@@ -28,6 +28,7 @@
 - Commit each task on branch `build`, end commit messages with the attribution lines in the session reminder, and scan staged files for keys.
 - Tests never call the network. Model calls are stubbed by injecting a fake into `storey.meta`.
 - Plain, direct prose in docs and UI text. No metaphors.
+- Stage results are JSON, so a map keyed by sheet index has string keys everywhere it is read: `transforms`, `inliers`, `floors`, `sheets`.
 
 ## Review Focus
 
@@ -113,7 +114,7 @@ Task 1 and Task 2 land first, alone, because everything else imports them. Tasks
 - Consumes: `Meter`, `BudgetReached`.
 - Produces:
   - `@dataclass class Context: dir: Path; meter: Meter; sheets: list[dict]; fresh: bool; def stage(self, name: str) -> dict` returns a stored stage result or `{}`; `def progress(self, step: str, done: int = 0, total: int = 0)`
-  - `STAGES: list[tuple[str, str, Callable[[Context], dict]]]`, entries `(name, label, fn)` in the order read, floors, verticals, declared, vector, letter. `evaluate` and `assemble` run after them.
+  - `STAGES: list[tuple[str, str, Callable[[Context], dict]]]`, entries `(name, label, fn)` in the order read, floors, verticals, declared, vector, evaluate, letter, assemble. Task 11 registers them.
   - `run(dir: Path, *, fresh: bool = False, stages: list | None = None) -> None`
   - A stage that throws or hits `BudgetReached` writes `stage_<name>.json` as `{"failed": "<plain message>"}` and the run continues.
   - `status.json` fields: `state` (queued, running, done, failed), `step`, `stages` (list of `{name, label, state, done, total}`), `usd`.
@@ -181,14 +182,14 @@ The rule is `lab/presence/rule.py` arm C. Port it unchanged except that hidden c
 **Interfaces:**
 - Consumes: `read_stage` and `floors_stage` output, `spark`, `sam_video`, `ink`, `warp_point`.
 - Produces:
-  - `verticals_stage(ctx) -> dict` returning `{"verticals": [{"id": "A", "name": str, "established": bool, "pos": [x, y] | None, "floors": {index: {"state": str, "signals": {"spark": "2/3", "crop": "yes"|"no"|"unclear"|None, "ink": float|None, "aligned": bool, "reason": str}, "point": [x, y]|None, "crop": str|None, "mask": str|None}}}], "not_checked": [str]}`. `state` is one of `found`, `missing`, `check`, `not_followed`, `end`.
+  - `verticals_stage(ctx) -> dict` returning `{"verticals": [{"id": "A", "name": str, "established": bool, "pos": [x, y] | None, "floors": {str(index): {"state": str, "signals": {"spark": "2/3", "crop": "yes"|"no"|"unclear"|None, "ink": float|None, "aligned": bool, "reason": str}, "point": [x, y]|None, "box": [x1, y1, x2, y2]|None, "crop": str|None, "mask": [[x, y], ...]|None}}}], "not_checked": [str]}`. Points, boxes and masks are in that floor's sheet pixels. `box` is the mask's bounding box, or None with no mask. `mask` is a polygon. `storey/vector.py` reads `state`, `point` and `box`. `state` is one of `found`, `missing`, `check`, `not_followed`, `end`.
   - `decide(row: dict, cell: dict) -> tuple[str, str]`, the pure rule, same evidence fields as `lab/presence/rule.py`.
   - `cluster(points: list[dict]) -> list[dict]`, ported from `lab/presence/cells.py` with R = 80.
   - `ink_ratio(row, paths, half=30)`, `blank` at density 0.002 with half 50.
 
 - [ ] **Step 1: Write the failing tests.** Port the self-checks in `lab/presence/rule.py` and `lab/presence/cells.py` as tests, replacing arm A and B cases with arm C only, and `None` with `not_followed`. Then `test_ends_become_end_state`, `test_missing_between_found_stays_missing`, `test_one_run_row_stays_visible`, `test_unaligned_floor_is_check`, `test_empty_compare_reply_gives_not_checked`, `test_empty_crop_reply_is_check`, `test_mask_only_on_found_cells`, `test_shaft_claims_are_ignored`.
 - [ ] **Step 2: Run.** Expected: import error.
-- [ ] **Step 3: Implement.** `FLOOR_P`, `EXTRA` and `SCHEMA` from `lab/presence/compare.py`, unchanged, 3 runs at effort medium, floors coded F1 to Fn. Those three calls need `fresh` semantics per run: include the run number in the cache key, or identical requests collapse into one run. Crop question `Q["stair"]`, `ANS`, side 260, up 3, effort low, 6 workers, from `lab/presence/crop.py`; save each crop into the review folder. Crop every cell of every established row unless blank. Crop cells of other rows when v is at least 1. Marker is the registered row place. After `decide`, a Missing cell outside the span of Found and Check floors becomes `end`. Masks: for each established row, take the seed with `lab/tightseed/post1.py` (`WHOLE_P`, two zoomed crops) on the floor nearest the median of its Found floors, map the box to the other Found floors, pin one SAM object on those frames, 16 objects per request, and keep masks on Found floors only. A SAM failure leaves `mask` null and changes no state.
+- [ ] **Step 3: Implement.** `FLOOR_P`, `EXTRA` and `SCHEMA` from `lab/presence/compare.py`, unchanged, 3 runs at effort medium, floors coded F1 to Fn. Add a keyword `run: int = 0` to `spark` that enters the cache key when non-zero and is never sent to the model, or the three identical requests collapse into one run reported as 3 of 3. Add `"mask"` to the rows `sam_video` returns. Constants are in pixels of a 2000 px sheet, so work on copies with long edge 2000 and convert results to sheet pixels. Crop question `Q["stair"]`, `ANS`, side 260, up 3, effort low, 6 workers, from `lab/presence/crop.py`; save each crop into the review folder. Crop every cell of every established row unless blank. Crop cells of other rows when v is at least 1. Marker is the registered row place. After `decide`, a Missing cell outside the span of Found and Check floors becomes `end`. Masks: for each established row, take the seed with `lab/tightseed/post1.py` (`WHOLE_P`, two zoomed crops) on the floor nearest the median of its Found floors, map the box to the other Found floors, pin one SAM object on those frames, 16 objects per request, and keep masks on Found floors only. A SAM failure leaves `mask` null and changes no state.
 - [ ] **Step 4: Run.** Expected: all pass.
 - [ ] **Step 5: Live check** on `habs_stelizabeths_center` and `bme_k` under a 2 USD meter. Compare with `lab/presence/truth.json`. Expected: no Found on absent cells, and matrix counts near the `presence` cell files. View one mask overlay.
 - [ ] **Step 6: Commit.**
@@ -211,12 +212,12 @@ Reading only. Comparison lives in Task 9. The method is `recommended_method` of 
   - `schedules`: `[{"sheet": int, "kind": "door"|"window"|"finish", "rows": [{"mark": str, "cells": {str: str}, "box": [..]}], "source": str}]`
   - `tables`: `[{"sheet": int, "kind": "occupant"|"exit"|"area", "rows": [...], "box": [..]}]`
   - `rooms`: `[{"sheet": int, "number": str, "name": str, "source": str}]`
-  - `exits`: `{"sheets": [{"sheet": int, "sum": int|None, "reads": [int, int]|None}]}`, under the half-sheet tile rule
+  - `exits`: `{"sheets": [{"sheet": int, "sum": int|None, "reads": [int, int]|None, "markers": [{"point": [x, y], "width_mm": float|None, "capacity": int|None}]}]}`, under the half-sheet tile rule, points in sheet pixels. `storey/vector.py` reads `markers`
   - `cannot_tell`: `[{"what": str, "why": str, "sheet": int|None}]`
 
 - [ ] **Step 1: Write the failing tests:** `test_text_layer_used_before_model`, `test_strips_cut_on_row_lines` (a synthetic ruled table gives one strip boundary per row and no header leak), `test_two_reads_disagree_gives_cannot_tell`, `test_half_sheet_rule_keeps_marker_from_its_own_tile` (a marker in the overlap of two tiles counts once, two real markers 12 per mille apart both count), `test_missing_code_sheet_returns_empty_code`, `test_not_used_row_flagged`, `test_empty_tile_reply_is_cannot_tell`, `test_non_breaking_space_in_title` (`PLAN\u00a0- LEVEL 1` reads as `PLAN - LEVEL 1`).
 - [ ] **Step 2: Run.** Expected: import error.
-- [ ] **Step 3: Implement** by porting `lab/declared/read_text.py`, `read_tables.py`, `read_spark.py` and `row_strips`, `core_exits`, the plan label read and the title judge from `posthoc.py`. Keep prompts and schemas. Settings: cut schedule strips on the table's row lines at effort medium; plan labels as 3 by 3 tiles of the plan area at effort medium; life safety markers as 2 by 2 tiles at effort medium; title block crops at 1000 px at effort low, with a second read only where the first disagrees with the index. Never use an IFC model. Remove every absolute path and every set-specific branch from the port.
+- [ ] **Step 3: Implement** by porting `lab/declared/read_text.py`, `read_tables.py`, `read_spark.py` and `row_strips`, `core_exits`, the plan label read and the title judge from `posthoc.py`. The lab chose pages per set by hand, so the product needs a sheet selector: tables by searching every page's text layer, the code sheet by class or title, life safety sheets by title, schedules with no text layer by class and title. Compare what the selector picks with `lab/declared/run.py` on the 13 sets, with no model calls. PDF parsing runs in a child process with a time limit, following `storey/vector.py`. Keep prompts and schemas. Settings: cut schedule strips on the table's row lines at effort medium; plan labels as 3 by 3 tiles of the plan area at effort medium; life safety markers as 2 by 2 tiles at effort medium; title block crops at 1000 px at effort low, with a second read only where the first disagrees with the index. Never use an IFC model. Remove every absolute path and every set-specific branch from the port.
 - [ ] **Step 4: Run.** Expected: all pass.
 - [ ] **Step 5: Live check** on `mml_capitol` and `mml_baxter` under a 1 USD meter. Expected: door schedule rows and tags equal those in `data/lab/declared`.
 - [ ] **Step 6: Commit.**

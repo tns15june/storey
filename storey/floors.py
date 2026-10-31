@@ -264,7 +264,7 @@ def floors_stage(ctx) -> dict:
             why = "fewer than two floor plans were read with a floor name"
         else:
             why = f"this set has {'one floor plan' if ids else 'no floor plans'}"
-        return result | {"not_checked": " ".join([f"Stairs and shafts were not followed across floors, because {why}.", *notes])}
+        return result | {"not_checked": " ".join([f"Stairs were not followed across floors, because {why}.", *notes])}
     paths = {s["index"]: ctx.dir / s["image"] for s in ctx.sheets}
 
     def sheet(i):
