@@ -78,7 +78,7 @@ def data_url(im, quality=92):
     return "data:image/jpeg;base64," + base64.b64encode(cv2.imencode(".jpg", im, [cv2.IMWRITE_JPEG_QUALITY, quality])[1]).decode()
 
 
-def spark(prompt, images=(), model="muse-spark-1.3", schema=None, effort=None, system=None, max_tokens=None):
+def spark(prompt, images=(), model="muse-spark-1.3", schema=None, effort=None, system=None, max_tokens=24000):
     """One chat call. Returns (parsed JSON or text, info with usd, seconds and token counts)."""
     _guard()
     content = [{"type": "text", "text": prompt}] + [{"type": "image_url", "image_url": {"url": data_url(i)}} for i in images]
@@ -88,8 +88,8 @@ def spark(prompt, images=(), model="muse-spark-1.3", schema=None, effort=None, s
         kw["response_format"] = {"type": "json_schema", "json_schema": {"name": "out", "schema": schema, "strict": True}}
     if effort:
         kw["reasoning_effort"] = effort
-    if max_tokens:
-        kw["max_completion_tokens"] = max_tokens
+    # Always capped: two uncapped calls ran to 262,144 output tokens at 1.12 USD each.
+    kw["max_completion_tokens"] = max_tokens
     t0 = time.time()
     r = _retry(lambda: client.chat.completions.create(model=model, messages=msgs, **kw))
     u = r.usage
@@ -136,7 +136,7 @@ def raster(rec):
 def sam_image(prompt, im):
     """Concept text or a box and point prompt on one image. Returns mask records."""
     t0 = time.time()
-    text = _sam(prompt, {"type": "input_image", "image_url": data_url(im)}, {"include_confidence": "true"})
+    text = _sam(prompt, {"type": "input_image", "image_url": data_url(im)}, {"include_confidence": "true", "mask_encoding": "one_bit"})
     _log("sam-3.1", 0.0025, kind="image", seconds=round(time.time() - t0, 2))
     return _masks(text, image_segmentation_format)
 
@@ -144,9 +144,10 @@ def sam_image(prompt, im):
 def sam_video(prompt, path, frames, direction="both"):
     """Box or point prompts on an MP4. `frames` is the clip length, used for the spend estimate."""
     t0 = time.time()
-    with open(path, "rb") as f:
-        fid = _retry(lambda: client.files.create(purpose="user_data", file=f)).id
-    text = _sam(prompt, {"type": "input_video", "file_id": fid}, {"include_confidence": "true", "propagation_direction": direction})
+    # Bytes, not an open handle: a retried upload would otherwise send a spent file object.
+    video = (Path(path).name, Path(path).read_bytes())
+    fid = _retry(lambda: client.files.create(purpose="user_data", file=video)).id
+    text = _sam(prompt, {"type": "input_video", "file_id": fid}, {"include_confidence": "true", "propagation_direction": direction, "mask_encoding": "one_bit"})
     _log("sam-3.1", max(frames, 50) * 0.0002, kind="video", frames=frames, seconds=round(time.time() - t0, 2))
     return _masks(text, video_segmentation_format)
 

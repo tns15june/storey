@@ -1,0 +1,112 @@
+[
+ {
+  "id": "af_ces_admin",
+  "url": "https://legacy.wbdg.org/FFC/AF/AFDP/CE_ADMIN/CES_SD_drawings_admin_bldg.pdf",
+  "file": "CES_SD_drawings_admin_bldg.pdf"
+ },
+ {
+  "id": "af_ces_admin",
+  "url": "https://legacy.wbdg.org/FFC/AF/AFDG/standard_design_civil_engineer_squadron_administration_facility_2018.pdf",
+  "file": "standard_design_2018.pdf"
+ },
+ {
+  "id": "af_ces_shops",
+  "url": "https://legacy.wbdg.org/FFC/AF/AFDP/SHOPS-WAREHOUSE/CES_sd_drawings_warehouse_bldg.pdf",
+  "file": "CES_sd_drawings_warehouse_bldg.pdf"
+ },
+ {
+  "id": "nibs_duplex",
+  "url": "https://legacy.wbdg.org/FFC/BIM/LCie/Apartment%20Model/2011-09-14-Duplex-PDF.zip",
+  "file": "Duplex-PDF.zip"
+ },
+ {
+  "id": "nibs_duplex",
+  "url": "https://legacy.wbdg.org/FFC/BIM/LCie/Apartment%20Model/2011-09-14-Duplex-IFC.zip",
+  "file": "Duplex-IFC.zip"
+ },
+ {
+  "id": "nibs_office",
+  "url": "https://legacy.wbdg.org/FFC/BIM/LCie/Office%20Model/2011-09-14-Office-PDF.zip",
+  "file": "Office-PDF.zip"
+ },
+ {
+  "id": "nibs_office",
+  "url": "https://legacy.wbdg.org/FFC/BIM/LCie/Office%20Model/2011-09-14-Office-IFC.zip",
+  "file": "Office-IFC.zip"
+ },
+ {
+  "id": "nibs_clinic",
+  "url": "https://legacy.wbdg.org/FFC/BIM/LCie/Clinic%20Model/2011-09-14-Clinic-PDF.zip",
+  "file": "Clinic-PDF.zip"
+ },
+ {
+  "id": "nibs_clinic",
+  "url": "https://legacy.wbdg.org/FFC/BIM/LCie/Clinic%20Model/2011-09-14-Clinic-IFC.zip",
+  "file": "Clinic-IFC.zip"
+ },
+ {
+  "id": "nibs_clinic",
+  "url": "https://legacy.wbdg.org/FFC/BIM/LCie/Clinic%20Model/2012-03-27-ClinicDrawingsRedacted.zip",
+  "file": "ClinicDrawingsRedacted.zip"
+ },
+ {
+  "id": "carpinteria_adu1",
+  "url": "https://carpinteriaca.gov/wp-content/uploads/2023/05/Plan-1-ADU-Prototype-Plan-City-of-Carpinteria-Form.pdf",
+  "file": "plan1.pdf"
+ },
+ {
+  "id": "carpinteria_adu2",
+  "url": "https://carpinteriaca.gov/wp-content/uploads/2023/05/Plan-2-ADU-Prototype-Plan-City-of-Carpinteria-Form.pdf",
+  "file": "plan2.pdf"
+ },
+ {
+  "id": "queens_leonard",
+  "url": "https://www.queensu.ca/residences/sites/residencewww/files/2026-06/Leonard%20Hall%20Floor%20Plans%2001.2026.pdf",
+  "file": "leonard_hall.pdf"
+ },
+ {
+  "id": "queens_royce",
+  "url": "https://www.queensu.ca/residences/sites/residencewww/files/2025-06/Jean%20Royce%20Hall%20Floor%20Plans%2005.2025.pdf",
+  "file": "jean_royce_hall.pdf"
+ },
+ {
+  "id": "brandeis_hall",
+  "url": "https://www.brandeis.edu/new-residence-hall/pdfs/2017-03-17-floor-plan-level-1.pdf",
+  "file": "level-1.pdf"
+ },
+ {
+  "id": "wfu_efird",
+  "url": "https://prod.wp.cdn.aws.wfu.edu/sites/303/2017/07/Efird.pdf",
+  "file": "Efird.pdf"
+ },
+ {
+  "id": "wfu_huffman",
+  "url": "https://prod.wp.cdn.aws.wfu.edu/sites/303/2017/07/HUFFMAN-FLOOR-PLAN-G-3.pdf",
+  "file": "HUFFMAN-FLOOR-PLAN-G-3.pdf"
+ },
+ {
+  "id": "usc_leconte",
+  "url": "https://sc.edu/purchasing/solicitations/documents/USC%20LeConte%20Bid%20Drawings.pdf",
+  "file": "USC_LeConte_Bid_Drawings.pdf"
+ },
+ {
+  "id": "mml_abbot",
+  "url": "https://mml.org/wp-content/uploads/2023/12/v1.0_THE-ABBOT_15Oct23.pdf",
+  "file": "THE-ABBOT.pdf"
+ },
+ {
+  "id": "mml_baxter",
+  "url": "https://mml.org/wp-content/uploads/2023/12/v1.0_THE-BAXTER_15Oct23.pdf",
+  "file": "THE-BAXTER.pdf"
+ },
+ {
+  "id": "mml_capitol",
+  "url": "https://mml.org/wp-content/uploads/2023/12/v1.0_THE-CAPITOL_15Oct23.pdf",
+  "file": "THE-CAPITOL.pdf"
+ },
+ {
+  "id": "mml_abbot",
+  "url": "https://mml.org/wp-content/uploads/2023/11/MML.PatternBookHome.Volume2-11.13.23.pdf",
+  "file": "Volume2_manual.pdf"
+ }
+]

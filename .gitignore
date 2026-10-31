@@ -14,3 +14,7 @@ docs/research/2026-10-31-impact-ideas.md
 docs/superpowers/specs/2026-10-28-tickstrobe-design.md
 spike/*
 !spike/plan_probe/
+# Rule values stay out of the public repo except rows the product ships. See docs/research/build-log.md.
+lab/gather_rules/
+# Holds a replacement table with names from public permit letters.
+lab/gather_practice/examples.py
