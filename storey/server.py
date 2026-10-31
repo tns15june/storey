@@ -7,6 +7,7 @@ import shutil
 import subprocess
 import sys
 import threading
+import traceback
 import uuid
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
@@ -17,6 +18,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
+from . import pipeline
 from .ingest import MAX_SHEETS
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -113,9 +115,7 @@ def _dir(review_id):
 
 
 def _status(path, **fields):
-    tmp = path / "status.tmp"
-    tmp.write_text(json.dumps(fields))
-    tmp.replace(path / "status.json")   # a poller must never read a half-written file
+    pipeline.write_json(path / "status.json", pipeline.read_json(path / "status.json") | fields)
 
 
 def _ingest(path, uploads):
@@ -132,13 +132,19 @@ def _ingest(path, uploads):
 def _run(path, uploads):
     try:
         _status(path, state="running", step="Reading the drawings")
-        _status(path, state="done", step="Done", sheets=_ingest(path, uploads))
+        _status(path, sheets=_ingest(path, uploads))
     except subprocess.TimeoutExpired:
         _status(path, state="failed", step="Stopped", message="This upload took too long to read")
     except ValueError as e:
         _status(path, state="failed", step="Stopped", message=str(e))
     except Exception:
         _status(path, state="failed", step="Stopped", message="Could not read this upload")
+    else:
+        try:
+            pipeline.run(path)
+        except Exception as e:
+            pipeline.log.error("Review %s stopped with %s\n%s", path.name, type(e).__name__, "".join(traceback.format_tb(e.__traceback__)))
+            _status(path, state="failed", step="Stopped", message="The review stopped before it finished")
     finally:
         waiting.release()
 
@@ -181,7 +187,7 @@ async def create_review(files: list[UploadFile]):
             if total > MAX_UPLOAD:
                 raise HTTPException(413, "The upload is over 400 MB")
             saved.append(p)
-        _status(path, state="queued", step="Waiting")
+        _status(path, state="queued", step="Waiting", stages=pipeline.stage_rows(pipeline.STAGES), usd=0)
     except BaseException:
         waiting.release()
         shutil.rmtree(path, ignore_errors=True)
