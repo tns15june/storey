@@ -616,3 +616,34 @@ def test_missing_ffmpeg_fails_the_stage_and_the_review_still_finishes(tmp_path, 
 def test_ffmpeg_failure_is_reported_plainly(tmp_path):
     with pytest.raises(RuntimeError, match="ffmpeg could not write"):
         write_stack([np.zeros((100, 100, 3), np.uint8)], tmp_path / "no_such_folder" / "s.mp4")
+
+
+def test_more_floors_than_one_request_can_hold_are_not_followed(tmp_path, monkeypatch):
+    monkeypatch.setattr(floors, "MAX_FLOORS", 2)
+    ctx = tower(tmp_path, 3)
+    meta.set_transport(lambda kind, **request: pytest.fail("no model call past the limit"))
+    monkeypatch.setattr(floors, "register", lambda *args: pytest.fail("no alignment past the limit"))
+    out = floors_stage(ctx)
+    assert out["order"] == [] and out["reference"] is None and out["stack"] is None
+    assert "3 floor plans" in out["not_checked"] and "limit is 2" in out["not_checked"]
+
+
+def test_time_limit_leaves_the_remaining_floors_unaligned(tmp_path, monkeypatch, quick_fit):
+    monkeypatch.setattr(floors, "ALIGN_SECONDS", -1)
+    ctx = tower(tmp_path, 3)
+    out = floors_stage(ctx)
+    assert len(out["unaligned"]) == 2 and "ran out of time" in out["not_checked"]
+
+
+def test_no_time_note_when_alignment_finishes(tmp_path, quick_fit):
+    ctx = tower(tmp_path, 3)
+    out = floors_stage(ctx)
+    assert out["unaligned"] == [] and out["not_checked"] is None
+
+
+def test_stack_encoder_has_a_time_limit(tmp_path, monkeypatch):
+    seen = {}
+    monkeypatch.setattr(floors.shutil, "which", lambda name: "/bin/true")
+    monkeypatch.setattr(floors.subprocess, "run", lambda *args, **kw: seen.update(kw) or type("Done", (), {"returncode": 0})())
+    write_stack([np.zeros((100, 100, 3), np.uint8)], tmp_path / "s.mp4")
+    assert seen["timeout"] == floors.STACK_SECONDS

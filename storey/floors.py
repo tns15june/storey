@@ -3,6 +3,7 @@ import random
 import re
 import shutil
 import subprocess
+import time
 from pathlib import Path
 
 import cv2
@@ -14,6 +15,9 @@ WORK_PX = 2000   # every pixel value in the alignment code, and the gate, were t
 GATE = 25        # inliers, unrelated real buildings reached 37 on one sample of 72 pairs, so this gate alone does not prove a fit
 SCALE_GATE = 0.10   # share off the median, because accepted floors sit within 3% of their neighbours and a visibly wrong fit passed at 57 inliers, 0.92 against 1.13
 STACK_PX = 960
+MAX_FLOORS = 50   # Meta takes 50 images in one request, and the order and stair comparison calls each send every floor at once
+ALIGN_SECONDS = 900   # an upload must not hold a worker for long, and a floor past this shows as unaligned
+STACK_SECONDS = 120
 NOT_MAIN = re.compile(r"demol|life.?safety|egress|exit|ceiling|partial|enlarged|block", re.I)
 DISCHARGE = (r"\b(ground|street)\b", r"\b(first|1st|level 0*1|floor 0*1)\b")   # tried in this order
 JOINT = {"type": "object", "additionalProperties": False, "required": ["bottom_to_top"],
@@ -197,7 +201,7 @@ def write_stack(frames: list[np.ndarray], path: Path) -> None:
     w, h = _frame_size(frames[0].shape)
     raw = b"".join(cv2.resize(f, (w, h), interpolation=cv2.INTER_AREA).tobytes() for f in frames)
     done = subprocess.run([ffmpeg, "-y", "-v", "error", "-f", "rawvideo", "-pix_fmt", "bgr24", "-s", f"{w}x{h}", "-r", "4", "-i", "-",
-                           "-c:v", "libx264", "-crf", "16", "-pix_fmt", "yuv420p", str(path)], input=raw, capture_output=True)
+                           "-c:v", "libx264", "-crf", "16", "-pix_fmt", "yuv420p", str(path)], input=raw, capture_output=True, timeout=STACK_SECONDS)
     if done.returncode:
         raise RuntimeError("ffmpeg could not write the floor stack.")
 
@@ -265,6 +269,9 @@ def floors_stage(ctx) -> dict:
         else:
             why = f"this set has {'one floor plan' if ids else 'no floor plans'}"
         return result | {"not_checked": " ".join([f"Stairs were not followed across floors, because {why}.", *notes])}
+    if len(ids) > MAX_FLOORS:
+        why = f"this set has {len(ids)} floor plans and the limit is {MAX_FLOORS}"
+        return result | {"order": [], "reference": None, "not_checked": " ".join([f"Stairs were not followed across floors, because {why}.", *notes])}
     paths = {s["index"]: ctx.dir / s["image"] for s in ctx.sheets}
 
     def sheet(i):
@@ -275,10 +282,18 @@ def floors_stage(ctx) -> dict:
         order = ids
         notes.append("The floor order could not be read, so floors are in sheet order. Check the order before relying on stair continuity.")
     total = 2 * (len(order) - 1)
+    deadline, late = time.monotonic() + ALIGN_SECONDS, []
+
+    def fit(ref_img, mov_img, a, b):
+        if time.monotonic() > deadline:
+            late.append(b)
+            return np.eye(3), 0   # a failed fit, so the floor shows as unaligned
+        return register(ref_img, mov_img, box[a], box[b])
+
     score = dict.fromkeys(order, 0)
     links = {}   # (floor, neighbour) to (matrix from floor to neighbour, inliers), for fits that cleared the gate
     for done, (a, b) in enumerate(zip(order, order[1:]), 1):
-        H, n = register(sheet(a), sheet(b), box[a], box[b])
+        H, n = fit(sheet(a), sheet(b), a, b)
         score[a] += n
         score[b] += n
         if n >= GATE:
@@ -290,8 +305,11 @@ def floors_stage(ctx) -> dict:
     fits, side = {}, {}
     for done, i in enumerate((i for i in order if i != reference), total // 2 + 1):
         mov = sheet(i)
-        fits[i], side[i] = register(ref, mov, box[reference], box[i]), max(mov.shape[:2])
+        fits[i], side[i] = fit(ref, mov, reference, i), max(mov.shape[:2])
         ctx.progress("Lining up the floors", done, total)
+
+    if late:
+        notes.append("Lining up the floors ran out of time, so some floors show as not aligned.")
 
     def scale(H, i):
         return np.hypot(H[0, 0], H[1, 0]) * side[i] / max(ref.shape[:2])   # sheets rendered at different sizes are no scale change
