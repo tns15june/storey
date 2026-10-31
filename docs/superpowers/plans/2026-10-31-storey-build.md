@@ -18,7 +18,6 @@
 - Every model call sets a token cap, default 24000.
 - Per-review spend cap default 8 USD, server daily cap default 25 USD. Hitting one ends the stage with a visible `unknown` item.
 - Runtime models are Meta only: `muse-spark-1.3` and `sam-3.1`. Never a Contributor variant.
-- `data/plans/navy_b14` is excluded. No task reads it or sends it to a model until the user rules on it.
 - An empty or malformed model reply is Cannot tell for that item, never a crash and never a pass.
 - A model never removes a finding. SAM never decides presence, absence or change.
 - Never read or print `.env`, `meta_api_key.rtf` or the key. Load the key inside `storey/meta.py` only, from `MODEL_API_KEY` in the environment or `.env`.

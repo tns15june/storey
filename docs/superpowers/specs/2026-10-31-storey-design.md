@@ -188,7 +188,7 @@ Public on screen: `habs_stelizabeths_center` (public domain, 5 floors, stairs), 
 
 No demo set has both a code summary and a life safety plan, so no public demo shows checks 8, 11 or 13, or an outcome that changes with jurisdiction. The selector still changes rule values, adopted code names and Not checked items, and the demo says plainly that no sample exercises the R-2 single exit difference. A generated test set would close this gap. It is deferred until one building runs end to end.
 
-`navy_b14` is excluded from the product, the evaluation and all model calls until the user rules on it, because a research agent fetched it by script against SAM.gov's terms. It is also a naval shipyard building, and 245 of its 257 sheets have not been checked for restriction markings. The Second review demo uses a planted revision on a `public_demo: yes` set, labelled as planted.
+The Second review demo uses a planted revision on a `public_demo: yes` set, labelled as planted.
 
 ## Hackathon use of Meta tooling
 

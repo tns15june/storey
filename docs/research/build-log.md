@@ -83,7 +83,7 @@ Audit status in brackets. Frozen means the rule was fixed before held-out. Post 
 ### Real records found
 
 - Richmond VA Appeal 26-02: one submitted sheet with 14 real examiner comments, 10 answerable from the sheet. Virginia packets are public records. No full set paired with a full city letter was found.
-- Navy B14: 257 sheets, code and life safety sheets, 25 reissued sheets with a written change list, 211 bidder questions. Excluded, see below.
+- Navy B14: 257 sheets, code and life safety sheets, 25 reissued sheets with a written change list, 211 bidder questions. Deleted, see below.
 
 ### Real defects added, none planted
 
@@ -91,7 +91,7 @@ Baxter upper tags run 17 to 34 against a schedule of 1 to 18, and mark 9 has no 
 
 ### Conduct
 
-The `realsets` agent scripted SAM.gov's internal endpoints and fetched 14 files before reading its terms, which restrict automated collection. It also made 5 requests to Portland OR efiles before reading a robots file that bars Claude agents, sending a generic browser user-agent on some, and pulled 13.3 MB of a Sonoma plan file that the county says is protected. The Portland and Sonoma files were deleted. Both SAM scripts exit on start. The Navy set stays on disk, unused, until the user rules.
+The `realsets` agent scripted SAM.gov's internal endpoints and fetched 14 files before reading its terms, which restrict automated collection. It also made 5 requests to Portland OR efiles before reading a robots file that bars Claude agents, sending a generic browser user-agent on some, and pulled 13.3 MB of a Sonoma plan file that the county says is protected. The Portland and Sonoma files were deleted. Both SAM scripts exit on start. The user had the Navy set and everything made from it deleted on 31 Oct: 15 source files, plus 33 MB of renders, overlays and truth files. No Meta model saw it. The research agent viewed about 12 of its sheets. The SAM.gov search log stays in `data/lab/realsets/sam`, and it holds no drawings.
 
 ### Corrections to earlier claims
 
