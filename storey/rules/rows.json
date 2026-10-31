@@ -1,0 +1,158 @@
+{
+  "ibc.1005.3.1": {
+    "section": "1005.3.1",
+    "title": "Stair width needed per occupant",
+    "unit": "in per occupant",
+    "stricter": "higher",
+    "cases": [
+      {"when": {"occupancy": ["A", "B", "E", "F", "I-1", "I-3", "I-4", "M", "R", "S", "U"], "sprinklers": "yes", "voice_alarm": "yes"}, "value": 0.2},
+      {"value": 0.3}
+    ]
+  },
+  "ibc.1005.3.2": {
+    "section": "1005.3.2",
+    "title": "Width of doors, corridors and other non-stair components per occupant",
+    "unit": "in per occupant",
+    "stricter": "higher",
+    "cases": [
+      {"when": {"occupancy": ["A", "B", "E", "F", "I-1", "I-3", "I-4", "M", "R", "S", "U"], "sprinklers": "yes", "voice_alarm": "yes"}, "value": 0.15},
+      {"value": 0.2}
+    ]
+  },
+  "ibc.1006.3.3": {
+    "section": "Table 1006.3.3",
+    "title": "Minimum exits per story, by occupant load",
+    "unit": "exits",
+    "cases": [
+      {"when": {"occupant_load": {"min": 1, "max": 500}}, "value": 2},
+      {"when": {"occupant_load": {"min": 501, "max": 1000}}, "value": 3},
+      {"when": {"occupant_load": {"min": 1001}}, "value": 4}
+    ]
+  },
+  "ibc.1006.3.4.t1": {
+    "section": "Table 1006.3.4(1)",
+    "title": "Single exit stories, R-2 dwelling units",
+    "unit": "units; ft",
+    "cases": [
+      {
+        "when": {"sprinklers": "yes", "story": {"max": 3}},
+        "value": {"max_dwelling_units": 4, "max_exit_access_travel": 125},
+        "conditions": ["4 units per floor at most", "Emergency escape openings at sleeping rooms"],
+        "confirm": true
+      },
+      {"value": "NP"}
+    ],
+    "overrides": {
+      "seattle": [
+        {
+          "when": {"sprinklers": "yes", "story": {"max": 3}},
+          "value": {"max_dwelling_units": 4, "max_exit_access_travel": 125},
+          "conditions": ["4 units per floor at most", "Emergency escape openings at sleeping rooms"],
+          "confirm": true
+        },
+        {
+          "when": {"sprinklers": "yes", "story": {"max": 5}},
+          "value": {"max_dwelling_units": 4, "max_exit_access_travel": 125},
+          "section": "1006.3.4 item 7",
+          "conditions": [
+            "6 stories above grade at most",
+            "4 units per floor at most",
+            "NFPA 13 sprinklers and 1-hour construction",
+            "Exterior stair, or pressurized interior stair",
+            "20 ft at most from unit door to stair",
+            "Eight more conditions in item 7"
+          ],
+          "confirm": true
+        },
+        {"value": "NP"}
+      ]
+    }
+  },
+  "ibc.1006.3.4.t2": {
+    "section": "Table 1006.3.4(2)",
+    "title": "Single exit stories, other occupancies",
+    "unit": "occupants",
+    "cases": [
+      {"when": {"occupancy": ["A", "B", "E", "F", "M", "U"], "story": {"max": 1}}, "value": 49},
+      {"when": {"occupancy": ["H-2", "H-3"], "story": {"max": 1}}, "value": 3},
+      {"when": {"occupancy": ["H-4", "H-5", "I", "R-1"], "story": {"max": 1}}, "value": 10},
+      {"when": {"occupancy": ["S"], "story": {"max": 1}}, "value": 29},
+      {"when": {"occupancy": ["B", "F", "M", "S"], "story": {"max": 2}}, "value": 29},
+      {"value": "NP"}
+    ]
+  },
+  "ibc.1010.1.1": {
+    "section": "1010.1.1",
+    "title": "Door clear opening size",
+    "unit": "in",
+    "cases": [
+      {"when": {"occupancy": ["I-2"]}, "value": 41.5, "conditions": ["Applies where beds are moved"], "confirm": true},
+      {"when": {"occupancy": ["A", "B", "E", "F", "H", "I-1", "I-3", "I-4", "M", "R", "S", "U"]}, "value": 32}
+    ]
+  },
+  "ibc.1017.2": {
+    "section": "Table 1017.2",
+    "title": "Longest exit access travel, by occupancy and sprinklers",
+    "unit": "ft",
+    "cases": [
+      {"when": {"occupancy": ["A", "E", "F-1", "M", "R", "S-1"], "sprinklers": "no"}, "value": 200},
+      {"when": {"occupancy": ["A", "E", "F-1", "M", "R", "S-1"], "sprinklers": "yes"}, "value": 250},
+      {"when": {"occupancy": ["I-1"], "sprinklers": "no"}, "value": "NP"},
+      {"when": {"occupancy": ["I-1"], "sprinklers": "yes"}, "value": 250},
+      {"when": {"occupancy": ["B"], "sprinklers": "no"}, "value": 200},
+      {"when": {"occupancy": ["B"], "sprinklers": "yes"}, "value": 300},
+      {"when": {"occupancy": ["F-2", "S-2", "U"], "sprinklers": "no"}, "value": 300},
+      {"when": {"occupancy": ["F-2", "S-2", "U"], "sprinklers": "yes"}, "value": 400},
+      {"when": {"occupancy": ["H-1"], "sprinklers": "no"}, "value": "NP"},
+      {"when": {"occupancy": ["H-1"], "sprinklers": "yes"}, "value": 75},
+      {"when": {"occupancy": ["H-2"], "sprinklers": "no"}, "value": "NP"},
+      {"when": {"occupancy": ["H-2"], "sprinklers": "yes"}, "value": 100},
+      {"when": {"occupancy": ["H-3"], "sprinklers": "no"}, "value": "NP"},
+      {"when": {"occupancy": ["H-3"], "sprinklers": "yes"}, "value": 150},
+      {"when": {"occupancy": ["H-4"], "sprinklers": "no"}, "value": "NP"},
+      {"when": {"occupancy": ["H-4"], "sprinklers": "yes"}, "value": 175},
+      {"when": {"occupancy": ["H-5"], "sprinklers": "no"}, "value": "NP"},
+      {"when": {"occupancy": ["H-5"], "sprinklers": "yes"}, "value": 200},
+      {"when": {"occupancy": ["I-2", "I-3"], "sprinklers": "no"}, "value": "NP"},
+      {"when": {"occupancy": ["I-2", "I-3"], "sprinklers": "yes"}, "value": 200},
+      {"when": {"occupancy": ["I-4"], "sprinklers": "no"}, "value": 150},
+      {"when": {"occupancy": ["I-4"], "sprinklers": "yes"}, "value": 200}
+    ]
+  },
+  "ibc.1020.3": {
+    "section": "Table 1020.3",
+    "title": "Minimum corridor width",
+    "unit": "in",
+    "cases": [
+      {"when": {"occupancy": ["I-2"]}, "value": 96, "conditions": ["Applies where beds are moved"], "confirm": true},
+      {"when": {"occupancy": ["E"], "occupant_load": {"min": 100}}, "value": 72},
+      {"when": {"occupancy": ["A", "B", "E", "F", "H", "I-1", "I-3", "I-4", "M", "R", "S", "U"], "occupant_load": {"max": 49}}, "value": 36},
+      {"when": {"occupancy": ["E"], "occupant_load": {"min": 50}}, "value": 44},
+      {"when": {"occupancy": ["A", "B", "F", "H", "I-1", "I-3", "I-4", "M", "R", "S", "U"]}, "value": 44}
+    ]
+  },
+  "ibc.1020.5": {
+    "section": "1020.5",
+    "title": "Dead-end corridor length",
+    "unit": "ft",
+    "cases": [
+      {"when": {"occupancy": ["B", "E", "F", "I-1", "M", "R-1", "R-2", "S", "U"], "sprinklers": "yes"}, "value": 50},
+      {"value": 20}
+    ],
+    "overrides": {
+      "seattle": [
+        {"when": {"occupancy": ["B"], "construction": ["IA", "IB"], "occupant_load": {"max": 50}}, "value": 75},
+        {"when": {"occupancy": ["B", "E", "F", "I-1", "M", "R-1", "R-2", "S", "U"], "sprinklers": "yes"}, "value": 50},
+        {"value": 25}
+      ]
+    }
+  },
+  "ibc.1023.3": {
+    "section": "1023.3",
+    "title": "Exit stairs end at discharge or a public way",
+    "unit": "logic",
+    "cases": [
+      {"value": "terminates_at_exit_discharge_or_public_way"}
+    ]
+  }
+}
