@@ -13,20 +13,30 @@ HERE = Path(__file__).resolve().parent
 PLANS = HERE.parent.parent / "data/plans"
 UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/120 Safari/537.36"
 
+ZIP_LIMIT = 8 * 1024 ** 3
+
 
 def safe_extract(zip_path, out):
     """Pull only document files, and reject paths that escape the folder (downloads are untrusted)."""
     with zipfile.ZipFile(zip_path) as z:
+        # Declared sizes are checked first and the bytes written are counted, so a zip bomb cannot fill the disk.
+        if sum(i.file_size for i in z.infolist()) > ZIP_LIMIT:
+            raise ValueError(f"{zip_path} unpacks to more than {ZIP_LIMIT} bytes")
+        written = 0
         for info in z.infolist():
             root = out.resolve()
             target = (root / info.filename).resolve()
-            # A 2 GiB cap per member keeps a zip bomb from filling the disk.
-            if info.is_dir() or not target.is_relative_to(root) or info.file_size > 2 * 1024 ** 3:
+            if info.is_dir() or not target.is_relative_to(root):
                 continue
             if target.suffix.lower() not in {".pdf", ".ifc", ".txt", ".png", ".jpg"}:
                 continue
             target.parent.mkdir(parents=True, exist_ok=True)
-            target.write_bytes(z.read(info))
+            with z.open(info) as src, open(target, "wb") as dst:
+                while chunk := src.read(1 << 20):
+                    written += len(chunk)
+                    if written > ZIP_LIMIT:
+                        raise ValueError(f"{zip_path} wrote more than {ZIP_LIMIT} bytes")
+                    dst.write(chunk)
 
 
 def main():
