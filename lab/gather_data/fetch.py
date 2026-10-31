@@ -28,7 +28,7 @@ def safe_extract(zip_path, out):
             target = (root / info.filename).resolve()
             if info.is_dir() or not target.is_relative_to(root):
                 continue
-            if target.suffix.lower() not in {".pdf", ".ifc", ".txt", ".png", ".jpg"}:
+            if target.suffix.lower() not in {".pdf", ".ifc", ".txt", ".png", ".jpg"} or info.compress_type not in (zipfile.ZIP_STORED, zipfile.ZIP_DEFLATED):
                 continue
             target.parent.mkdir(parents=True, exist_ok=True)
             with z.open(info) as src, open(target, "wb") as dst:
