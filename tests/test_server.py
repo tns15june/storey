@@ -9,7 +9,7 @@ from fastapi.testclient import TestClient
 def client(tmp_path, monkeypatch):
     from storey import server
     monkeypatch.setattr(server, "DATA", tmp_path)
-    return TestClient(server.app)
+    return TestClient(server.app, base_url="http://127.0.0.1", client=("127.0.0.1", 50000))
 
 
 def _pdf_bytes():
@@ -19,7 +19,7 @@ def _pdf_bytes():
 
 
 def _wait(client, rid):
-    for _ in range(100):
+    for _ in range(400):
         st = client.get(f"/api/reviews/{rid}").json()
         if st["state"] in ("done", "failed"):
             return st
@@ -79,9 +79,54 @@ def test_busy_server_turns_uploads_away_without_leaking_slots(client, monkeypatc
     assert server.waiting.acquire(blocking=False)
 
 
+ID_URL = "/api/reviews/" + "0" * 32
+
+
 def test_without_a_key_only_this_machine_is_served(client):
-    r = client.get("/api/reviews/" + "0" * 32, headers={"host": "storey.example.com"})
+    assert client.get(ID_URL).status_code == 404
+    assert client.get(ID_URL, headers={"host": "storey.example.com"}).status_code == 403
+
+
+def test_a_remote_client_cannot_claim_to_be_local():
+    from storey import server
+    remote = TestClient(server.app, base_url="http://localhost", client=("203.0.113.9", 50000))
+    assert remote.get(ID_URL).status_code == 403
+
+
+@pytest.mark.parametrize("header", ["x-forwarded-for", "cf-connecting-ip", "forwarded"])
+def test_tunnel_traffic_from_localhost_is_not_treated_as_local(client, header):
+    assert client.get(ID_URL, headers={header: "203.0.113.9"}).status_code == 403
+
+
+@pytest.mark.parametrize("headers", [{"origin": "https://evil.example"}, {"sec-fetch-site": "cross-site"}])
+def test_other_sites_cannot_post_to_a_local_server(client, headers):
+    r = client.post("/api/reviews", headers=headers, files=[("files", ("set.pdf", _pdf_bytes(), "application/pdf"))])
     assert r.status_code == 403
+
+
+def test_same_origin_browser_post_is_allowed(client):
+    headers = {"origin": "http://127.0.0.1", "sec-fetch-site": "same-origin"}
+    r = client.post("/api/reviews", headers=headers, files=[("files", ("set.pdf", _pdf_bytes(), "application/pdf"))])
+    assert r.status_code == 200
+
+
+def test_a_hung_reader_is_killed_and_frees_its_slot(client, monkeypatch):
+    import sys
+    from storey import server
+    monkeypatch.setattr(server, "INGEST_COMMAND", [sys.executable, "-c", "import time; time.sleep(30)"])
+    monkeypatch.setattr(server, "INGEST_SECONDS", .2)
+    rid = client.post("/api/reviews", files=[("files", ("set.pdf", _pdf_bytes(), "application/pdf"))]).json()["id"]
+    st = _wait(client, rid)
+    assert st["state"] == "failed" and "too long" in st["message"]
+
+
+def test_a_crashing_reader_fails_cleanly(client, monkeypatch):
+    import sys
+    from storey import server
+    monkeypatch.setattr(server, "INGEST_COMMAND", [sys.executable, "-c", "raise SystemExit(139)"])
+    rid = client.post("/api/reviews", files=[("files", ("set.pdf", _pdf_bytes(), "application/pdf"))]).json()["id"]
+    st = _wait(client, rid)
+    assert st["state"] == "failed" and st["message"] == "Could not read this upload"
 
 
 def test_with_a_key_api_needs_it_and_cookie_works(client, monkeypatch):

@@ -1,5 +1,7 @@
 """Turn an uploaded drawing set into page images plus whatever text and vector content the file holds."""
 import json
+import resource
+import sys
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
@@ -11,6 +13,8 @@ MAX_EDGE = 6000       # sheets past this add file size, not legibility, at Spark
 MAX_SHEETS = 300      # a tiny PDF can hold thousands of pages, and each page costs render time and API money
 MAX_PIXELS = 150_000_000   # a small image file can decode to gigabytes, so check the header first
 MAX_WORDS = 50_000    # per page, for the same reason
+CPU_SECONDS = 600
+MEMORY_BYTES = 8 * 1024 ** 3
 RENDER_DPI = 200
 VECTOR_MIN_ITEMS = 200   # shortcut: a fixed count separates CAD pages from scans, replace if the lab finds a better signal
 
@@ -86,3 +90,24 @@ def ingest(paths, out_dir):
         raise ValueError("The upload holds no pages")
     (out_dir / "sheets.json").write_text(json.dumps([asdict(s) for s in sheets]))
     return sheets
+
+
+def main(argv):
+    """Runs in a child process, so a hostile file can be killed. MuPDF work in a thread cannot be interrupted."""
+    resource.setrlimit(resource.RLIMIT_CPU, (CPU_SECONDS, CPU_SECONDS))
+    try:
+        resource.setrlimit(resource.RLIMIT_AS, (MEMORY_BYTES, MEMORY_BYTES))
+    except (ValueError, OSError):
+        pass   # shortcut: macOS refuses this limit, the wall-clock timeout in the server still applies
+    out_dir, *paths = argv
+    try:
+        sheets = ingest(paths, out_dir)
+    except ValueError as e:
+        print(json.dumps({"error": str(e)}))
+        return 2
+    print(json.dumps({"sheets": len(sheets)}))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))

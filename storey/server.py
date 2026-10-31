@@ -3,24 +3,31 @@ import hmac
 import json
 import os
 import shutil
+import subprocess
+import sys
 import threading
 import uuid
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from urllib.parse import urlsplit
 
 from fastapi import FastAPI, HTTPException, Request, Response, UploadFile
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from .ingest import MAX_SHEETS, ingest
+from .ingest import MAX_SHEETS
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA = Path(os.environ.get("STOREY_DATA", ROOT / "data/reviews"))
 MAX_UPLOAD = 400 * 1024 * 1024
 MAX_WAITING = 8       # each review spends API credit, so a burst of uploads must be turned away, not queued
 SIGNATURES = {".pdf": b"%PDF", ".png": b"\x89PNG", ".jpg": b"\xff\xd8", ".jpeg": b"\xff\xd8"}
-LOCAL_HOSTS = {"127.0.0.1", "localhost", "[::1]", "testserver"}
+INGEST_SECONDS = 900
+INGEST_COMMAND = [sys.executable, "-m", "storey.ingest"]
+LOCAL_CLIENTS = {"127.0.0.1", "::1"}
+LOCAL_HOSTS = {"127.0.0.1", "localhost", "[::1]"}
+FORWARDED = ("forwarded", "x-forwarded-for", "x-real-ip", "cf-connecting-ip", "true-client-ip")
 CSP = ("default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; "
        "img-src 'self' data: blob:; object-src 'none'; base-uri 'none'; frame-ancestors 'none'")
 
@@ -57,14 +64,30 @@ class LimitBody:
 app.add_middleware(LimitBody, limit=MAX_UPLOAD + 1024 * 1024)
 
 
+def is_local(request):
+    """True only for a browser on this machine. The socket address decides, the Host check stops DNS rebinding,
+    and the forwarding headers catch a tunnel, whose traffic also arrives from localhost."""
+    host = request.headers.get("host", "").rsplit(":", 1)[0]
+    client = request.client.host if request.client else ""
+    return client in LOCAL_CLIENTS and host in LOCAL_HOSTS and not any(h in request.headers for h in FORWARDED)
+
+
+def is_cross_site(request):
+    """A page on another site can post a form to localhost without a preflight, so check where it came from."""
+    if request.headers.get("sec-fetch-site", "same-origin") not in ("same-origin", "none"):
+        return True
+    origin = request.headers.get("origin")
+    return bool(origin) and urlsplit(origin).netloc != request.headers.get("host")
+
+
 @app.middleware("http")
 async def guard(request: Request, call_next):
-    # With no key set the server answers only on this machine, which also covers a tunnel pointed at localhost.
-    host = request.headers.get("host", "").rsplit(":", 1)[0]
     key = access_key()
-    if not key and host not in LOCAL_HOSTS:
+    if not key and not is_local(request):
         return JSONResponse({"detail": "Set STOREY_ACCESS_KEY before opening this server to other machines"}, 403)
     path = request.url.path
+    if path.startswith("/api/") and request.method not in ("GET", "HEAD") and is_cross_site(request):
+        return JSONResponse({"detail": "Requests from other sites are not allowed"}, 403)
     if key and path.startswith("/api/") and path != "/api/session":
         given = request.headers.get("x-storey-key") or request.cookies.get("storey_key") or ""
         if not hmac.compare_digest(given.encode(), key.encode()):
@@ -105,11 +128,23 @@ def _status(path, **fields):
     tmp.replace(path / "status.json")   # a poller must never read a half-written file
 
 
+def _ingest(path, uploads):
+    r = subprocess.run([*INGEST_COMMAND, str(path), *map(str, uploads)], cwd=ROOT, capture_output=True, text=True, timeout=INGEST_SECONDS)
+    try:
+        out = json.loads(r.stdout.strip().splitlines()[-1])
+    except (IndexError, ValueError):
+        out = {}
+    if r.returncode or "sheets" not in out:
+        raise ValueError(out.get("error", "Could not read this upload"))
+    return out["sheets"]
+
+
 def _run(path, uploads):
     try:
         _status(path, state="running", step="Reading the drawings")
-        sheets = ingest(uploads, path)
-        _status(path, state="done", step="Done", sheets=len(sheets))
+        _status(path, state="done", step="Done", sheets=_ingest(path, uploads))
+    except subprocess.TimeoutExpired:
+        _status(path, state="failed", step="Stopped", message="This upload took too long to read")
     except ValueError as e:
         _status(path, state="failed", step="Stopped", message=str(e))
     except Exception:
