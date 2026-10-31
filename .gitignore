@@ -18,3 +18,7 @@ spike/*
 lab/gather_rules/
 # Holds a replacement table with names from public permit letters.
 lab/gather_practice/examples.py
+# Fetch and case-review code for permit records: it names real cases, and part of it hit a site against its terms.
+lab/realsets/
+lab/audit2/navy_words.py
+lab/audit2/realsets_check.py

@@ -48,3 +48,54 @@ Audit status in brackets. Reproduced means an independent agent reran it. Weaken
 - "No competing entry" is wrong. Moke covers whole-packet review for design firms, ConformScope covers wheelchair access with the same architecture, Helonic advertises stacking and egress checks commercially.
 - bme_f is not safe for public demo: the sheet legend post-dates the 1905 Commons date. Use habs_stelizabeths_center.
 - Repeat 4 was the wrong choice for stacks. Repeat 1 at 960 px is as good and cheaper.
+
+- 19:00. Round 2 finished: 6 experiments and one audit, 24.95 USD, ledger 54.01 USD of 148. Output is in the workflow result; lab code in `lab/`, outputs in `data/lab/`. The design and plan now carry these decisions.
+
+### Round 2 numbers that decide scope
+
+Audit status in brackets. Frozen means the rule was fixed before held-out. Post hoc means it was changed after seeing results.
+
+| Question | Result | Status |
+|---|---|---|
+| Stair erased mid-run, three-run Spark voting as designed | 10 of 15 planted erasures still Found. Run 0 alone 13 of 15. Round 1's "false absences only" does not hold | Reproduced, frozen |
+| Arm C: ink and a blind crop on every Found | 0 of 15 Found (12 Check, 3 Missing), 0 of 38 tested natural absent cells, upper bounds 18% and 7.6% | Reproduced. Weakened: on plants that keep walls ink fired on 5 of 22, the crop is a single guard |
+| Check load and cost, arm C | 7.2 stair cells per building, 0.32 USD, about 68 s. The crop says no on the same 5 clean stairs every time, so part of the load is permanent | Reproduced |
+| SAM tracker from hand boxes, 960 px on aligned stacks | 107 of 110, 14 of 14 absent floors | Reproduced, but only for top-of-run endings |
+| SAM with treads erased, walls kept, accurate pinned seeds | 14 of 20 masks stay on the empty stair room at clean confidence | Audit, live. Refutes "the tracker stops where the stair stops" |
+| Best SAM seed with no human | Frozen 82 of 110, post hoc 92 of 110, always-present 96 of 110 | Reproduced. Still under baseline |
+| SAM mask as a veto on ending flags | 11 false cancels on pinned tracks, 1 true ending cancelled | Refuted. Dropped |
+| Alignment gate | 26 of 27 floors, floor order 9 of 9 buildings. A wrong fit passed at 57 inliers, scale 0.92 against 1.13 | Weakened. Scale check added |
+| Declared against drawn, 13 real sets | 25 real and 19 likely distinct discrepancies. Held-out flags at frozen settings 35 of 137 real or likely. Text layer 9 of 26, Spark 26 of 111 | Reproduced. One unblinded reader. 93% after fixes is fitted to the same flags and is not quoted |
+| Tag against schedule, both ways, text layer | 6 flags, 5 real, 1 likely, 0 false | Frozen, pooled |
+| Exit capacity sum | Frozen 1620 against 1440 and 441 against 294, the unsafe direction. Half-sheet tile rule 1440 and 294 on 4 reads plus 4 live | Post hoc, one building. Empty tile replies occurred. Never reported as a pass |
+| Spark marker reading on life safety sheets | 32 of 33 no-capacity flags false: pull stations and detectors read as exits | Dropped |
+| Clean table reads | USC 105 of 105. Clinic door rows 254 of 255 with row-cut strips, 224 of 255 with frozen strips | Row cut is post hoc |
+| Code sheet numbers | 44 of 46 field reads. Two reads required | Frozen |
+| Model audits an overlay | Spark low 16 of 16 bad, 6 of 16 good rejected. Live repeat 14 of 16 with two new wrong passes. Routes: Spark rejects all, Wonder flips 3 of 8 | Weakened. Optional tag only |
+| Agent driving | Frozen answer no. Spark dropped real row D04 twice, and frozen truth had called those runs clean | Refuted |
+| Letter | 0 added facts in 4 letters. A template did the same for free | Not independently rescored |
+| Spark on 12 tiles, revision clouds | 18 of 20 on two runs, 3 and 5 false, 0.10 USD a sheet. SAM 0 of 20. Whole sheet 4 of 20 | Reproduced. One PDF only |
+| SAM concept "floor plan" | 23 of 48 against Spark 14 of 48, 0.0025 USD a sheet. Silent miss on sheet n161 on 3 of 3 calls | Reproduced. Spark fallback required |
+| Spark video on floors | 12 of 59 against always-present 50 of 59. Flat 124 tokens a second | Not rescored. Dropped |
+| SAM across versions | Replaced arrow stays tracked 3 of 3 at 0.45 to 0.49 | Not rescored. Dropped. Pixel difference finds the regions |
+| response_format and the prefix cache | Image-first caches 97% in plain text, 0% with response_format | Not rescored |
+
+### Real records found
+
+- Richmond VA Appeal 26-02: one submitted sheet with 14 real examiner comments, 10 answerable from the sheet. Virginia packets are public records. No full set paired with a full city letter was found.
+- Navy B14: 257 sheets, code and life safety sheets, 25 reissued sheets with a written change list, 211 bidder questions. Excluded, see below.
+
+### Real defects added, none planted
+
+Baxter upper tags run 17 to 34 against a schedule of 1 to 18, and mark 9 has no plan tag. Abbot tag 20 has no schedule row. ADU2 lists sheet AD-901 on its index and the PDF does not hold it. Clinic finish rows 1E25 to 1E28 hold the wrong rooms. Clinic room 2B19 is OFFICE on the plan and WATER LAB in both schedules. Clinic A1-4 prints SHEET __ OF 316.
+
+### Conduct
+
+The `realsets` agent scripted SAM.gov's internal endpoints and fetched 14 files before reading its terms, which restrict automated collection. It also made 5 requests to Portland OR efiles before reading a robots file that bars Claude agents, sending a generic browser user-agent on some, and pulled 13.3 MB of a Sonoma plan file that the county says is protected. The Portland and Sonoma files were deleted. Both SAM scripts exit on start. The Navy set stays on disk, unused, until the user rules.
+
+### Corrections to earlier claims
+
+- "SAM follows a stair and stops where it stops" is wrong as a general claim. It follows the room.
+- "Spark errors are false absences only" holds on clean sheets, not on a stair erased mid-run.
+- "SAM tracks reveal changes between cycles" is withdrawn. Round 1's 36 of 36 had cut-offs set after seeing data, and a replaced symbol stays tracked.
+- The pitch says stairs, not stairs and shafts.

@@ -1,10 +1,10 @@
 # Storey design
 
-Written 31 Oct 2026, 15:30 IST. Author: the assistant, working solo with the user. The user opted out of design questions, so every choice here is the author's call unless marked as the user's. Measured numbers are in `docs/research/build-log.md`.
+Written 31 Oct 2026, 15:30 IST, updated 19:00 IST with the Round 2 results. Author: the assistant, working solo with the user. The user opted out of design questions, so every choice here is the author's call unless marked as the user's. Measured numbers are in `docs/research/build-log.md`.
 
 ## What it is
 
-Storey does the first pass of plan review for a city building department. An examiner uploads a permit set as a PDF or as images. A few minutes later Storey shows an inventory of the set, a stair and shaft matrix across floors, a draft correction list, a list of what it did not check, and a comment letter in the format cities already issue. On a resubmittal it shows which earlier comments look resolved, which look open, and what changed that nobody mentioned.
+Storey does the first pass of plan review for a city building department. An examiner uploads a permit set as a PDF or as images. A few minutes later Storey shows an inventory of the set, a stair matrix across floors, a draft correction list, a list of what it did not check, and a comment letter in the format cities already issue. On a resubmittal it shows which earlier comments look resolved, which look open, and what changed that nobody mentioned.
 
 It comes from Y Combinator's Winter 2027 request for "AI for City Hall". It is an entry in the Meta Global AI Developer Hackathon, theme Push the Frontier, Indie track. Submission target is Wed 4 Nov 22:30 IST. The hard deadline is 07:30 IST on 5 Nov.
 
@@ -23,6 +23,9 @@ More than 80% of standard permit plans in Portland needed corrections. Seattle m
 ## Non-goals
 
 - Raster travel distance, dead-end length, door counts per room, exit door detection from plans alone, and tracker-based detection of added partitions. All were measured and failed. See the build log.
+- SAM as evidence that a stair is present, absent or unchanged. With accurate seeds and the treads erased, 14 of 20 masks stayed on the empty room at the same confidence. A replaced door symbol stayed tracked in 3 of 3 runs.
+- Elevators and shafts as a claim. No run listed 14 of 21 present cells, and none were planted. They are listed in Not checked.
+- An agent driving the review. It passed one bar and failed the other in every configuration, and two runs dropped a real discrepancy. Spark video input scored 12 of 59 against 50 of 59 for always-present.
 - Electrical, plumbing, mechanical, structural, zoning and energy review. Those sheets are inventoried and listed as not reviewed.
 - Fine-tuning, and any integration with Accela, ProjectDox or Bluebeam.
 - Applicant accounts, billing, multi-tenant login, and multi-building sets. One upload is one building.
@@ -35,7 +38,8 @@ These would make the product a failure even if everything else worked.
 - A number on a scan that looks measured but is not. Scans show "Cannot tell" for distance and width.
 - A code section or value not traceable to a row in the shipped rule file. Models receive rule rows, never code prose, and no code sentence is displayed.
 - A model deciding severity. Models read and locate. Code measures, compares and assigns severity.
-- A silent failure. A stage that fails, runs out of budget or hits a low-confidence alignment leaves a visible item.
+- A silent failure. A stage that fails, runs out of budget or hits a low-confidence alignment leaves a visible item. An empty model reply is Cannot tell. A stair seen by only one run stays on the matrix as Not followed.
+- A model removing a finding. An optional audit can only add a disputed tag.
 - Showing a drawing publicly when `public_demo` is not `yes` in the catalog.
 - Sending customer drawings to a Contributor model variant.
 
@@ -50,28 +54,34 @@ Severity is fixed per check in code. Fix means the set contradicts itself or a r
 | # | Check | Input | Failure direction | Severity |
 |---|---|---|---|---|
 | 1 | Required sheets present: code summary, life safety plan, door schedule, floor plan per storey | Sheet read | Missed sheet raises a flag | Fix |
-| 2 | Sheet index against sheets in the set, duplicates, unreadable sheets | Sheet read | Flag | Check |
-| 3 | Floor label in title block against label under the drawing | Sheet read | Flag | Check |
-| 4 | Code summary fields present: edition, occupancy, type, sprinklers, stories, area, occupant load | Spark on code sheet | Flag | Fix when absent |
+| 2 | Sheet index against the set: sheet not on the index, index row with no sheet (rows marked not used are skipped), one number listed twice | Text layer, else Spark title blocks | Flag | Fix. A number listed twice is Check |
+| 3 | Floor named in the title block against the label under the drawing, by a floor-word test in code. Other title differences only when Spark says different in both reads | Text layer or Spark | Flag | Check |
+| 4 | Code summary fields present and consistent: edition, occupancy, type, sprinklers, stories, area, occupant load | Text layer or Spark on the code sheet | Flag | Check |
 | 5 | Stories declared against floor plans present; edition against the jurisdiction's adopted edition | Facts | Flag | Fix |
-| 6 | Table arithmetic: room loads, totals, exit width against occupants, worked examples against tables | Text layer or Spark | Flag | Check |
-| 7 | Door tags on plans against schedule rows, both ways; width and type against the drawn arc on vector sheets | Text, Spark strips, vector arcs | Flag | Check |
-| 8 | Exit markers on life safety sheets: capacity sum after removing tile duplicates, against declared load | Spark tiles | Flag | Check |
-| 9 | Stair and shaft continuity: gap between floors | Spark comparison, crops, ink | False absence raises a flag | Fix when all signals agree, otherwise Check |
-| 10 | Stair does not reach the level of exit discharge | Same, plus the discharge level | Flag | Fix when all signals agree, otherwise Check |
+| 6 | Table arithmetic: room loads, totals, exit width against occupants, worked examples against tables. The item states the direction: a load rounded down is unsafe, a load over-declared is safe | Text layer or two equal Spark reads | Flag | Check |
+| 7 | Door and window tags on plans against schedule rows, both ways; schedule type against the drawn arc on vector sheets | Text layer, Spark strips cut on row lines, vector arcs | Flag. A wrong row with no detected arc is not seen | Fix for a tag or row with no partner. Check for type against arc |
+| 8 | Exit capacity on life safety sheets. Sum shown only under the half-sheet tile rule with two equal reads, and compared only with a printed load | Spark tiles | Never reported as a pass | Cannot tell by default. Check when the sum is below a printed load |
+| 9 | Stair continuity: gap between Found floors | Presence rule below | False absence raises a flag | Fix when the cell is Missing, Check when the cell is Check |
+| 10 | Stair does not reach the level of exit discharge | Same, plus the discharge level | Flag | Fix when the cell is Missing, Check when the cell is Check |
 | 11 | Stair count per floor against exits required for the declared load | Matrix, rule rows | Flag | Check |
-| 12 | Every stair's top and bottom floor listed for the examiner | Matrix | Always shown | Open item |
+| 12 | Every stair's top and bottom floor listed for the examiner, plus Check cells at the end of a run and every Not followed row | Matrix | Always shown | Open item |
 | 13 | Travel distance on vector sheets, with the route drawn | Vector walls and arcs. Route ends: stairs from the matrix on upper floors, declared exit markers where a life safety sheet exists | Under-measures by 16 to 19% | Never Fix. Check when within 25% of the limit or over it. Shown as a minimum. Cannot tell where neither source of route ends exists |
 | 14 | Corridor clear width on vector sheets with wall layers or a dominant wall pen | Vector | Measured against printed value | Check |
-| 15 | Cycle 2: each earlier comment rechecked at its location, plus unmentioned changes | Registered diff, SAM tracks | See below | Looks resolved, Still open, Cannot tell, New change |
+| 15 | Cycle 2: each earlier comment rechecked at its location, plus unmentioned changes | Registered pixel difference, Spark cloud list | See below | Looks resolved, Still open, Cannot tell, New change |
+| 16 | Room names: finish or door schedule against plan labels. A room with no label read on a Spark-read plan is Cannot tell, because Spark misses overprinted labels | Text layer, Spark tiles of the plan area | Flag | Check |
 
-Round 2 results may change checks 6 to 8 or their severities. The `declared` experiment sets the final list.
+Severities above come from frozen scores with at least 3 flags. Checks with fewer stay at Check until a new set confirms them. The declared-versus-drawn list rests on 13 real sets: 25 real and 19 likely discrepancies, but 35 of 137 held-out flags at frozen settings, and post hoc fixes that have not met a new set. Dropped because they raised false alarms: marker with no capacity, plan room not in schedule, door room not in finish, plan key not in legend, width against arc, closed swing vocabulary, swing with no arc, title compare by normaliser alone, occupancy word match, and any use of an IFC model in place of the drawing.
+
+Any value a finding rests on comes from the text layer or from two agreeing Spark reads. Two reads that disagree give Cannot tell. Every finding carries a crop tight enough to read.
 
 Checks are geometric or arithmetic. No check requires code text.
 
 Limits stated on screen and in the README:
 
 - A stair that ends on its top floor looks the same as one erased from that floor. Check 12 lists it as an open item. That is the accepted answer for now, and it is labelled as a limit, not a pass.
+- A stair no run lists cannot be followed. On held-out buildings 3 of 79 main stair cells were not listed.
+- Found means a stair is drawn at this place on this floor. It says nothing about whether the stair complies.
+- The miss rate on real defects is not known. Every wrong-pass number comes from defects planted or labelled by one labeller.
 - Door swing against occupant load is left out, because no code joins a door to a room's load.
 
 One- and two-family dwellings use the International Residential Code, which this product does not check. When the code sheet or room labels show a dwelling, the rule-based checks (1 for the life safety sheet, 11, 13, 14) move to Not checked with that reason, and the coordination checks (2, 3, 6, 7, 9, 10) still run.
@@ -80,30 +90,33 @@ The discharge level comes from floor labels: the sheet labelled ground, first or
 
 ## How stair presence is decided
 
-Round 1 refuted SAM as the presence signal and OR fusion of the two models. Spark floor comparison decides. Default rule until the `presence` experiment reports:
+The rule is arm C of the `presence` experiment, frozen before held-out, in `lab/presence/rule.py`. On 15 planted erasures it gave 0 Found (12 Check, 3 Missing), against 10 Found for three-run voting alone and 13 for one run. On 38 tested natural absent cells it gave 0 Found. It costs about 0.32 USD per building and sends about 7 stair cells to Check. Reproduced by the audit, including live repeats of the crop. On harder plants that keep the walls, ink fired on only 5 of 22 and the crop caught them, so the crop is now the main guard and a single point of failure.
 
-1. Spark compares all floor sheets in one call, three runs. Stairs are matched across runs by position after alignment.
-2. If all three runs agree, the cell takes that value.
-3. If they disagree, or any run says absent, a Spark crop question and an ink and tread check run at the registered location.
-4. A gap or an end-of-stair finding is Fix only when Spark, the crop and the ink check agree. Any disagreement makes it Check.
-5. SAM masks are drawn as evidence and give each floor's registration offset. SAM never decides presence, unless the `tightseed` experiment shows it can, in which case it joins step 4 as one more signal.
+1. Spark reads each sheet, orders the floors in one joint call, and each floor is registered to the reference floor. The gate needs 25 inliers and a scale within 10% of the median scale of the floors.
+2. Spark compares all floors in one call, three runs, medium effort. Every present point is mapped to the reference floor and clustered at 80 px. A cluster is a row. A row is a place, not a name.
+3. A row is established when two runs agree on some floor.
+4. For each cell of an established row: v is the number of runs claiming it, ink is the ink in a 60 px box at the registered place over the median of the other floors with v of at least 2, blank means under 0.002 ink density in a 100 px box, and crop is a blind yes, no or unclear on a 260 px crop at 3x, low effort. The crop question never mentions other floors.
+5. Decision. Unaligned floor: Check. v of at least 2: Check if ink is under 0.40, the place is blank, or the crop says no or unclear; otherwise Found. v under 2: Missing if blank; Check if the crop says yes or unclear, or ink is at least 0.90; otherwise Missing.
+6. A row that is not established stays on the matrix under the heading "Seen by one run". A cell with some support is Check. The rest are Not followed. Experiments hid these cells, which made an erased stair vanish without a trace in one audit case, so the product shows them.
+7. The marker is the registered row place, not Spark's point, which drifts up to 112 px.
+8. A Missing cell above or below every Found floor of its row reads Not on this floor. A Missing cell between Found floors, or on the discharge floor of a stair serving floors above, raises check 9 or 10.
 
-A floor that fails the alignment gate shows as unaligned, and its cells become Cannot tell.
+Crops and ink never lift a cell to Found. SAM takes no part in the decision. Its masks are drawn only on Found cells, as a picture of what was found. Stairs only: elevator and shaft claims in the frozen prompt are ignored.
 
 ## Architecture
 
-Python 3.12, FastAPI, vanilla JS, no database. Everything for a review sits in one folder. Models: `muse-spark-1.3` for reading, `sam-3.1` for tracking, and `muse-wonder-1.0` only where the `agent` experiment shows it earns its price. Every runtime model is Meta's.
+Python 3.12, FastAPI, vanilla JS, no database. Everything for a review sits in one folder. Models: `muse-spark-1.3` for reading and comparing, `sam-3.1` for plan boxes and evidence masks. `muse-wonder-1.0` is not in the runtime path: it gained no accuracy on any reading task at 3 to 5 times the cost, and on routes its verdicts flipped on 3 of 8 repeats. Every runtime model is Meta's.
 
 ```
 upload
   ingest        PDF or images to sheet PNGs, text layer words, vector or scan   (built)
-  read          Spark low effort per sheet: number, title, class, level, scale, plan box
-  floors        Joint Spark order, alignment, inlier gate, 960 px stack video
-  verticals     Spark comparison, crops, ink, SAM masks, matrix
-  declared      Code sheet, door schedule strips, life safety tiles, text layer tables
+  read          Spark low effort per sheet: number, title, class, level, scale, plan box. SAM "floor plan" for viewport boxes, Spark's box when SAM returns none
+  floors        Joint Spark order, alignment, inlier and scale gate, 960 px stack video
+  verticals     Spark comparison three runs, crops, ink, matrix, SAM masks on Found cells
+  declared      Text layer tables and index first. Spark strips and tiles where no text exists, two reads
   vector        Walls, arcs, rooms, routes, scale chain. Vector sheets only
   evaluate      Facts plus rule rows to findings. Deterministic and free to rerun
-  audit         Optional model check of overlays, per the agent experiment
+  audit         Optional. Spark low on stair, door and value overlays. Adds a disputed tag, removes nothing
   letter        Draft from findings. Adds no fact
   review.json   What the screen reads
 ```
@@ -131,7 +144,7 @@ The current `review.json` stays and gains these fields.
 
 - `project`: `jurisdiction`, `adopted_code`, `discharge_level`, `facts` with sources.
 - `sheets[]`: `number`, `class`, `kind`, `scale`, `reviewed` (bool), `reason`.
-- `verticals[].floors[sheet]`: `state` (found, missing, check, unknown, end), `signals` (`spark` as n of 3, `crop`, `ink`, `sam`), `point`, `box`. `conf` stays as SAM's number but no longer drives the state.
+- `verticals[]`: `established` (bool). `verticals[].floors[sheet]`: `state` (found, missing, check, not_followed, end), `signals` (`spark` as n of 3, `crop`, `ink`, `aligned`, `reason`), `point`, `box`, `crop` (file name), `mask` on found cells only.
 - `findings[]`: `key` (a stable hash of check, sheet number and object), `comment_id` (discipline letter and number, kept across cycles), `check`, `discipline`, `state` for cycle 2.
 - `routes[]`: `sheet`, `path`, `length`, `label`.
 - `open_items[]`, `not_checked[]`, `cost` (USD and seconds per stage).
@@ -141,7 +154,7 @@ The current `review.json` stays and gains these fields.
 1. **Start.** Upload, sample reviews, past reviews. Handles `#key=` by posting to `/api/session` and clearing the hash.
 2. **Progress.** Stages with counts, thumbnails as sheets are read, spend so far.
 3. **Review.** The existing title block and three panes, changed as follows.
-   - Matrix cells read the `state` field. Dashed means Check. The legend reads Found, Missing, Check, Not on this floor.
+   - Matrix cells read the `state` field. Dashed means Check. The legend reads Found, Missing, Check, Not followed, Not on this floor. Rows that are not established sit under "Seen by one run". Clicking a cell shows its crop and the reason for its state.
    - Tabs in the right pane: Findings, Set, Open items, Not checked.
    - Jurisdiction, sprinkler and discharge level selectors in the title block, wired to the free re-evaluate call.
    - Routes drawn on the sheet with the label "Minimum. Examiner to confirm."
@@ -155,33 +168,40 @@ Design language stays as built: a drawing-office title block, IBM Plex, red for 
 
 ## Second review
 
-Sheets are matched by sheet number, then registered. For each earlier comment the location is compared in the new sheet. Erased, moved and exit door changes are detected. Added partitions are not, so a resolved state for those reads Cannot tell. Clouded areas are listed if `samtricks` finds a method for them. Comment IDs persist, and items carried forward keep their history, matching how Sonoma's letters mark them.
+Sheets are matched by sheet number, then registered. Pixel difference on the registered pair finds every changed region: both real sheet pairs tested, in the best case of two renders of one PDF. For each earlier comment, a changed location reads Looks resolved, an unchanged one reads Still open, and a sheet that cannot be matched or registered reads Cannot tell. Spark on 12 overlapping tiles lists revision clouds and delta numbers as a draft for the examiner, 18 of 20 clouds on two runs at about 0.10 USD a sheet, from one PDF only. An empty list never means no change. A changed region outside every comment and every cloud reads New change. SAM does not take part: it scored 0 of 20 clouds and followed the place rather than the object. Comment IDs persist, and items carried forward keep their history, matching how Sonoma's letters mark them.
 
 ## Evaluation
 
 `eval/` runs the real pipeline, not lab code.
 
-- Held-out real sets, truth written first, one labeller, stated as such.
-- Planted defects on real sheets with `lab/defects/plant.py`: stair gap, stair cut off above discharge, duplicate sheet, door tag changed, table value changed.
-- Any real letter paired with its drawing set from the `realsets` experiment. This is the most valuable test available, and it is reported whether it flatters the product or not.
-- Metrics, in this order: wrong passes, findings per set judged real, false findings per set, cost and minutes per set, and a baseline beside each.
-- Truth is written first by the assistant, one labeller, not a licensed examiner, and the report says so. Sets used in the experiments count as development. Held-out numbers come only from sets no stage has seen, and the report names which is which.
+- Scores in this order: wrong passes, findings per set judged real, false findings per set, cost and minutes per set, with a baseline beside each.
+- Truth is written first by the assistant, one labeller, not a licensed examiner, and the report says so.
+- Almost every set has been touched by an experiment, so those numbers are development numbers and the report names them as such. Reserved and unopened until Task 14: `queens_royce` Phase 2 and `army_bt_bcof`. Held-out numbers come only from these.
+- Planted defects on real sheets with `lab/defects/plant.py`: stair gap, stair cut off above discharge, duplicate sheet, door tag changed, table value changed. Stair plants keep the walls, using the soft plant rule from `lab/audit2`.
+- Richmond Appeal 26-02 is the only real examiner record in hand. The method sees packet page 107 only. Pages 84, 86, 87, 101 and 176 hold the answers and are never passed to it. Score whether each of the 10 sheet-only comments was raised for a human, never pass or fail, because the examiner was overturned on appeal. Baseline: a rule that recomputes each area over factor line. It is never shown publicly.
+- One full manual audit of `mml_capitol`, sheet by sheet, gives the only miss rate available. It is one labeller and one set, and the report says so.
+- A published number comes with its status: frozen or post hoc. The post hoc 93% declared precision is never quoted. The frozen figure is 35 of 137.
 
 ## Demo sets
 
-Public on screen: `habs_stelizabeths_center` (public domain, 5 floors, stairs and shafts), `mml_capitol` and `mml_baxter` (vector, schedules, real door tag and label findings). `nibs_clinic` supplies numbers only until WBDG gives permission. `bme_f` is not shown, because its date tag cannot be trusted. Replace the sample review, which still uses `bme_f`, with real pipeline output on `habs_stelizabeths_center`. The `realsets` experiment may add a better set.
+Public on screen: `habs_stelizabeths_center` (public domain, 5 floors, stairs), `mml_capitol`, `mml_baxter` and `mml_abbot` (vector, schedules, real door tag and label findings). `nibs_clinic` supplies numbers only until WBDG gives permission. `bme_f` is not shown, because its date tag cannot be trusted. Replace the sample review, which still uses `bme_f`, with real pipeline output on `habs_stelizabeths_center`.
+
+No demo set has both a code summary and a life safety plan, so no public demo shows checks 8, 11 or 13, or an outcome that changes with jurisdiction. The selector still changes rule values, adopted code names and Not checked items, and the demo says plainly that no sample exercises the R-2 single exit difference. A generated test set would close this gap. It is deferred until one building runs end to end.
+
+`navy_b14` is excluded from the product, the evaluation and all model calls until the user rules on it, because a research agent fetched it by script against SAM.gov's terms. It is also a naval shipyard building, and 245 of its 257 sheets have not been checked for restriction markings. The Second review demo uses a planted revision on a `public_demo: yes` set, labelled as planted.
 
 ## Hackathon use of Meta tooling
 
-- SAM 3.1 video tracker reads a stack of floor plans as frames: registration across floors, masks as evidence, tracked changes between cycles.
-- Spark multi-image comparison across a building, grounding, structured output, tiled reading of fine text.
+- Spark multi-image comparison across a whole building, three runs, clustered by place, then checked by a blind crop question. Structured output, grounding on a 0 to 1000 grid, tiled reading of fine text and revision clouds.
+- SAM 3.1 concept prompt "floor plan" for viewport boxes at a ninth of the cost of a Spark call, with Spark's box as a required fallback because SAM's silent miss on a life safety sheet repeats on every call.
+- SAM 3.1 video tracker over a stack of floor plans, pinned on each confirmed floor, draws the stair on every Found cell. It is evidence for the reader, not a decision.
 - A findings schema with no pass value, enforced by constrained decoding.
-- If it earns its place: Wonder reviewing tool results that return overlay images.
+- The published experiment log: what was tried with each Meta model, what failed and by how much, including SAM as a presence signal, Spark video, and Wonder as a driver. This is the honest account of the tooling and the strongest part of it.
 - Stretch: Glimmer running locally so a city's drawings stay on its own machine. Test on the 24 GB laptop before any claim.
 
 ## Constraints
 
-- Budget: 148 USD total, 29 spent after Round 1, Round 2 capped so the ledger stops at 75. Reserve 25 USD for the final evaluation and demo rehearsals.
+- Budget: 148 USD total, 54 spent after Round 2. Reserve 25 USD for the final evaluation and demo rehearsals.
 - Repo `tns15june/storey`, private until submission, branch `build`. Commit often, because the platform flags single-commit repos. Scan staged files for secrets.
 - Never print the API key. Security rules from the first three reviews stay in force: the API always needs a key, uploads are bounded, PDFs are read in a child process.
 - Video at most 3 minutes, in English, link opens without login. README has "Built during the hackathon" and "Pre-existing assets" sections and a licence.
