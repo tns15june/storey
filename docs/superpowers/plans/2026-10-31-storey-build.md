@@ -218,7 +218,7 @@ Waits for the `declared` result, which fixes the check list and prompts.
 
 **Interfaces:**
 - Consumes: sheet records with `kind == "vector"`, verticals, declared exits.
-- Produces: `vector_stage(ctx) -> dict` returning `{"sheets": {index: {"scale_in_per_pt": float|None, "scale_checked": int, "doors": [{"point": [x,y], "width_in": float, "swing": str, "hinge": [x,y]}], "routes": [{"path": [[x,y],...], "length_ft": float, "from_room": str, "to_exit": str}], "corridors": [{"point": [x,y], "clear_in": float, "printed_in": float|None}], "skipped": str|None}}}`
+- Produces: `vector_stage(ctx) -> dict` returning `{"sheets": {index: {"scale_in_per_pt": float|None, "scale_checked": int, "doors": [{"point": [x,y], "width_in": float, "hinge": [x,y]}], "routes": [{"path": [[x,y],...], "length_ft": float, "from_room": str, "to_exit": str, "end_source": "matrix"|"life_safety"}], "corridors": [{"point": [x,y], "clear_in": float, "printed_in": float|None}], "skipped": str|None}}}`
 
 - [ ] **Step 1: Write the failing tests:**
   - `test_arc_found_with_width`: a PDF with a 36 in door arc at known scale gives a door at 36 in within 0.5.
@@ -226,7 +226,7 @@ Waits for the `declared` result, which fixes the check list and prompts.
   - `test_route_stays_inside_walkable`: a two-room plan with one door, the route passes the door.
   - `test_scan_sheet_is_skipped_with_reason`.
 - [ ] **Step 2: Run.** Expected: import error.
-- [ ] **Step 3: Implement** by porting `lab/walls/vec.py`, `lab/doors/vec_arcs.py`, `lab/modern/vec.py`, `lab/modern/measure.py`, `lab/modern/halls.py`, `lab/walls/truepath_lib.py`. Wall pen chosen by the dominant stroke-width rule, then checked by reach. Stair shafts closed except at detected doors. Vector route is reported as a minimum.
+- [ ] **Step 3: Implement** by porting `lab/walls/vec.py`, `lab/doors/vec_arcs.py`, `lab/modern/vec.py`, `lab/modern/measure.py`, `lab/modern/halls.py`, `lab/walls/truepath_lib.py`. Wall pen chosen by the dominant stroke-width rule, then checked by reach. Stair shafts closed except at detected doors. Route ends come from stairs in the verticals stage on upper floors and from declared exit markers where a life safety sheet exists. With neither, `routes` is empty and `skipped` gives the reason. Vector route is reported as a minimum. Exit doors are never inferred from plans.
 - [ ] **Step 4: Run.** Expected: all pass.
 - [ ] **Step 5: Live check** on `nibs_clinic` sheets 052 and 059 against `lab/walls/clinic4.py` figures, with exits from the life safety read rather than the IFC. Report the change in numbers.
 - [ ] **Step 6: Commit.**
@@ -258,12 +258,12 @@ Waits for the `declared` result, which fixes the check list and prompts.
 **Interfaces:**
 - Consumes: stage dicts from Tasks 3 to 7, `rule`.
 - Produces:
-  - `evaluate(stages: dict, jurisdiction: str, sprinklers: str | None) -> dict` returning `{"findings": [...], "open_items": [...], "not_checked": [...]}`. No model call, no file access.
+  - `evaluate(stages: dict, jurisdiction: str, sprinklers: str | None, discharge: int | None) -> dict` returning `{"findings": [...], "open_items": [...], "not_checked": [...]}`. No model call, no file access.
   - Each finding: `{"key": str, "check": int, "severity": "fix"|"check"|"unknown", "discipline": "A", "sheet": int|None, "box": [..]|None, "title": str, "measured": str, "required": str, "rule": str, "evidence": str, "vertical": str|None}`
   - `SEVERITY: dict[int, str]`, the table from the spec
   - `assign_ids(findings, previous: dict[str, str]) -> None`, keeps a comment id for a known `key`, otherwise issues the next `A-01` style id
 
-- [ ] **Step 1: Write the failing tests,** one per check in the spec's table, 1 to 15, each from a small hand-built stages dict. Also: `test_no_pass_value_anywhere` (no field in a full evaluate output contains pass, approved or compliant), `test_failed_stage_appears_in_not_checked`, `test_route_never_fix`, `test_scan_distance_is_unknown`, `test_jurisdiction_changes_the_list`, `test_key_is_stable_across_runs`.
+- [ ] **Step 1: Write the failing tests,** one per check in the spec's table, 1 to 14, each from a small hand-built stages dict. Also: `test_no_pass_value_anywhere` (no field in a full evaluate output contains pass, approved or compliant), `test_failed_stage_appears_in_not_checked`, `test_route_never_fix`, `test_scan_distance_is_unknown`, `test_seattle_r2_single_exit_differs_from_houston`, `test_dwelling_moves_rule_checks_to_not_checked`, `test_unknown_discharge_makes_check_10_unknown`, `test_key_is_stable_across_runs`.
 - [ ] **Step 2: Run.** Expected: import error.
 - [ ] **Step 3: Implement.** One small function per check, registered in a list. Margin on route check: raise when route length is at least 75% of the limit, since routes run 16 to 19% under the architect's figures.
 - [ ] **Step 4: Run.** Expected: all pass.
@@ -296,7 +296,7 @@ Waits for the `declared` result, which fixes the check list and prompts.
 - Consumes: all stages, `evaluate`, `assign_ids`.
 - Produces:
   - `assemble(dir: Path, jurisdiction: str = "houston", sprinklers: str | None = None) -> dict`, writes `review.json` per the spec's contract. Sheet images resized to long edge 2000 px and saved as JPEG in the review folder. Image URLs are `/api/reviews/<id>/files/<name>`.
-  - `POST /api/reviews/{id}/evaluate {jurisdiction, sprinklers}` returns the new review without any model call.
+  - `POST /api/reviews/{id}/evaluate {jurisdiction, sprinklers, discharge}` returns the new review without any model call.
   - `POST /api/reviews/{id}/decisions {key, decision}`, stored in `decisions.json`.
   - `POST /api/reviews/{id}/recheck` multipart resubmittal, returns a new review id with `parent` set.
   - `POST /api/reviews/{id}/remove {vertical, sheet}`, calls Task 13.
@@ -323,10 +323,10 @@ Waits for the `declared` result, which fixes the check list and prompts.
 - [ ] **Step 2:** Build Start: upload, sample reviews, past reviews.
 - [ ] **Step 3:** Build Progress: polls `status.json` every 2 seconds, shows stages, counts, thumbnails, spend, and failure messages.
 - [ ] **Step 4:** Change the matrix to read `state`. Legend: Found, Missing, Check, Not on this floor. Tooltip shows signals.
-- [ ] **Step 5:** Add tabs Findings, Set, Open items, Not checked; jurisdiction and sprinkler selectors; routes drawn with the label "Minimum. Examiner to confirm."
+- [ ] **Step 5:** Add tabs Findings, Set, Open items, Not checked; jurisdiction, sprinkler and discharge level selectors; routes drawn with the label "Minimum. Examiner to confirm." With no server, as on the static demo, the selector loads `review.<jurisdiction>.json` next to the review, and Keep and Drop stay in `localStorage`.
 - [ ] **Step 6:** Save Keep and Drop to the server. Letter view reads from `letter` output, editable, and uses the browser print view for PDF.
 - [ ] **Step 7:** Second review screen: comment states, old and new crops side by side.
-- [ ] **Step 8:** Test tool button on a Found cell, labelled "Test: remove this stair from the sheet".
+- [ ] **Step 8:** Test tool button on a Found cell, labelled "Test: remove this stair from the sheet", shown only when the stair is found on the floors above and below, or the floor is the discharge level. Hidden on the static demo.
 - [ ] **Step 9:** How well it works page reading `eval.json`.
 - [ ] **Step 10:** `tests/test_web.py`: the status line is on every page, no page contains "approved", "compliant" or "pass" as a state. Run: expected pass.
 - [ ] **Step 11:** Drive it with the `run` skill on desktop and at phone width, in light and dark, and fix what is broken.
@@ -373,7 +373,7 @@ Waits for the `declared` result, which fixes the check list and prompts.
 - Create: `README.md`, `LICENSE`
 - Modify: `app/web/sample/*`, `.gitignore`
 
-- [ ] **Step 1:** Replace the sample with real pipeline output on `habs_stelizabeths_center`, and delete `app/web/sample/{L2,L1,L0,B1}.jpg`.
+- [ ] **Step 1:** Replace the sample with real pipeline output on `habs_stelizabeths_center` and the demo set, one review per jurisdiction, images under `app/web/sample/<set>/`, and delete `app/web/sample/{L2,L1,L0,B1}.jpg`. Add a GitHub Pages deploy from `app/web/`.
 - [ ] **Step 2:** Replace absolute `/Users/tsharma/...` paths in `lab/` with paths relative to the repo root, and confirm one lab script still runs.
 - [ ] **Step 3:** Write the README: what it is, how to run, evaluation with misses, Meta tooling, "Built during the hackathon", "Pre-existing assets", licence.
 - [ ] **Step 4:** Confirm no file in the repo holds a key, IBC tables beyond `rows.json`, or a sheet without `public_demo: yes`.

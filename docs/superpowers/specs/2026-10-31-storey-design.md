@@ -17,7 +17,7 @@ More than 80% of standard permit plans in Portland needed corrections. Seattle m
 1. A real upload produces a real draft correction list end to end, with no human steps, on a set the product has not seen.
 2. Every item carries the sheet, the location on the drawing, the measured or read value, the rule, and the evidence, so an examiner can verify it in seconds.
 3. The product is wrong in the safe direction. It raises extra items rather than missing a real gap, and when it cannot tell it says so on screen.
-4. The demo holds up live: a judge can remove a stair from a sheet and watch the finding appear, or change the jurisdiction and watch the list change.
+4. The demo holds up live. In the video and at the finals, a stair is removed from a sheet and the finding appears, and a change of jurisdiction changes the rule values and any item that depends on them.
 5. The evaluation is published with its misses, including wrong passes.
 
 ## Non-goals
@@ -61,14 +61,22 @@ Severity is fixed per check in code. Fix means the set contradicts itself or a r
 | 10 | Stair does not reach the level of exit discharge | Same, plus the discharge level | Flag | Fix when all signals agree, otherwise Check |
 | 11 | Stair count per floor against exits required for the declared load | Matrix, rule rows | Flag | Check |
 | 12 | Every stair's top and bottom floor listed for the examiner | Matrix | Always shown | Open item |
-| 13 | Travel distance on vector sheets, with the route drawn | Vector walls and arcs | Under-measures by 16 to 19% | Never Fix. Check when within 25% of the limit or over it. Shown as a minimum |
+| 13 | Travel distance on vector sheets, with the route drawn | Vector walls and arcs. Route ends: stairs from the matrix on upper floors, declared exit markers where a life safety sheet exists | Under-measures by 16 to 19% | Never Fix. Check when within 25% of the limit or over it. Shown as a minimum. Cannot tell where neither source of route ends exists |
 | 14 | Corridor clear width on vector sheets with wall layers or a dominant wall pen | Vector | Measured against printed value | Check |
-| 15 | Door swing against occupant load on vector sheets | Vector arcs, load | Flag | Check |
-| 16 | Cycle 2: each earlier comment rechecked at its location, plus unmentioned changes | Registered diff, SAM tracks | See below | Looks resolved, Still open, Cannot tell, New change |
+| 15 | Cycle 2: each earlier comment rechecked at its location, plus unmentioned changes | Registered diff, SAM tracks | See below | Looks resolved, Still open, Cannot tell, New change |
 
 Round 2 results may change checks 6 to 8 or their severities. The `declared` experiment sets the final list.
 
 Checks are geometric or arithmetic. No check requires code text.
+
+Limits stated on screen and in the README:
+
+- A stair that ends on its top floor looks the same as one erased from that floor. Check 12 lists it as an open item. That is the accepted answer for now, and it is labelled as a limit, not a pass.
+- Door swing against occupant load is left out, because no code joins a door to a room's load.
+
+One- and two-family dwellings use the International Residential Code, which this product does not check. When the code sheet or room labels show a dwelling, the rule-based checks (1 for the life safety sheet, 11, 13, 14) move to Not checked with that reason, and the coordination checks (2, 3, 6, 7, 9, 10) still run.
+
+The discharge level comes from floor labels: the sheet labelled ground, first or street level. The title block has a selector so an examiner can change it. If no label settles it, check 10 is Cannot tell.
 
 ## How stair presence is decided
 
@@ -115,7 +123,7 @@ Facts and rules are separate. Stages write facts with their source (sheet, box, 
 
 ## Rule data
 
-`storey/rules/rows.json` holds only the rows the shipped checks use, each with section number, value, unit and jurisdiction overrides. The full research file stays in `data/rules/` and out of git. Titles are in our own words. Unknown sprinkler status uses the stricter value and raises an item asking the examiner. Jurisdictions shipped: Houston and Philadelphia, which matched the model code on all 144 checks, plus Seattle, whose 25 ft dead-end and other amendments show the list changing. Each item names the adopted code of that city. Occupant load calculations appear in the item so the examiner can see the rounding.
+`storey/rules/rows.json` holds only the rows the shipped checks use, each with section number, value, unit and jurisdiction overrides. The full research file stays in `data/rules/` and out of git. Titles are in our own words. Unknown sprinkler status uses the stricter value and raises an item asking the examiner. Jurisdictions shipped: Houston, Philadelphia and Seattle. Houston and Philadelphia matched the model code on all 144 checks, so a switch between them changes only the adopted code named on each item. Seattle differs where a shipped check depends on occupancy or load, most visibly in its exception that lets some R-2 buildings up to five stories use a single exit, so the demo set needs a code sheet and a declared occupancy for the switch to change an outcome. Occupant load calculations appear in the item so the examiner can see the rounding.
 
 ## Review data contract
 
@@ -135,10 +143,10 @@ The current `review.json` stays and gains these fields.
 3. **Review.** The existing title block and three panes, changed as follows.
    - Matrix cells read the `state` field. Dashed means Check. The legend reads Found, Missing, Check, Not on this floor.
    - Tabs in the right pane: Findings, Set, Open items, Not checked.
-   - Jurisdiction selector and sprinkler selector in the title block, wired to the free re-evaluate call.
+   - Jurisdiction, sprinkler and discharge level selectors in the title block, wired to the free re-evaluate call.
    - Routes drawn on the sheet with the label "Minimum. Examiner to confirm."
    - Keep and Drop decisions saved on the server.
-   - A test tool, "Remove this stair from the sheet", which edits a copy of the sheet and reruns the stair stage. It is labelled as a test. It proves the check is live.
+   - A test tool, "Remove this stair from the sheet", which edits a copy of the sheet and reruns the stair stage. It is labelled as a test, and it is offered only on floors where a finding can appear: floors with the stair above and below, and the discharge level. It proves the check is live.
 4. **Letter.** Draft in the real letter format, sheet first, imperative wording, section at the end, status per item with no approval box. Editable. Downloads as PDF.
 5. **Second review.** Upload a resubmittal against a review. Each comment gets its state, with old and new crops side by side. Unmentioned changes are listed.
 6. **How well it works.** The published evaluation, misses included, reading from the eval output.
@@ -156,7 +164,8 @@ Sheets are matched by sheet number, then registered. For each earlier comment th
 - Held-out real sets, truth written first, one labeller, stated as such.
 - Planted defects on real sheets with `lab/defects/plant.py`: stair gap, stair cut off above discharge, duplicate sheet, door tag changed, table value changed.
 - Any real letter paired with its drawing set from the `realsets` experiment. This is the most valuable test available, and it is reported whether it flatters the product or not.
-- Metrics, in this order: wrong passes, findings per set an examiner would keep, false findings per set, cost and minutes per set, and a baseline beside each.
+- Metrics, in this order: wrong passes, findings per set judged real, false findings per set, cost and minutes per set, and a baseline beside each.
+- Truth is written first by the assistant, one labeller, not a licensed examiner, and the report says so. Sets used in the experiments count as development. Held-out numbers come only from sets no stage has seen, and the report names which is which.
 
 ## Demo sets
 
@@ -176,7 +185,7 @@ Public on screen: `habs_stelizabeths_center` (public domain, 5 floors, stairs an
 - Repo `tns15june/storey`, private until submission, branch `build`. Commit often, because the platform flags single-commit repos. Scan staged files for secrets.
 - Never print the API key. Security rules from the first three reviews stay in force: the API always needs a key, uploads are bounded, PDFs are read in a child process.
 - Video at most 3 minutes, in English, link opens without login. README has "Built during the hackathon" and "Pre-existing assets" sections and a licence.
-- Public demo stays on free, cached sample reviews. Uploads need the access key.
+- The public demo is a static site on GitHub Pages holding sample reviews for `public_demo: yes` sets, with one precomputed review per jurisdiction so the selector works with no server and no spend. Keep and Drop stay in the browser there. The full app runs from the repo with the user's own key, and that is what the video and the finals use. A hosted full app is a stretch that needs an account from the user. Sample reviews and their images are committed to `app/web/sample/`, because `data/` is ignored.
 
 ## Left to the builder
 
