@@ -5,8 +5,12 @@ from pathlib import Path
 
 import cv2
 import pymupdf
+from PIL import Image
 
 MAX_EDGE = 6000       # sheets past this add file size, not legibility, at Spark's and SAM's working sizes
+MAX_SHEETS = 300      # a tiny PDF can hold thousands of pages, and each page costs render time and API money
+MAX_PIXELS = 150_000_000   # a small image file can decode to gigabytes, so check the header first
+MAX_WORDS = 50_000    # per page, for the same reason
 RENDER_DPI = 200
 VECTOR_MIN_ITEMS = 200   # shortcut: a fixed count separates CAD pages from scans, replace if the lab finds a better signal
 
@@ -32,21 +36,37 @@ def _render(page, out):
 def _from_pdf(path, out_dir):
     sheets = []
     with pymupdf.open(path) as doc:
+        if doc.needs_pass:
+            raise ValueError("This PDF is password protected")
+        if doc.page_count > MAX_SHEETS:
+            raise ValueError(f"This PDF has {doc.page_count} pages, and the limit is {MAX_SHEETS}")
         for i, page in enumerate(doc):
             name = f"sheet_{i:03d}.png"
             w, h, scale = _render(page, out_dir / name)
             kind = "vector" if sum(len(d["items"]) for d in page.get_drawings()) >= VECTOR_MIN_ITEMS else "scan"
-            words = [[round(a * scale), round(b * scale), round(c * scale), round(d * scale), t] for a, b, c, d, t, *_ in page.get_text("words")]
+            words = [[round(a * scale), round(b * scale), round(c * scale), round(d * scale), t] for a, b, c, d, t, *_ in page.get_text("words")[:MAX_WORDS]]
             sheets.append(Sheet(i, name, w, h, kind, page.get_text(), words))
     return sheets
 
 
 def _from_images(paths, out_dir):
+    if len(paths) > MAX_SHEETS:
+        raise ValueError(f"This upload has {len(paths)} images, and the limit is {MAX_SHEETS}")
     sheets = []
     for i, p in enumerate(sorted(paths)):
+        try:
+            with Image.open(p) as probe:     # reads the header only
+                pixels = probe.width * probe.height
+        except OSError:
+            raise ValueError(f"Could not read {Path(p).name} as an image") from None
+        if pixels > MAX_PIXELS:
+            raise ValueError(f"{Path(p).name} is too large to read safely")
         im = cv2.imread(str(p))
         if im is None:
             raise ValueError(f"Could not read {Path(p).name} as an image")
+        if max(im.shape[:2]) > MAX_EDGE:
+            k = MAX_EDGE / max(im.shape[:2])
+            im = cv2.resize(im, None, fx=k, fy=k, interpolation=cv2.INTER_AREA)
         name = f"sheet_{i:03d}.png"
         cv2.imwrite(str(out_dir / name), im)
         sheets.append(Sheet(i, name, im.shape[1], im.shape[0], "scan"))

@@ -49,3 +49,33 @@ def test_rejects_unreadable_and_mixed_uploads(tmp_path):
     _pdf(pdf)
     with pytest.raises(ValueError, match="not both"):
         ingest([pdf, bad], tmp_path / "out")
+
+
+def test_rejects_too_many_pages_and_locked_pdfs(tmp_path, monkeypatch):
+    from storey import ingest as mod
+    monkeypatch.setattr(mod, "MAX_SHEETS", 1)
+    src = tmp_path / "set.pdf"
+    _pdf(src)
+    with pytest.raises(ValueError, match="limit"):
+        ingest([src], tmp_path / "out")
+    monkeypatch.setattr(mod, "MAX_SHEETS", 10)
+    doc = pymupdf.open()
+    doc.new_page()
+    doc.save(tmp_path / "locked.pdf", encryption=pymupdf.PDF_ENCRYPT_AES_256, user_pw="x", owner_pw="y")
+    with pytest.raises(ValueError, match="password"):
+        ingest([tmp_path / "locked.pdf"], tmp_path / "out")
+
+
+def test_large_image_is_rejected_from_its_header(tmp_path, monkeypatch):
+    from storey import ingest as mod
+    monkeypatch.setattr(mod, "MAX_PIXELS", 100)
+    cv2.imwrite(str(tmp_path / "big.png"), np.zeros((40, 60, 3), np.uint8))
+    with pytest.raises(ValueError, match="too large"):
+        ingest([tmp_path / "big.png"], tmp_path / "out")
+
+
+def test_wide_image_is_scaled_to_the_edge_limit(tmp_path, monkeypatch):
+    from storey import ingest as mod
+    monkeypatch.setattr(mod, "MAX_EDGE", 30)
+    cv2.imwrite(str(tmp_path / "w.png"), np.zeros((40, 60, 3), np.uint8))
+    assert ingest([tmp_path / "w.png"], tmp_path / "out")[0].width == 30

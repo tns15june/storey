@@ -1,7 +1,8 @@
 // Review screen. Reads one review JSON and draws it. All state lives here so a new review only needs new JSON.
 const SEVERITY = { fix: 'Must fix', check: 'Check', unknown: 'Cannot tell' }
 const COLORS = ['#1f8a4c', '#1f6fd6', '#a42bb8', '#d9730d', '#0f8a94', '#6d5bd0', '#b5483a', '#3b7d23']
-const REVIEW_URL = new URLSearchParams(location.search).get('review') || 'sample/review.json'
+const REVIEW_ID = new URLSearchParams(location.search).get('review')
+const REVIEW_URL = /^[0-9a-f]{32}$/.test(REVIEW_ID || '') ? `/api/reviews/${REVIEW_ID}/files/review.json` : 'sample/review.json'
 const $ = s => document.querySelector(s)
 const el = (tag, props = {}, ...kids) => { const e = Object.assign(document.createElement(tag), props); e.append(...kids); return e }
 const NS = 'http://www.w3.org/2000/svg'
