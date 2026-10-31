@@ -18,8 +18,10 @@ def safe_extract(zip_path, out):
     """Pull only document files, and reject paths that escape the folder (downloads are untrusted)."""
     with zipfile.ZipFile(zip_path) as z:
         for info in z.infolist():
-            target = (out / info.filename).resolve()
-            if info.is_dir() or not str(target).startswith(str(out.resolve())):
+            root = out.resolve()
+            target = (root / info.filename).resolve()
+            # A 2 GiB cap per member keeps a zip bomb from filling the disk.
+            if info.is_dir() or not target.is_relative_to(root) or info.file_size > 2 * 1024 ** 3:
                 continue
             if target.suffix.lower() not in {".pdf", ".ifc", ".txt", ".png", ".jpg"}:
                 continue
