@@ -1,0 +1,59 @@
+<title>Storey Review Screen</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="style.css">
+<div class="app">
+  <header class="titleblock">
+    <div class="cell brand">Storey</div>
+    <div class="cell"><span class="label">Project</span><span class="value" id="project"></span></div>
+    <div class="cell"><span class="label">Location</span><span class="value" id="address"></span></div>
+    <div class="cell"><span class="label">Review</span><span class="value" id="cycle"></span></div>
+    <div class="cell"><span class="label">Code</span><span class="value" id="code"></span></div>
+    <div class="cell status"><span class="label">Status</span><span class="value">Draft for examiner. Not an approval.</span></div>
+    <div class="actions"><button class="primary" id="open-letter">Comment letter</button></div>
+  </header>
+  <div class="panes">
+    <nav class="floors" id="floors" aria-label="Floors, top to bottom">
+      <h2 class="pane-title floors-title">Floors</h2>
+    </nav>
+    <main class="viewer" id="viewer">
+      <div class="tools">
+        <button id="play" aria-pressed="false">Walk the floors</button>
+        <button id="toggle-stairs" aria-pressed="true">Stairs</button>
+        <button id="toggle-findings" aria-pressed="true">Findings</button>
+        <button id="zoom-in" aria-label="Zoom in">+</button>
+        <button id="zoom-out" aria-label="Zoom out">−</button>
+        <button id="fit">Fit</button>
+      </div>
+      <div class="stage" id="stage">
+        <img id="sheet" alt="Floor plan sheet" draggable="false">
+        <svg id="overlay" aria-hidden="true"></svg>
+      </div>
+      <div class="floorname" id="floorname"></div>
+    </main>
+    <aside class="review" aria-label="Review">
+      <section>
+        <h2 class="pane-title">Stairs by floor</h2>
+        <table class="matrix" id="matrix"></table>
+        <div class="legend">
+          <span><i style="background:var(--accent)"></i>Found</span>
+          <span><i style="background:var(--unknown-soft)"></i>None</span>
+          <span><i style="background:var(--fix-soft);outline:2px dashed var(--fix);outline-offset:-2px"></i>Gap</span>
+        </div>
+      </section>
+      <section>
+        <h2 class="pane-title">Findings</h2>
+        <div class="stack" id="findings" style="display:grid;gap:10px"></div>
+      </section>
+      <p class="note" id="note"></p>
+    </aside>
+  </div>
+  <div class="letter" id="letter" role="dialog" aria-modal="true" aria-labelledby="letter-title" hidden>
+    <div class="paper">
+      <h2 id="letter-title">Comment letter</h2>
+      <div id="letter-body" style="display:grid;gap:10px"></div>
+      <div class="row"><button class="ghost" id="close-letter">Close</button></div>
+    </div>
+  </div>
+</div>
+<script src="app.js"></script>

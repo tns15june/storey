@@ -1,0 +1,16 @@
+.env
+meta_api_key.rtf
+.venv/
+data/
+.DS_Store
+.pytest_cache/
+__pycache__/
+*.pyc
+docs/research/refs/
+docs/research/raw/
+docs/research/plans/
+docs/research/2026-10-27-hackathon-ideas.md
+docs/research/2026-10-31-impact-ideas.md
+docs/superpowers/specs/2026-10-28-tickstrobe-design.md
+spike/*
+!spike/plan_probe/
