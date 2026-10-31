@@ -2,6 +2,7 @@
 import hmac
 import json
 import os
+import secrets
 import shutil
 import subprocess
 import sys
@@ -25,9 +26,7 @@ MAX_WAITING = 8       # each review spends API credit, so a burst of uploads mus
 SIGNATURES = {".pdf": b"%PDF", ".png": b"\x89PNG", ".jpg": b"\xff\xd8", ".jpeg": b"\xff\xd8"}
 INGEST_SECONDS = 900
 INGEST_COMMAND = [sys.executable, "-m", "storey.ingest"]
-LOCAL_CLIENTS = {"127.0.0.1", "::1"}
-LOCAL_HOSTS = {"127.0.0.1", "localhost", "[::1]"}
-FORWARDED = ("forwarded", "x-forwarded-for", "x-real-ip", "cf-connecting-ip", "true-client-ip")
+RUN_KEY = secrets.token_urlsafe(24)   # used when no key is configured, and shown once in the terminal
 CSP = ("default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; "
        "img-src 'self' data: blob:; object-src 'none'; base-uri 'none'; frame-ancestors 'none'")
 
@@ -37,7 +36,7 @@ waiting = threading.BoundedSemaphore(MAX_WAITING)
 
 
 def access_key():
-    return os.environ.get("STOREY_ACCESS_KEY", "")
+    return os.environ.get("STOREY_ACCESS_KEY") or RUN_KEY
 
 
 class LimitBody:
@@ -64,14 +63,6 @@ class LimitBody:
 app.add_middleware(LimitBody, limit=MAX_UPLOAD + 1024 * 1024)
 
 
-def is_local(request):
-    """True only for a browser on this machine. The socket address decides, the Host check stops DNS rebinding,
-    and the forwarding headers catch a tunnel, whose traffic also arrives from localhost."""
-    host = request.headers.get("host", "").rsplit(":", 1)[0]
-    client = request.client.host if request.client else ""
-    return client in LOCAL_CLIENTS and host in LOCAL_HOSTS and not any(h in request.headers for h in FORWARDED)
-
-
 def is_cross_site(request):
     """A page on another site can post a form to localhost without a preflight, so check where it came from."""
     if request.headers.get("sec-fetch-site", "same-origin") not in ("same-origin", "none"):
@@ -82,15 +73,14 @@ def is_cross_site(request):
 
 @app.middleware("http")
 async def guard(request: Request, call_next):
-    key = access_key()
-    if not key and not is_local(request):
-        return JSONResponse({"detail": "Set STOREY_ACCESS_KEY before opening this server to other machines"}, 403)
+    # The API always needs the key. Each review spends credit, and no check of headers or addresses can tell
+    # this machine from a proxy with certainty.
     path = request.url.path
     if path.startswith("/api/") and request.method not in ("GET", "HEAD") and is_cross_site(request):
         return JSONResponse({"detail": "Requests from other sites are not allowed"}, 403)
-    if key and path.startswith("/api/") and path != "/api/session":
+    if path.startswith("/api/") and path != "/api/session":
         given = request.headers.get("x-storey-key") or request.cookies.get("storey_key") or ""
-        if not hmac.compare_digest(given.encode(), key.encode()):
+        if not hmac.compare_digest(given.encode(), access_key().encode()):
             return JSONResponse({"detail": "Access key needed"}, 401)
     response = await call_next(request)
     response.headers["Content-Security-Policy"] = CSP
@@ -106,7 +96,7 @@ class Session(BaseModel):
 @app.post("/api/session")
 def open_session(body: Session, request: Request, response: Response):
     key = access_key()
-    if not key or not hmac.compare_digest(body.key.encode(), key.encode()):
+    if not hmac.compare_digest(body.key.encode(), key.encode()):
         raise HTTPException(401, "That key is not right")
     response.set_cookie("storey_key", key, httponly=True, samesite="strict", secure=request.url.scheme == "https", max_age=7 * 86400)
     return {"ok": True}
@@ -129,10 +119,10 @@ def _status(path, **fields):
 
 
 def _ingest(path, uploads):
-    r = subprocess.run([*INGEST_COMMAND, str(path), *map(str, uploads)], cwd=ROOT, capture_output=True, text=True, timeout=INGEST_SECONDS)
+    r = subprocess.run([*INGEST_COMMAND, str(path), *map(str, uploads)], cwd=ROOT, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=INGEST_SECONDS)
     try:
-        out = json.loads(r.stdout.strip().splitlines()[-1])
-    except (IndexError, ValueError):
+        out = json.loads((path / "ingest_result.json").read_text())
+    except (OSError, ValueError):
         out = {}
     if r.returncode or "sheets" not in out:
         raise ValueError(out.get("error", "Could not read this upload"))

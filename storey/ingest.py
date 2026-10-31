@@ -13,6 +13,7 @@ MAX_EDGE = 6000       # sheets past this add file size, not legibility, at Spark
 MAX_SHEETS = 300      # a tiny PDF can hold thousands of pages, and each page costs render time and API money
 MAX_PIXELS = 150_000_000   # a small image file can decode to gigabytes, so check the header first
 MAX_WORDS = 50_000    # per page, for the same reason
+MAX_DISK_BYTES = 8 * 1024 ** 3
 CPU_SECONDS = 600
 MEMORY_BYTES = 8 * 1024 ** 3
 RENDER_DPI = 200
@@ -38,7 +39,7 @@ def _render(page, out):
 
 
 def _from_pdf(path, out_dir):
-    sheets = []
+    sheets, written = [], 0
     with pymupdf.open(path) as doc:
         if doc.needs_pass:
             raise ValueError("This PDF is password protected")
@@ -47,6 +48,9 @@ def _from_pdf(path, out_dir):
         for i, page in enumerate(doc):
             name = f"sheet_{i:03d}.png"
             w, h, scale = _render(page, out_dir / name)
+            written += (out_dir / name).stat().st_size
+            if written > MAX_DISK_BYTES:
+                raise ValueError("This PDF is too large to read")
             kind = "vector" if sum(len(d["items"]) for d in page.get_drawings()) >= VECTOR_MIN_ITEMS else "scan"
             words = [[round(a * scale), round(b * scale), round(c * scale), round(d * scale), t] for a, b, c, d, t, *_ in page.get_text("words")[:MAX_WORDS]]
             sheets.append(Sheet(i, name, w, h, kind, page.get_text(), words))
@@ -100,12 +104,12 @@ def main(argv):
     except (ValueError, OSError):
         pass   # shortcut: macOS refuses this limit, the wall-clock timeout in the server still applies
     out_dir, *paths = argv
+    result = Path(out_dir) / "ingest_result.json"   # a file, because a hostile PDF can flood stdout with library warnings
     try:
-        sheets = ingest(paths, out_dir)
+        result.write_text(json.dumps({"sheets": len(ingest(paths, out_dir))}))
     except ValueError as e:
-        print(json.dumps({"error": str(e)}))
+        result.write_text(json.dumps({"error": str(e)}))
         return 2
-    print(json.dumps({"sheets": len(sheets)}))
     return 0
 
 

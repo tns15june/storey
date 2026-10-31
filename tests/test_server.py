@@ -5,11 +5,16 @@ import pytest
 from fastapi.testclient import TestClient
 
 
+KEY = {"x-storey-key": "test-key"}
+ID_URL = "/api/reviews/" + "0" * 32
+
+
 @pytest.fixture
 def client(tmp_path, monkeypatch):
     from storey import server
     monkeypatch.setattr(server, "DATA", tmp_path)
-    return TestClient(server.app, base_url="http://127.0.0.1", client=("127.0.0.1", 50000))
+    monkeypatch.setenv("STOREY_ACCESS_KEY", "test-key")
+    return TestClient(server.app, base_url="http://127.0.0.1", headers=KEY)
 
 
 def _pdf_bytes():
@@ -79,23 +84,14 @@ def test_busy_server_turns_uploads_away_without_leaking_slots(client, monkeypatc
     assert server.waiting.acquire(blocking=False)
 
 
-ID_URL = "/api/reviews/" + "0" * 32
-
-
-def test_without_a_key_only_this_machine_is_served(client):
-    assert client.get(ID_URL).status_code == 404
-    assert client.get(ID_URL, headers={"host": "storey.example.com"}).status_code == 403
-
-
-def test_a_remote_client_cannot_claim_to_be_local():
+def test_api_always_needs_the_key(tmp_path, monkeypatch):
     from storey import server
-    remote = TestClient(server.app, base_url="http://localhost", client=("203.0.113.9", 50000))
-    assert remote.get(ID_URL).status_code == 403
-
-
-@pytest.mark.parametrize("header", ["x-forwarded-for", "cf-connecting-ip", "forwarded"])
-def test_tunnel_traffic_from_localhost_is_not_treated_as_local(client, header):
-    assert client.get(ID_URL, headers={header: "203.0.113.9"}).status_code == 403
+    monkeypatch.setattr(server, "DATA", tmp_path)
+    monkeypatch.delenv("STOREY_ACCESS_KEY", raising=False)
+    local = TestClient(server.app, base_url="http://localhost", client=("127.0.0.1", 50000))
+    assert local.get(ID_URL).status_code == 401
+    assert local.post("/api/reviews", files=[("files", ("set.pdf", _pdf_bytes(), "application/pdf"))]).status_code == 401
+    assert local.get(ID_URL, headers={"x-storey-key": server.RUN_KEY}).status_code == 404
 
 
 @pytest.mark.parametrize("headers", [{"origin": "https://evil.example"}, {"sec-fetch-site": "cross-site"}])
@@ -129,13 +125,30 @@ def test_a_crashing_reader_fails_cleanly(client, monkeypatch):
     assert st["state"] == "failed" and st["message"] == "Could not read this upload"
 
 
-def test_with_a_key_api_needs_it_and_cookie_works(client, monkeypatch):
+def test_session_cookie_works_in_place_of_the_header(tmp_path, monkeypatch):
+    from storey import server
+    monkeypatch.setattr(server, "DATA", tmp_path)
     monkeypatch.setenv("STOREY_ACCESS_KEY", "s3cret")
-    assert client.post("/api/reviews", files=[("files", ("set.pdf", _pdf_bytes(), "application/pdf"))]).status_code == 401
-    assert client.post("/api/session", json={"key": "wrong"}).status_code == 401
-    assert client.post("/api/session", json={"key": "s3cret"}).status_code == 200
-    assert client.post("/api/reviews", files=[("files", ("set.pdf", _pdf_bytes(), "application/pdf"))]).status_code == 200
+    browser = TestClient(server.app, base_url="http://127.0.0.1")
+    assert browser.get(ID_URL).status_code == 401
+    assert browser.post("/api/session", json={"key": "wrong"}).status_code == 401
+    assert browser.post("/api/session", json={"key": "s3cret"}).status_code == 200
+    assert browser.get(ID_URL).status_code == 404
+
+
+def test_the_review_screen_itself_needs_no_key():
+    from storey import server
+    assert TestClient(server.app, base_url="http://127.0.0.1").get("/").status_code == 200
 
 
 def test_responses_carry_a_content_policy(client):
-    assert "default-src 'self'" in client.get("/api/reviews/" + "0" * 32).headers["content-security-policy"]
+    assert "default-src 'self'" in client.get(ID_URL).headers["content-security-policy"]
+
+
+def test_reader_noise_on_stdout_is_ignored(client, monkeypatch):
+    import sys
+    from storey import server
+    flood = "import sys, json, pathlib; print('warning' * 1000); pathlib.Path(sys.argv[1], 'ingest_result.json').write_text(json.dumps({'sheets': 3}))"
+    monkeypatch.setattr(server, "INGEST_COMMAND", [sys.executable, "-c", flood])
+    rid = client.post("/api/reviews", files=[("files", ("set.pdf", _pdf_bytes(), "application/pdf"))]).json()["id"]
+    assert _wait(client, rid)["sheets"] == 3
