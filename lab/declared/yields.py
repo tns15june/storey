@@ -3,7 +3,7 @@ import collections
 import json
 import sys
 
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/declared")
+sys.path.insert(0, "lab/declared")
 import rules as R
 import verdicts as V
 

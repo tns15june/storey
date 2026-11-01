@@ -1,6 +1,6 @@
 """Overlay montage: usage view.py split out.jpg start count [params json]"""
 import json, sys
-sys.path.insert(0, '/Users/tsharma/Github/Meta/lab/walls')
+sys.path.insert(0, 'lab/walls')
 import cv2, numpy as np
 import cc, plan as P, score as S
 split, out, st, n = sys.argv[1], sys.argv[2], int(sys.argv[3]), int(sys.argv[4])

@@ -4,10 +4,10 @@ from pathlib import Path
 
 import cv2
 
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/bakeoff")
+sys.path.insert(0, "lab/bakeoff")
 import sheets as s  # noqa: E402
 
-ROOT = Path("/Users/tsharma/Github/Meta")
+ROOT = Path(".")
 OUT = ROOT / "data/lab/samtricks"
 SHEETS = OUT / "sheets"
 TRUTH = OUT / "truth"

@@ -4,7 +4,7 @@ Run: .venv/bin/python -I lab/modern/detect.py
 """
 import json, re, sys, tempfile, time
 from pathlib import Path
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/modern")
+sys.path.insert(0, "lab/modern")
 import pymupdf as fitz
 import vec
 

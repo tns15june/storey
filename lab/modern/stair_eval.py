@@ -1,7 +1,7 @@
 """Vector-only stair detection scored against the ground truth boxes in track.py. No API call. Run: .venv/bin/python -I lab/modern/stair_eval.py"""
 import json, sys
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/modern")
-OUT = "/Users/tsharma/Github/Meta/data/lab/modern"
+sys.path.insert(0, "lab/modern")
+OUT = "data/lab/modern"
 P = json.load(open(OUT + "/prep.json"))
 GT = {
     "mml_capitol": {"rear": dict(ground=[1942, 166, 2021, 346], main=[1942, 170, 2022, 350], upper=[1942, 172, 2021, 352]), "front": dict(ground=[1942, 1138, 2021, 1254], main=[1942, 1133, 2022, 1249], upper=[1942, 1130, 2021, 1246]), "interior": dict(main=[1744, 859, 1807, 985], upper=[1744, 748, 1807, 952]),

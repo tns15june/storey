@@ -3,7 +3,7 @@ import json
 import math
 import sys
 
-sys.path.insert(0, '/Users/tsharma/Github/Meta/lab/bakeoff')
+sys.path.insert(0, 'lab/bakeoff')
 import numpy as np
 import e1_meta as e1
 import e2_tasks as t

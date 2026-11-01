@@ -1,6 +1,6 @@
 """Dev only: methods d and e, no-SAM baselines, Spark crop verdicts on present floors and on random drawn boxes."""
 import sys, random
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/tightseed")
+sys.path.insert(0, "lab/tightseed")
 from core import *
 import dev1, dev5, seeds as sd, multi as mu, tread
 

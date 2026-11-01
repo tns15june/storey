@@ -1,6 +1,6 @@
 """Fetch whole HABS and BME sets from Wikimedia Commons into data/plans/<id>/ and save exact license metadata.
 
-Run: /Users/tsharma/Github/Meta/.venv/bin/python -I lab/gather_data/commons.py
+Run: .venv/bin/python -I lab/gather_data/commons.py
 HABS originals are large TIFFs, so this takes a 5000 px wide server-rendered JPEG. Uses curl because the venv Python has no CA bundle.
 """
 import json

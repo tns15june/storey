@@ -1,5 +1,5 @@
 """Roll up every result into final.json. No API calls."""
-import sys, glob; sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/seed")
+import sys, glob; sys.path.insert(0, "lab/seed")
 from common import *
 from union import cluster, evaluate, CONF
 import score_sam

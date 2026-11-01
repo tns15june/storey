@@ -1,7 +1,7 @@
 import warnings; warnings.filterwarnings("ignore")
 import fitz, cv2, numpy as np
 from pathlib import Path
-ROOT = Path("/Users/tsharma/Github/Meta"); OUT = ROOT / "data/lab/tightseed/raw"
+ROOT = Path("."); OUT = ROOT / "data/lab/tightseed/raw"
 d = fitz.open(ROOT / "data/plans/mml_abbot/THE-ABBOT.pdf")
 for i, p in enumerate(d):
     t = [x for x in p.get_text().split("\n") if x.strip()]

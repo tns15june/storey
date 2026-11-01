@@ -1,6 +1,6 @@
 """Methods d and e, the Spark crop check, and the no-SAM registered-box checks."""
 import sys
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/tightseed")
+sys.path.insert(0, "lab/tightseed")
 from core import *
 import seeds as sd, tread, reg
 

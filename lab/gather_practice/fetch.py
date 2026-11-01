@@ -1,6 +1,6 @@
 """Download the public plan-review documents and extract their text.
 
-Run: /Users/tsharma/Github/Meta/.venv/bin/python -I /Users/tsharma/Github/Meta/lab/gather_practice/fetch.py
+Run: .venv/bin/python -I lab/gather_practice/fetch.py
 Reads urls.tsv (name, url) next to this script. Files already on disk are not fetched again.
 Downloads are untrusted: they are only saved and parsed by PyMuPDF, never executed.
 """

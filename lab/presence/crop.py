@@ -7,7 +7,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 import cv2
 
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/presence")
+sys.path.insert(0, "lab/presence")
 import pres
 from pres import OUT
 import metalab as m

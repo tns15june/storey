@@ -1,6 +1,6 @@
 """Is SAM needed? Spark's whole-sheet proposals as a standalone continuity checker, on clean sheets (already paid for) and on erased sheets."""
 import sys, random
-sys.path.insert(0, '/Users/tsharma/Github/Meta/lab/defects')
+sys.path.insert(0, 'lab/defects')
 from suite import *
 import propose_prompt as pp
 

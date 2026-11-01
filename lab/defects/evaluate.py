@@ -1,11 +1,11 @@
 """Score every stored run. DEV buildings fit thresholds, the other three are held out. Writes results.json, prints tables."""
 import sys, json, glob
 from collections import defaultdict
-sys.path.insert(0, '/Users/tsharma/Github/Meta/lab/defects')
+sys.path.insert(0, 'lab/defects')
 import numpy as np
 from rules import findings, base_find, P
 from pathlib import Path
-OUT = Path('/Users/tsharma/Github/Meta/data/lab/defects')
+OUT = Path('data/lab/defects')
 DEV = ('bme_f', 'habs_stelizabeths_center')
 SHAFT = {'elevator', 'xshaft_w', 'xshaft_e', 'xshaft_c', 'elev1', 'elev2', 'vent_w', 'vent_e'}
 runs = [json.load(open(p)) for p in glob.glob(str(OUT / 'runs/*.json')) if not p.endswith('_t.json') and '/jit_' not in p]

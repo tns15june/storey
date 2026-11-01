@@ -1,6 +1,6 @@
 """Read-only PDF spot checks of two 'real' flags. No API. Run with -I. PDFs are treated as data."""
 import fitz, re
-D = "/Users/tsharma/Github/Meta/data/plans/"
+D = "data/plans/"
 d = fitz.open(D + "mml_abbot/THE-ABBOT.pdf")
 print("abbot pages", len(d))
 for i, p in enumerate(d):

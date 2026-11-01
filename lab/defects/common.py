@@ -3,7 +3,7 @@ import json, subprocess, sys
 from pathlib import Path
 import cv2, numpy as np, fitz
 
-ROOT = Path('/Users/tsharma/Github/Meta')
+ROOT = Path('.')
 PLANS = ROOT / 'data/plans'
 OUT = ROOT / 'data/lab/defects'
 W = 2000

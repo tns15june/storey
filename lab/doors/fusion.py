@@ -3,7 +3,7 @@ import json, sys
 from pathlib import Path
 import numpy as np
 from scipy.optimize import linear_sum_assignment
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab"); sys.path.insert(0, str(Path(__file__).parent))
+sys.path.insert(0, "lab"); sys.path.insert(0, str(Path(__file__).parent))
 import key as K
 from spark_tiles import tiles, to_sheet, nms, score, arc_point, CACHE
 from vector_eval import midpoint

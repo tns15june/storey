@@ -4,7 +4,7 @@ import re
 import sys
 import unicodedata
 
-sys.path.insert(0, '/Users/tsharma/Github/Meta/lab/bakeoff')
+sys.path.insert(0, 'lab/bakeoff')
 from common import *  # noqa
 import cv2
 import numpy as np

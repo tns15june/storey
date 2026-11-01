@@ -2,7 +2,7 @@
 import json
 from pathlib import Path
 
-D = Path("/Users/tsharma/Github/Meta/data/lab/samtricks")
+D = Path("data/lab/samtricks")
 T1 = json.load(open(D / "truth/item1_viewports.json"))["sheets"]
 T4 = json.load(open(D / "truth/item4_clouds.json"))
 R1 = json.load(open(D / "item1.json"))

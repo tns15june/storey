@@ -1,5 +1,5 @@
 """Audit: fairest case for SAM. Tight hand boxes as prompts instead of Spark boxes, same stacks, same scoring."""
-import sys; sys.path.insert(0,"/Users/tsharma/Github/Meta/lab/seed"); sys.path.insert(0,"/Users/tsharma/Github/Meta/lab")
+import sys; sys.path.insert(0,"lab/seed"); sys.path.insert(0,"lab")
 from common import *
 import metalab as m
 src=open(ROOT/"lab/audit/heldout.py").read().replace("\nmain()\n","\n"); exec(src)

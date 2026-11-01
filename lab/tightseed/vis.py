@@ -2,7 +2,7 @@
 import sys, json
 from pathlib import Path
 import cv2, numpy as np
-ROOT = Path("/Users/tsharma/Github/Meta"); S = ROOT / "data/lab/tightseed/stacks"; V = ROOT / "data/lab/tightseed/views"; V.mkdir(exist_ok=True)
+ROOT = Path("."); S = ROOT / "data/lab/tightseed/stacks"; V = ROOT / "data/lab/tightseed/views"; V.mkdir(exist_ok=True)
 
 
 def frames(name):

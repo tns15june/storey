@@ -1,5 +1,5 @@
 """Draw a 100 px coordinate grid on aligned floors, for reading truth boxes by eye. Usage: grid.py building [x1 y1 x2 y2]"""
-import sys; sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/seed")
+import sys; sys.path.insert(0, "lab/seed")
 from common import *
 bid = sys.argv[1]
 d = OUT / bid; (d / "grid").mkdir(exist_ok=True)

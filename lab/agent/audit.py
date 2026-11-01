@@ -5,11 +5,11 @@ Run: env LAB_NAME=agent LAB_BUDGET=5 LAB_TOTAL=75 .venv/bin/python lab/agent/aud
 import json, math, sys, time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab"); sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/agent")
+sys.path.insert(0, "lab"); sys.path.insert(0, "lab/agent")
 import metalab as m
 import prompts as P
 
-D = Path("/Users/tsharma/Github/Meta/data/lab/agent")
+D = Path("data/lab/agent")
 MODELS = {"spark": "muse-spark-1.3", "wonder": "muse-wonder-1.0"}
 BAD_BY = ("cat", "source")
 

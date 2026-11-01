@@ -1,6 +1,6 @@
 """POST HOC, marked as such in every output. Recipe P: Spark clusters, then two rounds of zoomed Spark crops asking for the whole stair, then the tracker; P pin puts the same box on every floor the cluster saw."""
 import sys
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/tightseed")
+sys.path.insert(0, "lab/tightseed")
 from core import *
 import dev1, post1
 

@@ -1,11 +1,11 @@
 """Spark room boxes and door points on CubiCasa test plans. Cached per plan; usage: ask_spark.py n"""
 import json, os, sys
 from concurrent.futures import ThreadPoolExecutor
-sys.path.insert(0, '/Users/tsharma/Github/Meta/lab'); sys.path.insert(0, '/Users/tsharma/Github/Meta/lab/walls')
+sys.path.insert(0, 'lab'); sys.path.insert(0, 'lab/walls')
 import cv2, numpy as np
 import metalab as m
 import cc
-OUT = '/Users/tsharma/Github/Meta/data/lab/walls/spark/'
+OUT = 'data/lab/walls/spark/'
 os.makedirs(OUT, exist_ok=True)
 INT = {'type': 'integer'}
 ROOM = {'type': 'object', 'additionalProperties': False, 'required': ['rooms'], 'properties': {'rooms': {'type': 'array', 'items': {'type': 'object', 'additionalProperties': False, 'required': ['label', 'box'], 'properties': {'label': {'type': 'string'}, 'box': {'type': 'array', 'items': INT}}}}}}

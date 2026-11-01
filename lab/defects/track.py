@@ -1,6 +1,6 @@
 """Run SAM's video tracker over a list of sheets, cache per-floor track metrics, draw crop grids."""
 import sys, json, hashlib, tempfile, os
-sys.path.insert(0, '/Users/tsharma/Github/Meta/lab'); sys.path.insert(0, '/Users/tsharma/Github/Meta/lab/defects')
+sys.path.insert(0, 'lab'); sys.path.insert(0, 'lab/defects')
 import metalab as m
 from common import *
 REP = 4

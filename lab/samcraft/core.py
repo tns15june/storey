@@ -12,7 +12,7 @@ import cv2
 import numpy as np
 from scipy import ndimage as ndi
 
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab")
+sys.path.insert(0, "lab")
 import metalab as m  # noqa: E402
 from data import OUT, ink_of  # noqa: E402
 

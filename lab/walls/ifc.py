@@ -138,7 +138,7 @@ class Model:
 
 if __name__ == '__main__':
     import collections
-    m = Model('/Users/tsharma/Github/Meta/data/plans/nibs_clinic/Clinic_A_20110906_optimized.ifc')
+    m = Model('data/plans/nibs_clinic/Clinic_A_20110906_optimized.ifc')
     sp = m.of('IFCSPACE'); doors = m.of('IFCDOOR'); bd = m.of('IFCRELSPACEBOUNDARY')
     print(len(sp), len(doors), len(bd))
     print(m.a(sp[0])[:9])

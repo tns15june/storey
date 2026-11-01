@@ -1,9 +1,9 @@
 """Zoom a route candidate at the points where it enters and leaves the IFC walkable mask. No API."""
 import json, sys
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/agent")
+sys.path.insert(0, "lab/agent")
 from routelib import *
 import draw, pymupdf as fitz
-O = "/Users/tsharma/Github/Meta/data/lab/agent/mine/"
+O = "data/lab/agent/mine/"
 res = json.load(open(O + "routes.json"))
 fl, room = int(sys.argv[1]), int(sys.argv[2])
 r = next(x for x in res[str(fl)] if x["room"] == room)

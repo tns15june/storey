@@ -6,7 +6,7 @@ from pathlib import Path
 
 import fitz
 
-ROOT = Path("/Users/tsharma/Github/Meta")
+ROOT = Path(".")
 cat = {x["id"]: x for x in json.load(open(ROOT / "data/plans/catalog.json"))}
 RX = re.compile(r"\b(basement|cellar|ground|main|lower|upper|first|second|third|fourth|attic|roof)\s+(?:level\s+|floor\s+)?(?:floor\s+)?plan\b", re.I)
 RANK = {"basement": -1, "cellar": -1, "lower": -1, "ground": 0, "main": 1, "first": 1, "second": 2, "upper": 2, "third": 3, "fourth": 4, "attic": 5, "roof": 6}

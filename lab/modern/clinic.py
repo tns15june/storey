@@ -1,11 +1,11 @@
 """Vector sheets with no text layer: Spark reads dimension numbers, vector ticks verify each number by geometry, walls give corridor width.
 
-Run: cd /Users/tsharma/Github/Meta && LAB_NAME=modern LAB_BUDGET=4 LAB_TOTAL=60 .venv/bin/python lab/modern/clinic.py
+Run: LAB_NAME=modern LAB_BUDGET=4 LAB_TOTAL=60 .venv/bin/python lab/modern/clinic.py
 Sheet 55 is 1:50, read by eye from the title and graphic scale, because the sheet has no text layer.
 """
 import json, math, sys
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab")
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/modern")
+sys.path.insert(0, "lab")
+sys.path.insert(0, "lab/modern")
 import cv2, numpy as np, pymupdf as fitz
 import metalab as m
 import vec

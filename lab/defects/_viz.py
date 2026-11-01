@@ -1,5 +1,5 @@
 import sys
-sys.path.insert(0, '/Users/tsharma/Github/Meta/lab/defects')
+sys.path.insert(0, 'lab/defects')
 from track import *; from plant import *; from seeds import *
 tiles=[]
 def tile(a,b,box,lab,pad=50):

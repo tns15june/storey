@@ -3,7 +3,7 @@ import base64
 import sys
 import time
 
-sys.path.insert(0, '/Users/tsharma/Github/Meta/lab/bakeoff')
+sys.path.insert(0, 'lab/bakeoff')
 from common import *  # noqa
 import cv2
 import e1_meta as e1

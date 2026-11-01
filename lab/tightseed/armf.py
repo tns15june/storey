@@ -1,6 +1,6 @@
 """Secondary arm f: one local video per cluster, so SAM sees the stair large. Declared in rule_addendum.json before any held-out score."""
 import sys
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/tightseed")
+sys.path.insert(0, "lab/tightseed")
 from core import *
 
 

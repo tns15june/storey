@@ -1,6 +1,6 @@
 """Dev only, no API: tread score on stairs, on empty floors, and on random non-stair boxes, to place the check threshold."""
 import sys, json, random
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/tightseed")
+sys.path.insert(0, "lab/tightseed")
 from core import *
 import tread, vis
 SEED = json.load(open(ROOT / "lab/seed/truth.json"))

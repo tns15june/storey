@@ -1,5 +1,5 @@
 """Tables for padding, refinement, single seed sheet, Spark variants on the four scan buildings, and location-only scoring. No API calls."""
-import sys, glob; sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/seed")
+import sys, glob; sys.path.insert(0, "lab/seed")
 from common import *
 import union
 from union import cluster, evaluate

@@ -1,8 +1,8 @@
 """Every room to its nearest exit on Storey's walk mask; which routes cross a wall of the IFC truth mask? No API."""
 import json, sys
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/agent")
+sys.path.insert(0, "lab/agent")
 from routelib import *
-O = "/Users/tsharma/Github/Meta/data/lab/agent/mine/"
+O = "data/lab/agent/mine/"
 res = {}
 for fl in (1, 2):
     d = load(fl); rows = json.load(open(K.O + f"clinic_f{fl}_rows.json"), parse_constant=lambda c: float("inf"))

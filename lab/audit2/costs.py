@@ -1,5 +1,5 @@
 import json, collections
-rows=[json.loads(x) for x in open('/Users/tsharma/Github/Meta/data/lab/ledger.jsonl') if x.strip()]
+rows=[json.loads(x) for x in open('data/lab/ledger.jsonl') if x.strip()]
 for name in ('tightseed','presence','agent','samtricks'):
     c=collections.defaultdict(list)
     for r in rows:

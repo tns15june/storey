@@ -1,5 +1,5 @@
-D = '/Users/tsharma/Github/Meta/data/plans/nibs_clinic/'
-O = '/Users/tsharma/Github/Meta/data/lab/walls/'
+D = 'data/plans/nibs_clinic/'
+O = 'data/lab/walls/'
 PPM = 1000 / (150 * 0.352778)
 PXM = 40.0
 SC = PXM / PPM

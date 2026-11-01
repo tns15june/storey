@@ -1,7 +1,7 @@
 #!/bin/sh
 # Re-renders everything from caches in data/lab/seed. Delete data/lab/seed/spark and data/lab/seed/sam to pay for a fresh run, about 2.75 USD.
 set -e
-cd /Users/tsharma/Github/Meta
+cd "$(dirname "$0")/../.." || exit 1
 export LAB_NAME=seed LAB_BUDGET=3 LAB_TOTAL=60
 PY=".venv/bin/python -I"
 $PY lab/seed/check.py

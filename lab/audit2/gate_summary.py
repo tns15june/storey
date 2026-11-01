@@ -1,5 +1,5 @@
 import json, collections
-r=json.load(open('/Users/tsharma/Github/Meta/data/lab/audit2/gate_jitter.json'))
+r=json.load(open('data/lab/audit2/gate_jitter.json'))
 print(len(r),'fits')
 ok=[x for x in r if 'error' not in x]
 print('errors',[x for x in r if 'error' in x][:3])

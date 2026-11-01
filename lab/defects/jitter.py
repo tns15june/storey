@@ -1,6 +1,6 @@
 """Stress: every non-seed floor shifted by a random offset up to JIT px, as with poorly aligned scans. Same interior erasures, plus clean stacks."""
 import sys, random
-sys.path.insert(0, '/Users/tsharma/Github/Meta/lab/defects')
+sys.path.insert(0, 'lab/defects')
 import suite
 from suite import *
 JIT = 60

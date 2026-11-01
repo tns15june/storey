@@ -10,8 +10,8 @@ import math
 import re
 import sys
 
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/declared")
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/doors")
+sys.path.insert(0, "lab/declared")
+sys.path.insert(0, "lab/doors")
 import numpy as np  # noqa: E402
 
 import fitz  # noqa: E402

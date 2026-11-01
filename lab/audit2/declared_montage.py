@@ -1,7 +1,7 @@
 """Contact sheet of sampled flag crops with their flag text. No API."""
 import json, cv2, numpy as np
-D = "/Users/tsharma/Github/Meta/data/lab/declared/crops/"
-ids = json.load(open("/Users/tsharma/Github/Meta/data/lab/audit2/declared_pick.json"))
+D = "data/lab/declared/crops/"
+ids = json.load(open("data/lab/audit2/declared_pick.json"))
 tiles = []
 for i in ids:
     im = cv2.imread(D + i + ".png")
@@ -16,4 +16,4 @@ for i in ids:
     tiles.append(cv2.copyMakeBorder(c, 1, 1, 1, 1, cv2.BORDER_CONSTANT, value=(0, 0, 0)))
 for k in range(2):
     part = tiles[k * 6:(k + 1) * 6]
-    cv2.imwrite(f"/Users/tsharma/Github/Meta/data/lab/audit2/declared_crops{k}.jpg", np.vstack([np.hstack(part[j:j + 2]) for j in range(0, 6, 2)]), [cv2.IMWRITE_JPEG_QUALITY, 88])
+    cv2.imwrite(f"data/lab/audit2/declared_crops{k}.jpg", np.vstack([np.hstack(part[j:j + 2]) for j in range(0, 6, 2)]), [cv2.IMWRITE_JPEG_QUALITY, 88])

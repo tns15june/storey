@@ -2,14 +2,14 @@
 import json, sys
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab"); sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/agent")
+sys.path.insert(0, "lab"); sys.path.insert(0, "lab/agent")
 import metalab as m
-AUD = Path("/Users/tsharma/Github/Meta/data/lab/audit2")
+AUD = Path("data/lab/audit2")
 
 
 def agent():
     import prompts as P
-    D = Path("/Users/tsharma/Github/Meta/data/lab/agent")
+    D = Path("data/lab/agent")
     cases = json.load(open(D / "cases.json")); T = json.load(open(D / "truth.json"))["cases"]
     def one(a):
         c, model = a
@@ -29,7 +29,7 @@ def agent():
 
 
 def concept():
-    S = Path("/Users/tsharma/Github/Meta/data/lab/samtricks/sheets")
+    S = Path("data/lab/samtricks/sheets")
     print(sorted(p.name for p in S.iterdir())[:8])
     out = {}
     for k in ("n161", "n52", "n133"):
@@ -46,7 +46,7 @@ def concept():
 
 def exits():
     assert m.spent("audit2") < 2.4
-    sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/declared")
+    sys.path.insert(0, "lab/declared")
     import read_spark as RS
     SID = "nibs_clinic"
     res = {}

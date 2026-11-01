@@ -1,9 +1,9 @@
 """Freeze what the end-to-end run and the letter test are scored against, before any model call on these sheets. No API."""
 import hashlib, json, sys, time
 from pathlib import Path
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/agent")
+sys.path.insert(0, "lab/agent")
 import letter_data as L
-D = Path("/Users/tsharma/Github/Meta/data/lab/agent")
+D = Path("data/lab/agent")
 doc = {
     "_written": time.strftime("%Y-%m-%d %H:%M:%S %z"), "building": "nibs_clinic", "labeller": "one labeller by eye, not a licensed reviewer",
     "changes_to_saved_data": [

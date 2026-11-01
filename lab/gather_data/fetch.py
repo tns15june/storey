@@ -1,6 +1,6 @@
 """Download every file in manifest.json into data/plans/<id>/ and unzip archives there.
 
-Run: /Users/tsharma/Github/Meta/.venv/bin/python -I lab/gather_data/fetch.py
+Run: .venv/bin/python -I lab/gather_data/fetch.py
 Safe to rerun: existing files are skipped. CubiCasa and Swiss Dwellings are resumable curl jobs, see report.md.
 """
 import json

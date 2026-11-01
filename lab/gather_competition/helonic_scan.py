@@ -1,10 +1,10 @@
 """Search every Helonic sitemap page for scan input and city-buyer wording, and print its egress page.
-Run: /Users/tsharma/Github/Meta/.venv/bin/python -I /Users/tsharma/Github/Meta/lab/gather_competition/helonic_scan.py
+Run: .venv/bin/python -I lab/gather_competition/helonic_scan.py
 """
 import html, json, re, subprocess
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-OUT = Path("/Users/tsharma/Github/Meta/data/lab/gather_competition/helonic_scan.json")
+OUT = Path("data/lab/gather_competition/helonic_scan.json")
 def get(u): return subprocess.run(["curl","-s","-L","-m","15","-A","Mozilla/5.0 (research)",u],capture_output=True).stdout.decode("utf-8","ignore")
 def text(p):
     p=re.sub(r"<(script|style|noscript)\b.*?</\1>"," ",p,flags=re.S|re.I)

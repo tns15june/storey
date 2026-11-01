@@ -4,7 +4,7 @@ import math
 import re
 import sys
 
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/declared")
+sys.path.insert(0, "lab/declared")
 import fitz  # noqa: E402
 import read_text as T  # noqa: E402
 

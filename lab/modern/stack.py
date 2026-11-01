@@ -3,7 +3,7 @@
 Run: .venv/bin/python -I lab/modern/stack.py  (no API calls). Writes data/lab/modern/stacks/<set>_<dpi>/ and prep.json.
 """
 import json, subprocess, sys
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/modern")
+sys.path.insert(0, "lab/modern")
 import cv2, numpy as np, pymupdf as fitz
 import vec
 ROOT = vec.ROOT

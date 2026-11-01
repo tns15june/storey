@@ -1,8 +1,8 @@
 """Recounts with no API: presence natural absences and main-stair coverage, tightseed recipe cost, declared held-out support for each recommended Fix. Run with -I."""
 import json, math, glob, collections, sys
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/audit2")
-OUT = "/Users/tsharma/Github/Meta/data/lab/presence/"
-TR = json.load(open("/Users/tsharma/Github/Meta/lab/presence/truth.json")); T = TR["buildings"]
+sys.path.insert(0, "lab/audit2")
+OUT = "data/lab/presence/"
+TR = json.load(open("lab/presence/truth.json")); T = TR["buildings"]
 HELD = [b for b, t in T.items() if t["split"] == "heldout"]
 def box_dist(p, b): return math.hypot(max(b[0] - p[0], 0, p[0] - b[2]), max(b[1] - p[1], 0, p[1] - b[3]))
 def decide(est, ink, c):
@@ -64,13 +64,13 @@ print("natural absent cells with a shown row at the place (my count, 40 px from 
 print("3-run rows per truth main stair")
 # tightseed cost
 tot = 0; n = 0
-for p in glob.glob("/Users/tsharma/Github/Meta/data/lab/tightseed/spark/*_whole*_r*.json"):
+for p in glob.glob("data/lab/tightseed/spark/*_whole*_r*.json"):
     d = json.load(open(p)); tot += d["info"]["usd"]; n += 1
 print("tightseed whole-stair crop calls", n, "usd", round(tot, 3), "per call", round(tot / n, 4), "two rounds", round(2 * tot / n, 4))
-f = [json.load(open(p))["info"]["usd"] for p in glob.glob("/Users/tsharma/Github/Meta/data/lab/tightseed/spark/*_f[0-9].json")]
+f = [json.load(open(p))["info"]["usd"] for p in glob.glob("data/lab/tightseed/spark/*_f[0-9].json")]
 print("per-floor grounding calls", len(f), "mean", round(sum(f) / len(f), 4))
 # declared support
-Y = json.load(open("/Users/tsharma/Github/Meta/data/lab/declared/yield_v2.json"))
+Y = json.load(open("data/lab/declared/yield_v2.json"))
 for k, v in sorted(Y["by_sub"].items()):
     h = v["held"]
     print(f"  {k:32s} pooled {v['real']}+{v['likely']}/{v['flags']} held {h['real']}+{h['likely']}/{h['flags']} rule {v['rule']}")

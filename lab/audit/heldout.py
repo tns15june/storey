@@ -1,5 +1,5 @@
 """Audit: recommended seed pipeline on 3 stacks no seed tuning touched, plus Spark one-call floor compare and foreign-sheet controls. Cached per call."""
-import sys; sys.path.insert(0,"/Users/tsharma/Github/Meta/lab/seed"); sys.path.insert(0,"/Users/tsharma/Github/Meta/lab")
+import sys; sys.path.insert(0,"lab/seed"); sys.path.insert(0,"lab")
 from common import *
 from concurrent.futures import ThreadPoolExecutor
 import metalab as m

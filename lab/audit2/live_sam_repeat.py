@@ -2,7 +2,7 @@
 import json
 import sys
 
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/tightseed")
+sys.path.insert(0, "lab/tightseed")
 import core
 
 SRC = core.SAMD

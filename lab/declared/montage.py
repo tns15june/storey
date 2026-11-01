@@ -3,7 +3,7 @@ import sys, warnings
 warnings.filterwarnings("ignore")
 import cv2
 import numpy as np
-C = "/Users/tsharma/Github/Meta/data/lab/declared/crops/"
+C = "data/lab/declared/crops/"
 pre, ids = sys.argv[1], sys.argv[2:]
 for i in range(0, len(ids), 4):
     ims = []

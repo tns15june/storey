@@ -1,5 +1,5 @@
 """Audit: re-score seed e2e with stricter credit. No API calls."""
-import sys; sys.path.insert(0,"/Users/tsharma/Github/Meta/lab/seed")
+import sys; sys.path.insert(0,"lab/seed")
 from common import *
 from union import cluster, CONF
 ALL=["bme_f","schenley","habs_stelizabeths_atkins","habs_stelizabeths_center","mml_capitol","nibs_clinic","mml_baxter"]

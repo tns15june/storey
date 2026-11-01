@@ -1,7 +1,7 @@
 """Hybrid rule, frozen before its fresh test: SAM tracks give each floor's offset, ink in the registered seed box decides presence.
 Replays planting from the cached tracks, so `replay` makes no API call. `fresh` runs new jitter seeds on the frozen rule."""
 import sys, random
-sys.path.insert(0, '/Users/tsharma/Github/Meta/lab/defects')
+sys.path.insert(0, 'lab/defects')
 import suite, jitter
 from suite import *
 OUT2 = OUT / 'runs2'; OUT2.mkdir(exist_ok=True)

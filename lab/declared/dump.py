@@ -3,7 +3,7 @@ import json, sys, warnings
 from pathlib import Path
 warnings.filterwarnings("ignore")
 import fitz
-ROOT = Path("/Users/tsharma/Github/Meta")
+ROOT = Path(".")
 OUT = ROOT / "data/lab/declared/text"; OUT.mkdir(parents=True, exist_ok=True)
 SETS = {"mml_capitol": "mml_capitol/THE-CAPITOL.pdf", "mml_baxter": "mml_baxter/THE-BAXTER.pdf", "mml_abbot": "mml_abbot/THE-ABBOT.pdf",
         "usc_leconte": "usc_leconte/USC_LeConte_Bid_Drawings.pdf", "carpinteria_adu1": "carpinteria_adu1/plan1.pdf", "carpinteria_adu2": "carpinteria_adu2/plan2.pdf",

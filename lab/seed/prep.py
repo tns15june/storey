@@ -1,5 +1,5 @@
 """Align each building's floors to a reference sheet at 2000 px. Saves frames and align.json. No API calls."""
-import sys; sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/seed")
+import sys; sys.path.insert(0, "lab/seed")
 from common import *
 
 REF = {"bme_f": 1, "schenley": 2, "habs_stelizabeths_atkins": 1, "habs_stelizabeths_center": 1}

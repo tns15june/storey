@@ -5,14 +5,14 @@ Run: .venv/bin/python -I lab/agent/build_cases.py [stage]   stage: stairs routes
 """
 import json, math, random, sys
 from pathlib import Path
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/seed"); sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/modern"); sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/agent")
+sys.path.insert(0, "lab/seed"); sys.path.insert(0, "lab/modern"); sys.path.insert(0, "lab/agent")
 import cv2, numpy as np, pymupdf as fitz
 from PIL import Image, ImageDraw, ImageFont
 import vec, measure as M  # lab/modern's vec: lab/walls has its own, so this import must come before routelib
 import draw, routelib as RL
 
 SEED = 20261031
-ROOT = Path("/Users/tsharma/Github/Meta")
+ROOT = Path(".")
 A = ROOT / "data/lab/audit"; MINE = ROOT / "data/lab/agent/mine"; CAND = ROOT / "data/lab/agent/cand"; CAND.mkdir(parents=True, exist_ok=True)
 STAIR_T = "Storey's stair tracker placed the magenta box on this floor plan. Claim: a staircase is drawn inside the box on this floor."
 ROUTE_T = "The magenta line is Storey's travel route from the green dot to the blue dot, measured as {m} m. Claim: the whole route stays on walkable floor. It leaves each room only through a doorway and crosses no wall."

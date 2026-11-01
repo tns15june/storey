@@ -1,7 +1,7 @@
 """L7 for sheet c162 only, with an empty model answer retried once and counted. Writes to data/lab/audit2."""
 import json, sys
 from concurrent.futures import ThreadPoolExecutor
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab"); sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/declared")
+sys.path.insert(0, "lab"); sys.path.insert(0, "lab/declared")
 import metalab as m
 import read_spark as RS
 SID, k, want = "nibs_clinic", "c162", 294
@@ -32,5 +32,5 @@ for run in (0, 1):
     res[run] = dict(sum=sum(q[3] for q in kept), want=want, raw_sum=raw, kept=kept)
     print(k, "read", run, "half-sheet sum", sum(q[3] for q in kept), "want", want, "raw", raw, "kept", kept, flush=True)
 print("empty answers", empties)
-json.dump(dict(res=res, empties=empties), open("/Users/tsharma/Github/Meta/data/lab/audit2/L7_exit162.json", "w"), indent=1)
+json.dump(dict(res=res, empties=empties), open("data/lab/audit2/L7_exit162.json", "w"), indent=1)
 print("spent", round(m.spent("audit2"), 4))

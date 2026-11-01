@@ -1,6 +1,6 @@
 """E1: title-block reading sweep. Usage: e1_meta.py sweep | wide | repeat"""
 import sys
-sys.path.insert(0, '/Users/tsharma/Github/Meta/lab/bakeoff')
+sys.path.insert(0, 'lab/bakeoff')
 from common import *  # noqa
 import truth_meta as tm
 

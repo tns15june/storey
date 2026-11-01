@@ -1,5 +1,5 @@
 """For sheets where the plan is a small panel: Spark finds the plan panel, crop it from a 2.5x render, align crops. Replaces that building's frames."""
-import sys; sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/seed"); sys.path.insert(0, "/Users/tsharma/Github/Meta/lab")
+import sys; sys.path.insert(0, "lab/seed"); sys.path.insert(0, "lab")
 from common import *
 import metalab as m
 from seed_spark import SCHEMA, TAIL

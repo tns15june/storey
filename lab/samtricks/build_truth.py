@@ -7,7 +7,7 @@ import time
 import warnings
 
 warnings.filterwarnings("ignore")
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/samtricks")
+sys.path.insert(0, "lab/samtricks")
 import fitz  # noqa: E402
 
 import reg  # noqa: E402

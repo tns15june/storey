@@ -3,7 +3,7 @@ import sys
 
 import cv2
 
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/samtricks")
+sys.path.insert(0, "lab/samtricks")
 import reg
 
 

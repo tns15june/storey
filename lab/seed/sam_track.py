@@ -1,6 +1,6 @@
 """SAM video tracking of Spark seeds through a floor stack, with padding and refinement variants. Cached per run.
 Usage: sam_track.py matrix"""
-import sys; sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/seed"); sys.path.insert(0, "/Users/tsharma/Github/Meta/lab")
+import sys; sys.path.insert(0, "lab/seed"); sys.path.insert(0, "lab")
 from common import *
 from concurrent.futures import ThreadPoolExecutor
 import metalab as m

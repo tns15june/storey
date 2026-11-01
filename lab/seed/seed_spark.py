@@ -1,5 +1,5 @@
 """Spark finds staircases on every floor of every building. Cached per call. Usage: seed_spark.py variant [buildings]"""
-import sys; sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/seed"); sys.path.insert(0, "/Users/tsharma/Github/Meta/lab")
+import sys; sys.path.insert(0, "lab/seed"); sys.path.insert(0, "lab")
 from common import *
 from concurrent.futures import ThreadPoolExecutor
 import metalab as m

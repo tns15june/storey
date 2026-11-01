@@ -5,8 +5,8 @@ from concurrent.futures import ThreadPoolExecutor
 
 import numpy as np
 
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/presence")
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/audit2")
+sys.path.insert(0, "lab/presence")
+sys.path.insert(0, "lab/audit2")
 import pres
 from pres import OUT, SH, T, TRUTH, box_dist
 import cells as C

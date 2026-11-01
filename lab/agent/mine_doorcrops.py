@@ -1,7 +1,7 @@
 import json, sys
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/modern"); sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/agent")
+sys.path.insert(0, "lab/modern"); sys.path.insert(0, "lab/agent")
 import cv2, numpy as np, draw, vec
-O = "/Users/tsharma/Github/Meta/data/lab/agent/mine/"
+O = "data/lab/agent/mine/"
 d = json.load(open(O + "doors.json"))
 for r in d:
     pg = vec.open_page(r["id"], r["file"], r["page"])

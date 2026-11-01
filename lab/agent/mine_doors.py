@@ -1,10 +1,10 @@
 """Door tags and arcs on Capitol and Baxter sheets, from lab/modern code. Saves pairs with tag positions and contact crops. No API."""
 import json, math, sys
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/modern"); sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/agent")
+sys.path.insert(0, "lab/modern"); sys.path.insert(0, "lab/agent")
 import numpy as np, pymupdf as fitz, cv2
 from scipy.optimize import linear_sum_assignment
 import vec, measure as M, doors as D, draw
-O = "/Users/tsharma/Github/Meta/data/lab/agent/mine/"
+O = "data/lab/agent/mine/"
 res = []
 for id in ("mml_capitol", "mml_baxter"):
     for f in M.CAT[id]["floors"]:

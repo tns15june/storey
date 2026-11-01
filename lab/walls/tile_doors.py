@@ -1,11 +1,11 @@
 """Spark door boxes on zoomed tiles, then carve them into the blocker mask. CubiCasa test plans. usage: tile_doors.py n"""
 import json, os, sys
 from concurrent.futures import ThreadPoolExecutor
-sys.path.insert(0, '/Users/tsharma/Github/Meta/lab'); sys.path.insert(0, '/Users/tsharma/Github/Meta/lab/walls')
+sys.path.insert(0, 'lab'); sys.path.insert(0, 'lab/walls')
 import cv2, numpy as np
 import metalab as m
 import cc, plan as P, score as S
-OUT = '/Users/tsharma/Github/Meta/data/lab/walls/tiles/'
+OUT = 'data/lab/walls/tiles/'
 os.makedirs(OUT, exist_ok=True)
 INT = {'type': 'integer'}
 SC = {'type': 'object', 'additionalProperties': False, 'required': ['doors'], 'properties': {'doors': {'type': 'array', 'items': {'type': 'object', 'additionalProperties': False, 'required': ['box'], 'properties': {'box': {'type': 'array', 'items': INT}}}}}}

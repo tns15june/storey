@@ -1,8 +1,8 @@
 """Classical walkable mask on scanned and raster sheets. u is a door width in pixels, set by eye from the sheet. usage: scans.py"""
 import sys, json
-sys.path.insert(0, '/Users/tsharma/Github/Meta/lab/walls')
+sys.path.insert(0, 'lab/walls')
 import cv2, fitz, numpy as np, plan as P, vec
-D = '/Users/tsharma/Github/Meta/data/plans/'; O = '/Users/tsharma/Github/Meta/data/lab/walls/'
+D = 'data/plans/'; O = 'data/lab/walls/'
 def load(k):
     if k == 'af_ces_admin':
         return vec.render(fitz.open(D + 'af_ces_admin/CES_SD_drawings_admin_bldg.pdf')[1], 150)

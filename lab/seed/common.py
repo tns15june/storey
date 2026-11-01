@@ -5,7 +5,7 @@ import cv2, numpy as np
 warnings.filterwarnings("ignore")
 import fitz
 
-ROOT = Path("/Users/tsharma/Github/Meta")
+ROOT = Path(".")
 OUT = ROOT / "data/lab/seed"
 PLANS = ROOT / "data/plans"
 W = 2000

@@ -1,7 +1,7 @@
 """Print the case ids for overlays I want to read, and what the D04 row data said. No API."""
 import json
 from pathlib import Path
-D = Path("/Users/tsharma/Github/Meta/data/lab/agent")
+D = Path("data/lab/agent")
 C = json.load(open(D / "truth.json"))["cases"]
 cases = {c["id"]: c for c in json.load(open(D / "cases.json"))}
 want = ("door_good_6", "door_good_4", "route_good_1_8", "door_bad_1", "value_agree_0")

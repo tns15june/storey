@@ -1,7 +1,7 @@
 """Remaining no-API checks. Run with -I."""
 import glob, hashlib, json, os, sys
 import numpy as np
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/audit2")
+sys.path.insert(0, "lab/audit2")
 import rescore_tightseed as S
 R = S.R
 # Spark verdict veto on loose and snap
@@ -21,7 +21,7 @@ def vetoed(me):
 for me in ("loose_960", "snap_960"):
     print("Spark verdict veto", me, vetoed(me))
 # Round 1 misalignment and seed centre error
-A = json.load(open("/Users/tsharma/Github/Meta/lab/audit/truth.json"))
+A = json.load(open("lab/audit/truth.json"))
 for b, k in (("wfu_huffman", "central"), ("habs_va_bldg1", "west"), ("habs_va_bldg1", "central")):
     c = np.array([[(x[0] + x[2]) / 2, (x[1] + x[3]) / 2] for x in A[b][k]["boxes"].values()]) if isinstance(A[b][k], dict) and "boxes" in A[b][k] else None
     if c is not None:
@@ -43,7 +43,7 @@ for st in S.HELD + ["bme_f", "habs_stelizabeths_center", "mml_capitol"]:
                 errs.setdefault(st, []).append(best[1:])
 print("Spark box centre error, median abs px", {k: (round(float(np.median(np.abs(np.array(v)[:, 0])))), round(float(np.median(np.abs(np.array(v)[:, 1])))), len(v)) for k, v in errs.items()}, "n", sum(len(v) for v in errs.values()))
 # presence gate count, order, cost
-O = "/Users/tsharma/Github/Meta/data/lab/presence/"
+O = "data/lab/presence/"
 n = p = 0; low = []
 for f in glob.glob(O + "align/*.json"):
     d = json.load(open(f)); b = os.path.basename(f)[:-5]
@@ -60,7 +60,7 @@ bad = [b for b in J if [sp[f"joint/{b}"]["shown"][q - 1] for q in sp[f"joint/{b}
 print("joint orders", len(J))
 print("buildings whose joint order differs from index order:", bad)
 cost = {}
-T = json.load(open("/Users/tsharma/Github/Meta/lab/presence/truth.json"))["buildings"]
+T = json.load(open("lab/presence/truth.json"))["buildings"]
 for b, t in T.items():
     if t["split"] == "heldout":
         E = json.load(open(O + f"cells/{b}.json"))
@@ -68,7 +68,7 @@ for b, t in T.items():
         cost[b] = (round(E["compare_usd"], 3), round(E["crop_usd"], 3), round(sh, 3), E["crops"])
 print("cost per held-out building compare, crops, sheets, ncrops", cost, "mean", round(np.mean([sum(v[:3]) for v in cost.values()]), 3))
 # declared frozen code hashes
-st = json.load(open("/Users/tsharma/Github/Meta/data/lab/declared/stamps.json"))["v2_frozen_before_held_out"]
+st = json.load(open("data/lab/declared/stamps.json"))["v2_frozen_before_held_out"]
 for k, v in st.items():
     if isinstance(v, dict):
-        print(k, "same" if hashlib.sha256(open("/Users/tsharma/Github/Meta/" + k, "rb").read()).hexdigest() == v["sha256"] else "CHANGED")
+        print(k, "same" if hashlib.sha256(open("" + k, "rb").read()).hexdigest() == v["sha256"] else "CHANGED")

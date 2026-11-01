@@ -1,6 +1,6 @@
 """Render D04 and two neighbouring rows through the agent's own view tool, into audit2. No API."""
 import sys
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab"); sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/agent")
+sys.path.insert(0, "lab"); sys.path.insert(0, "lab/agent")
 import cv2
 import fixture as F
 cls = [v for k, v in vars(F).items() if isinstance(v, type) and hasattr(v, "view_sheet")][0]
@@ -14,4 +14,4 @@ for rid, c in (("D04", [655, 311, 733, 406]), ("D08", [756, 394, 820, 487])):
     print(n, im.shape)
     r = next(x for x in t.dims if x["id"] == rid)
     print({k: v for k, v in r.items()})
-    cv2.imwrite(f"/Users/tsharma/Github/Meta/data/lab/audit2/agent_{rid}.png", im)
+    cv2.imwrite(f"data/lab/audit2/agent_{rid}.png", im)

@@ -1,9 +1,9 @@
 """Overlays of the real route crossings on the drawing. No API."""
 import json, sys
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/agent")
+sys.path.insert(0, "lab/agent")
 from routelib import *
 import draw, pymupdf as fitz
-O = "/Users/tsharma/Github/Meta/data/lab/agent/mine/"
+O = "data/lab/agent/mine/"
 res = json.load(open(O + "routes.json"))
 fl = 1
 pg = fitz.open(K.D + SHEET[fl])[0]

@@ -1,6 +1,6 @@
 """Contact sheets of every SAM box at conf>=.5 that does not sit on a truth stair, for labelling by eye. No API."""
 import json, sys
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/seed")
+sys.path.insert(0, "lab/seed")
 from common import *
 A = ROOT / "data/lab/audit"; O = ROOT / "data/lab/agent/mine"; O.mkdir(parents=True, exist_ok=True)
 T = json.load(open(ROOT / "lab/audit/truth.json")); NF = {"habs_va_bldg1": 5, "bme_k": 4, "wfu_huffman": 4}

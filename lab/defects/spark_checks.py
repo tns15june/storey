@@ -1,6 +1,6 @@
 """Spark as the second reader for what tracks cannot prove. Crops are shuffled and carry no hint of the plant. Each check has clean controls."""
 import sys, random, re
-sys.path.insert(0, '/Users/tsharma/Github/Meta/lab/defects')
+sys.path.insert(0, 'lab/defects')
 from suite import *
 
 ANS = {"type": "object", "additionalProperties": False, "required": ["answer", "reason"], "properties": {"answer": {"type": "string", "enum": ["yes", "no"]}, "reason": {"type": "string"}}}

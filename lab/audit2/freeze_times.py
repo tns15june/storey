@@ -2,7 +2,7 @@
 import glob, json, os, datetime as dt
 ts = lambda s: dt.datetime.fromisoformat("2026-10-31T" + s).timestamp()
 iso = lambda t: dt.datetime.fromtimestamp(t).strftime("%H:%M:%S")
-ROOT = "/Users/tsharma/Github/Meta/"
+ROOT = ""
 def earliest(pats):
     fs = [f for p in pats for f in glob.glob(ROOT + p)]
     fs = [(os.stat(f).st_mtime, f.replace(ROOT, "")) for f in fs]

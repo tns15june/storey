@@ -4,11 +4,11 @@ Run: env LAB_NAME=agent LAB_BUDGET=5 LAB_TOTAL=75 .venv/bin/python lab/agent/let
 """
 import json, re, sys
 from pathlib import Path
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab"); sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/agent")
+sys.path.insert(0, "lab"); sys.path.insert(0, "lab/agent")
 import metalab as m
 import letter_data as L
 
-D = Path("/Users/tsharma/Github/Meta/data/lab/agent/letters"); D.mkdir(exist_ok=True)
+D = Path("data/lab/agent/letters"); D.mkdir(exist_ok=True)
 SRC = json.dumps(L.FINDINGS) + " " + json.dumps(L.HEADER)
 NUM = re.compile(r"\d+(?:\.\d+)*")
 SHEET = re.compile(r"\b[A-Z]\d{0,2}[-.]\d+(?:\.\d+)?\b")

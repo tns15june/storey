@@ -3,7 +3,7 @@
 Run: .venv/bin/python -I lab/modern/doors.py
 """
 import json, math, sys
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/modern")
+sys.path.insert(0, "lab/modern")
 import numpy as np, pymupdf as fitz
 from scipy.optimize import linear_sum_assignment
 import vec, measure as M

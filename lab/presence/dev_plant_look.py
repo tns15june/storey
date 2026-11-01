@@ -1,7 +1,7 @@
 """Dev only, no API. For each planted cell in the dev stacks: votes in the row at that place, and the ink ratio at two box sizes."""
 import sys
 
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/presence")
+sys.path.insert(0, "lab/presence")
 import numpy as np
 
 import cells as C

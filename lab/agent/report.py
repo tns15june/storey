@@ -1,7 +1,7 @@
 """Per-case verdicts for every config, same-subset scores and reasons. No API."""
 import json, math, sys
 from pathlib import Path
-D = Path("/Users/tsharma/Github/Meta/data/lab/agent")
+D = Path("data/lab/agent")
 T = json.load(open(D / "truth.json"))["cases"]
 CF = ["spark_low", "spark_medium", "wonder_low", "wonder_medium", "spark_low_blind"]
 R = {c: {p.stem: json.load(open(p)) for p in (D / "runs" / c).glob("case_*.json")} for c in CF}

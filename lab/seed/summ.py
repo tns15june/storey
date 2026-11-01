@@ -1,5 +1,5 @@
 """Pair-level comparison of SAM tracking, Spark per-sheet, and their agreement. No API calls."""
-import sys, glob; sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/seed")
+import sys, glob; sys.path.insert(0, "lab/seed")
 from common import *
 out = {}
 for var in sys.argv[1:] or ["doc", "plan_low"]:

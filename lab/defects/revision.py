@@ -1,6 +1,6 @@
 """Revision test: cycle 1 sheet followed by the same sheet re-scanned with a known change. Which items changed? Compared with a registered pixel diff."""
 import sys
-sys.path.insert(0, '/Users/tsharma/Github/Meta/lab/defects')
+sys.path.insert(0, 'lab/defects')
 from suite import *
 
 REPL = 4

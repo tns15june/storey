@@ -1,6 +1,6 @@
 #!/bin/sh
 # Reproduces every number. Tracks and runs are cached in data/lab/defects, so a rerun is free; delete tracks/ and runs*/ to pay about 5.80 USD again.
-cd /Users/tsharma/Github/Meta
+cd "$(dirname "$0")/../.." || exit 1
 export LAB_NAME=defects LAB_BUDGET=6 LAB_TOTAL=60
 P=.venv/bin/python
 $P lab/defects/plant.py && $P lab/defects/rules.py

@@ -1,5 +1,5 @@
 """Audit: for door leaves the detector missed, is there a drawn arc nearby that matching rejected? And do Spark 'false' points sit on those same doors? No API."""
-import sys, json; sys.path.insert(0,'/Users/tsharma/Github/Meta/lab/doors')
+import sys, json; sys.path.insert(0,'lab/doors')
 import numpy as np, key as K
 from vector_eval import midpoint, match_arcs, TOL_MID, footprint, in_box, quarter
 for tag in K.SHEETS:

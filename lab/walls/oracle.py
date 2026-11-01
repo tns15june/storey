@@ -1,6 +1,6 @@
 """What if door locations were perfect? Carve GT door polygons into each blocking mask. No API calls. usage: oracle.py split n"""
 import json, sys
-sys.path.insert(0, '/Users/tsharma/Github/Meta/lab/walls')
+sys.path.insert(0, 'lab/walls')
 import multiprocessing as mp
 import cv2, numpy as np
 import cc, plan as P, score as S

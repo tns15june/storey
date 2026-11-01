@@ -1,6 +1,6 @@
 """POST HOC, dev only: why seeds miss and two ways to fix it. P1 SAM text concept on a zoomed crop; P2 Spark on a zoomed crop asking for the whole stair, two rounds. Also centre error of Spark's one-call list."""
 import sys
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/tightseed")
+sys.path.insert(0, "lab/tightseed")
 from core import *
 import dev1, seeds as sd
 

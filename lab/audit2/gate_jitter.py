@@ -3,8 +3,8 @@ For each non-reference floor of the presence held-out buildings: jitter both pla
 A false pass is a fit at or over the gate of 25 inliers that lands more than 40 px from the frozen fit, on a floor whose frozen fit is good. Also reproduces tightseed's wfu f3 case."""
 import json, sys, time
 import numpy as np, cv2
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/presence")
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/tightseed")
+sys.path.insert(0, "lab/presence")
+sys.path.insert(0, "lab/tightseed")
 import pres
 from pres import T, GATE, reg, ctr
 pres.load_spark()
@@ -33,7 +33,7 @@ for b in pres.HELD + ["bme_f", "habs_stelizabeths_center", "mml_capitol"]:
                 dev = float(np.max(np.hypot(*(reg.apply(H, q) - reg.apply(H0, q)).T))) if q else None
                 res.append(dict(b=b, f=f, level=level, k=k, inliers=inl, frozen_inliers=A[f]["inliers"], frozen_aligned=A[f]["aligned"], passed=bool(inl is not None and inl >= GATE), dev_px=None if dev is None else round(dev, 1), s=round(time.time() - t, 1)))
                 print(res[-1], flush=True)
-                json.dump(res, open("/Users/tsharma/Github/Meta/data/lab/audit2/gate_jitter.json", "w"), indent=0)
+                json.dump(res, open("data/lab/audit2/gate_jitter.json", "w"), indent=0)
 import stacks as st
 AUD = st.AUD
 ims = [cv2.imread(str(AUD / "wfu_huffman" / f"f{i}.png")) for i in range(4)]

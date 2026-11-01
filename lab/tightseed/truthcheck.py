@@ -1,6 +1,6 @@
 """Every new truth box on its frame, to catch label slips before the first model call. No API."""
 import sys, json
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/tightseed")
+sys.path.insert(0, "lab/tightseed")
 import numpy as np, cv2, vis
 T = json.load(open(vis.ROOT / "data/lab/tightseed/truth.json"))
 for name, zoom in (("queens_royce1", 3), ("leonard4", 2.5)):

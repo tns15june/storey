@@ -1,10 +1,10 @@
 """All methods on the same 22 CubiCasa test plans. Uses cached Spark and SAM results only, no API calls."""
 import json, os, sys
-sys.path.insert(0, '/Users/tsharma/Github/Meta/lab/walls')
+sys.path.insert(0, 'lab/walls')
 import multiprocessing as mp
 import cv2, numpy as np
 import cc, plan as P, score as S
-SP = '/Users/tsharma/Github/Meta/data/lab/walls/spark/'; SM = '/Users/tsharma/Github/Meta/data/lab/walls/sam/'
+SP = 'data/lab/walls/spark/'; SM = 'data/lab/walls/sam/'
 KW = dict(dbl_k=0.08)
 
 
@@ -75,5 +75,5 @@ if __name__ == '__main__':
         tab[k] = S.summary([r[k] for r in rs])
         print(k, json.dumps(tab[k]))
     print('cand', [r['d_classical_arcs_sparkgate']['cand'] for r in rs][:8])
-    json.dump(tab, open('/Users/tsharma/Github/Meta/data/lab/walls/models22.json', 'w'), indent=1)
-    json.dump(rs, open('/Users/tsharma/Github/Meta/data/lab/walls/models22_plans.json', 'w'))
+    json.dump(tab, open('data/lab/walls/models22.json', 'w'), indent=1)
+    json.dump(rs, open('data/lab/walls/models22_plans.json', 'w'))

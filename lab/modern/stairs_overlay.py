@@ -1,6 +1,6 @@
 """Detect stair runs on each floor of each set from vector lines alone and draw them on the 150 DPI render."""
 import json, sys, time
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/modern")
+sys.path.insert(0, "lab/modern")
 import cv2, numpy as np, pymupdf as fitz
 import vec
 ROOT = vec.ROOT

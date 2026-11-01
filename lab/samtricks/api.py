@@ -10,8 +10,8 @@ from pathlib import Path
 import cv2
 import numpy as np
 
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab")
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/samtricks")
+sys.path.insert(0, "lab")
+sys.path.insert(0, "lab/samtricks")
 import metalab as m  # noqa: E402
 import reg  # noqa: E402
 

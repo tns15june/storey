@@ -1,6 +1,6 @@
 """Plant defects by editing ink, never by pasting flat boxes: paper grain outside the ink stays untouched."""
 import sys
-sys.path.insert(0, '/Users/tsharma/Github/Meta/lab/defects')
+sys.path.insert(0, 'lab/defects')
 from common import *
 
 

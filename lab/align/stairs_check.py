@@ -5,7 +5,7 @@ import sys
 import cv2
 import numpy as np
 
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/align")
+sys.path.insert(0, "lab/align")
 import reg
 
 H = json.load(open(reg.OUT / "H_blocks.json"))

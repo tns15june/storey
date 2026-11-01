@@ -1,5 +1,5 @@
 """Score Spark boxes per sheet against truth and draw overlays. No API calls. Usage: score_spark.py variant"""
-import sys; sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/seed")
+import sys; sys.path.insert(0, "lab/seed")
 from common import *
 var = sys.argv[1]
 tot = {}

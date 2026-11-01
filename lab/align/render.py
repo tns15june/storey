@@ -6,7 +6,7 @@ import cv2
 import fitz
 import numpy as np
 
-ROOT = Path("/Users/tsharma/Github/Meta")
+ROOT = Path(".")
 OUT = ROOT / "data/lab/align/sheets"
 PICK = ["bme_f", "bme_k", "schenley", "habs_stelizabeths_center", "habs_stelizabeths_atkins", "habs_va_bldg1",
         "mml_capitol", "mml_baxter", "wfu_efird", "nibs_clinic"]

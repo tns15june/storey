@@ -1,6 +1,6 @@
 """Reading accuracy with no model call: Spark reads against the hand truth and the clinic file names. Writes data/lab/declared/read_acc.json."""
 import json, re, sys
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/declared")
+sys.path.insert(0, "lab/declared")
 import read_spark as RS
 import rules as R
 import posthoc as P

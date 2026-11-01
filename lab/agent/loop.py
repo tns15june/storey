@@ -3,7 +3,7 @@
 tool_choice accepts only auto, so a run ends when the model stops calling tools or a cap is hit. Findings come from file_finding tool records in code, never from prose.
 """
 import json, sys, time
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab")
+sys.path.insert(0, "lab")
 import metalab as m
 
 

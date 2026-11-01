@@ -1,6 +1,6 @@
 """Wall segments from any pen: long segments with a parallel partner at wall thickness."""
 import sys
-sys.path.insert(0, '/Users/tsharma/Github/Meta/lab/walls')
+sys.path.insert(0, 'lab/walls')
 import numpy as np
 
 

@@ -1,6 +1,6 @@
 """Prints the tables used in the report and writes data/lab/declared/final.json. No model."""
 import collections, json, sys
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/declared")
+sys.path.insert(0, "lab/declared")
 import rules as R
 OUT = R.__file__.replace("lab/declared/rules.py", "data/lab/declared/")
 v2 = json.load(open(OUT + "yield_v2.json"))

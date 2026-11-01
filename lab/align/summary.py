@@ -6,8 +6,8 @@ import sys
 
 import numpy as np
 
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab")
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/align")
+sys.path.insert(0, "lab")
+sys.path.insert(0, "lab/align")
 import reg
 import stack_sam as ss
 

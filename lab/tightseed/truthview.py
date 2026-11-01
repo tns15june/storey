@@ -1,6 +1,6 @@
 """Show audit truth boxes warped into tightseed frames, to check they sit on treads. No API."""
 import sys, json
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/tightseed"); sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/align")
+sys.path.insert(0, "lab/tightseed"); sys.path.insert(0, "lab/align")
 import numpy as np, cv2, reg, vis
 ROOT = vis.ROOT
 AT = json.load(open(ROOT / "lab/audit/truth.json"))

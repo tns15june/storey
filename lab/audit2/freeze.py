@@ -1,8 +1,8 @@
 """Freeze the audit's live tests before any audit2 model call. No API."""
 import hashlib, json, time
 from pathlib import Path
-A = Path("/Users/tsharma/Github/Meta/data/lab/audit2")
-L = [json.loads(x) for x in open("/Users/tsharma/Github/Meta/data/lab/ledger.jsonl") if x.strip()]
+A = Path("data/lab/audit2")
+L = [json.loads(x) for x in open("data/lab/ledger.jsonl") if x.strip()]
 assert not [r for r in L if r["name"] == "audit2"], "audit2 already called a model"
 rule = {
  "written": time.strftime("%Y-%m-%d %H:%M:%S %z"),

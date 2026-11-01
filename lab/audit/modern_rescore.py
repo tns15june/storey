@@ -1,6 +1,6 @@
 """Audit: recount modern tracker claims and a no-model baseline. No API."""
 import json
-B='/Users/tsharma/Github/Meta/data/lab/modern/'
+B='data/lab/modern/'
 T=json.load(open(B+'track.json'));T2=json.load(open(B+'track2.json'));T3=json.load(open(B+'track3.json'))
 for name,tt in (('track',T),('track2',T2),('track3',T3)):
     for r in tt:

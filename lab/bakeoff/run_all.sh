@@ -1,7 +1,7 @@
 #!/bin/sh
 # Finished calls are cached in data/lab/bakeoff/runs.jsonl, so this spends only on what is missing.
 # report.py alone recomputes every number with no API call.
-cd /Users/tsharma/Github/Meta
+cd "$(dirname "$0")/../.." || exit 1
 export LAB_NAME=bakeoff LAB_BUDGET=${LAB_BUDGET:-8} LAB_TOTAL=${LAB_TOTAL:-60}
 PY=".venv/bin/python -I"
 $PY lab/bakeoff/truth_meta.py

@@ -1,6 +1,6 @@
 """Write data/plans/catalog.json and check that every floor entry points at a real file and page.
 
-Run: /Users/tsharma/Github/Meta/.venv/bin/python -I lab/gather_data/build_catalog.py
+Run: .venv/bin/python -I lab/gather_data/build_catalog.py
 page is 0-based. public_demo is yes, ask or no, and is my reading of the license text, not legal advice.
 """
 import json

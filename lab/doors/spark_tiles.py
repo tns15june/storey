@@ -4,7 +4,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 import cv2, fitz, numpy as np
 from scipy.optimize import linear_sum_assignment
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab"); sys.path.insert(0, str(Path(__file__).parent))
+sys.path.insert(0, "lab"); sys.path.insert(0, str(Path(__file__).parent))
 import metalab as m
 import key as K
 

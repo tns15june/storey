@@ -1,6 +1,6 @@
 #!/bin/sh
 # Reproduces every number. Spark and SAM results are cached under data/lab/walls, so a rerun spends nothing.
-cd /Users/tsharma/Github/Meta
+cd "$(dirname "$0")/../.." || exit 1
 PY=".venv/bin/python -I -W ignore"
 export LAB_NAME=walls LAB_BUDGET=6 LAB_TOTAL=60
 (cd lab/walls && ../../.venv/bin/python -I plan.py && ../../.venv/bin/python -I dbl.py) || exit 1

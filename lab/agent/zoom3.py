@@ -1,9 +1,9 @@
 """Every place a good route goes between IFC spaces, zoomed on the sheet, to check the labels the models disputed. No API."""
 import json, sys
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/agent")
+sys.path.insert(0, "lab/agent")
 from routelib import *
 import pymupdf as fitz
-O = "/Users/tsharma/Github/Meta/data/lab/agent/mine/"
+O = "data/lab/agent/mine/"
 res = json.load(open(O + "routes.json"))
 ims = []
 for fl, room in ((1, 8), (1, 29), (2, 8), (2, 55)):
@@ -36,12 +36,12 @@ for i in range(0, len(rows), 3):
     cv2.imwrite(O + f"zoom3_{i // 3}.jpg", np.vstack(rows[i:i + 3]), [cv2.IMWRITE_JPEG_QUALITY, 86])
 print(len(ims))
 # the number in value_agree_0 and the small stair in stair_good_bme__14_0
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/modern")
+sys.path.insert(0, "lab/modern")
 pg = fitz.open(K.D + "2012-03-27-ClinicRedactedDrawings/Clinic_055_First Floor Plan Block 1C.pdf")[0]
 x, y = 1780.5, 747.4; R = 32; sc = 16
 pm = pg.get_pixmap(matrix=fitz.Matrix(sc, sc), clip=fitz.Rect(x - 18, y - R, x + 18, y + R), alpha=False)
 im = np.frombuffer(pm.samples, np.uint8).reshape(pm.height, pm.width, pm.n)[:, :, ::-1].copy()
 cv2.imwrite(O + "zoom_2430.png", cv2.rotate(im, cv2.ROTATE_90_CLOCKWISE))
-im = cv2.imread("/Users/tsharma/Github/Meta/data/lab/audit/bme_k/f0.png")
+im = cv2.imread("data/lab/audit/bme_k/f0.png")
 c = im[770:870, 780:880]
 cv2.imwrite(O + "zoom_curve.png", cv2.resize(c, None, fx=7, fy=7, interpolation=cv2.INTER_CUBIC))

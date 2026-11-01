@@ -1,6 +1,6 @@
 """Throwaway viewer: crop in 0-1000 sheet coordinates with a labelled grid, to set truth by eye."""
 import sys, cv2
-sys.path.insert(0, '/Users/tsharma/Github/Meta/lab/bakeoff')
+sys.path.insert(0, 'lab/bakeoff')
 import sheets as s
 def crop(key, x0, y0, x1, y1, name, step=50, px=6000, width=1500):
     im = s.full(key, px); h, w = im.shape[:2]

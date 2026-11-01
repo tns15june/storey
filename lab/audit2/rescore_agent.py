@@ -1,7 +1,7 @@
 """Independent rescore of the agent test bed from cached answers. No API, imports nothing from lab/agent. Run with -I."""
 import json, math
 from pathlib import Path
-D = Path("/Users/tsharma/Github/Meta/data/lab/agent")
+D = Path("data/lab/agent")
 T = json.load(open(D / "truth.json"))
 print({k: (str(v)[:160]) for k, v in T.items() if k.startswith("_") and k != "_rule"})
 C = T["cases"]

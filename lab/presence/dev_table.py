@@ -3,7 +3,7 @@ import json
 import sys
 from collections import Counter
 
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/presence")
+sys.path.insert(0, "lab/presence")
 import pres
 from pres import OUT, T
 import score as S

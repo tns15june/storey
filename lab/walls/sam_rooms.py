@@ -1,11 +1,11 @@
 """Spark box to SAM box prompt, on the raw drawing and on a cleaned drawing. Cached. usage: sam_rooms.py n"""
 import json, os, sys
 from concurrent.futures import ThreadPoolExecutor
-sys.path.insert(0, '/Users/tsharma/Github/Meta/lab'); sys.path.insert(0, '/Users/tsharma/Github/Meta/lab/walls')
+sys.path.insert(0, 'lab'); sys.path.insert(0, 'lab/walls')
 import cv2, numpy as np
 import metalab as m
 import cc, plan as P, score as S, ask_spark as A
-OUT = '/Users/tsharma/Github/Meta/data/lab/walls/sam/'
+OUT = 'data/lab/walls/sam/'
 os.makedirs(OUT, exist_ok=True)
 
 

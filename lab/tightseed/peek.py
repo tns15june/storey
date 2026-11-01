@@ -2,7 +2,7 @@
 import sys, json
 import fitz, cv2, numpy as np
 from pathlib import Path
-ROOT = Path("/Users/tsharma/Github/Meta"); OUT = ROOT / "data/lab/tightseed/raw"
+ROOT = Path("."); OUT = ROOT / "data/lab/tightseed/raw"
 CAT = {x["id"]: x for x in json.load(open(ROOT / "data/plans/catalog.json"))}
 for bid in ("queens_leonard", "queens_royce", "mml_abbot"):
     print(bid, CAT[bid]["floors"])

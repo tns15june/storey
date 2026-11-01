@@ -1,6 +1,6 @@
 """Cache arithmetic, no API: absent floors among seeded stairs, precision of SAM silence as an ending claim, and the second-opinion AND with Spark's one-call list."""
 import sys
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/tightseed")
+sys.path.insert(0, "lab/tightseed")
 from core import *
 import held_score as hs, floors as fl
 

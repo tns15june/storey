@@ -1,6 +1,6 @@
 """Architect's drawn travel paths on the life safety sheets against geodesic routes on the extracted walkable mask."""
 import json, sys
-sys.path.insert(0, '/Users/tsharma/Github/Meta/lab/walls')
+sys.path.insert(0, 'lab/walls')
 import cv2, fitz, numpy as np, vec, clinic_const as K
 from skimage.graph import MCP_Geometric
 from scipy import ndimage as ndi

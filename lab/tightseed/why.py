@@ -1,6 +1,6 @@
 """Why present floors fail, per method, and how far Spark's one-call centres sit from truth. No API."""
 import sys
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/tightseed")
+sys.path.insert(0, "lab/tightseed")
 from core import *
 for me in ("hand_960", "loose_960", "snap_960", "sparkcrop_960", "d_960"):
     c = dict(unseeded=0, nomask=0, lowconf=0, misplaced=0)

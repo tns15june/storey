@@ -1,6 +1,6 @@
 """Run classical method over a split in parallel. usage: classical.py split n [json param overrides]"""
 import json, sys, time
-sys.path.insert(0, '/Users/tsharma/Github/Meta/lab/walls')
+sys.path.insert(0, 'lab/walls')
 import multiprocessing as mp
 import numpy as np
 import cc, plan as P, score as S

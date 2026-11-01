@@ -1,6 +1,6 @@
 """Clinic routes: same router as lab/walls, plus a check of a polyline against the IFC truth mask. No API."""
 import json, sys
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/walls")
+sys.path.insert(0, "lab/walls")
 import cv2, numpy as np
 from scipy import ndimage as ndi
 from skimage.graph import MCP_Geometric

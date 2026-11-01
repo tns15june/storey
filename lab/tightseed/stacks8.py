@@ -2,7 +2,7 @@
 import warnings; warnings.filterwarnings("ignore")
 import json, sys
 import cv2, numpy as np
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/tightseed"); sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/align")
+sys.path.insert(0, "lab/tightseed"); sys.path.insert(0, "lab/align")
 import reg, stacks as st
 SP = json.load(open(reg.OUT / "spark_sheets.json"))
 name = "habs_va_bldg1"

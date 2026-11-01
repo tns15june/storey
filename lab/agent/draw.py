@@ -1,6 +1,6 @@
 """One renderer for every case, good or bad, so style carries no hint. Colours are BGR. No API."""
 import sys
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/agent")
+sys.path.insert(0, "lab/agent")
 import cv2, numpy as np, pymupdf as fitz
 MARK, START, END = (255, 0, 255), (0, 160, 0), (255, 0, 0)  # magenta marker, green start, blue end
 LONG = 1100

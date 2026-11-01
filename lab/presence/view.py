@@ -5,8 +5,8 @@ from pathlib import Path
 import cv2
 import numpy as np
 
-SH = Path("/Users/tsharma/Github/Meta/data/lab/presence/sheets")
-V = Path("/Users/tsharma/Github/Meta/data/lab/presence/truth_views")
+SH = Path("data/lab/presence/sheets")
+V = Path("data/lab/presence/truth_views")
 b, f = sys.argv[1], sys.argv[2]
 im = cv2.imread(str(SH / b / f"{f}.jpg"))
 h, w = im.shape[:2]

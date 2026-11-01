@@ -2,7 +2,7 @@
 import json
 import sys
 
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/samtricks")
+sys.path.insert(0, "lab/samtricks")
 import api as a  # noqa: E402
 import cv2  # noqa: E402
 import numpy as np  # noqa: E402

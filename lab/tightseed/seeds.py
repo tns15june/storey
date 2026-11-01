@@ -1,6 +1,6 @@
 """Seed recipes. Each returns one box per cluster on the cluster's seed floor, in stack px, with the loose box as fallback when the method finds nothing."""
 import sys
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/tightseed")
+sys.path.insert(0, "lab/tightseed")
 from core import *
 import tread
 

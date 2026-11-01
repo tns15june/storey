@@ -10,8 +10,8 @@ import sys
 import threading
 from concurrent.futures import ThreadPoolExecutor
 
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab")
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/declared")
+sys.path.insert(0, "lab")
+sys.path.insert(0, "lab/declared")
 import cv2  # noqa: E402
 import fitz  # noqa: E402
 import numpy as np  # noqa: E402

@@ -1,6 +1,6 @@
 #!/bin/sh
 # Rebuilds every number from cached Spark calls in data/lab/doors/spark. Uncached calls spend from the doors budget.
-cd /Users/tsharma/Github/Meta
+cd "$(dirname "$0")/../.." || exit 1
 export LAB_NAME=doors LAB_BUDGET=6 LAB_TOTAL=60
 P=.venv/bin/python
 for s in ifc_truth vector_eval; do $P -I lab/doors/$s.py; done

@@ -8,10 +8,10 @@ from pathlib import Path
 
 import cv2
 
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab")
+sys.path.insert(0, "lab")
 import metalab as m
 
-OUT = Path("/Users/tsharma/Github/Meta/data/lab/align")
+OUT = Path("data/lab/align")
 index = json.load(open(OUT / "sheets/index.json"))
 cache_path = OUT / "spark_sheets.json"
 cache = json.load(open(cache_path)) if cache_path.exists() else {}

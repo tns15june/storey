@@ -1,6 +1,6 @@
 """Dev only: snap grow setting, Spark crop seeds, then SAM on both. Thresholds chosen here get frozen in rule.json."""
 import sys
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/tightseed")
+sys.path.insert(0, "lab/tightseed")
 from core import *
 import dev1, seeds as sd, tread
 

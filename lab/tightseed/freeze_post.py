@@ -1,7 +1,7 @@
 """Freeze the post-hoc recipe before it touches the fresh stack. Refuses to overwrite."""
 import hashlib, json, time
 from pathlib import Path
-p = Path("/Users/tsharma/Github/Meta/data/lab/tightseed/rule_posthoc.json")
+p = Path("data/lab/tightseed/rule_posthoc.json")
 A = {
  "status": "POST HOC: chosen after held-out scores were seen. rule.json is unchanged and its scores are reported first.",
  "recipe_P": "Spark DOC boxes per floor, Round 1 cluster, medoid floor; then two rounds of zoomed Spark crops with post1.WHOLE_P: crop 3x box min side 300, then 1.8x the answer min side 200, long side 1000, zoom at most 5x; nearest box to the current centre; keep the last answer, or the current box if Spark returns nothing; SAM on the seed floor at 960, repeat 1, conf>=.5",

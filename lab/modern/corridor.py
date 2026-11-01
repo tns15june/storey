@@ -3,7 +3,7 @@
 Run: .venv/bin/python -I lab/modern/corridor.py
 """
 import json, sys
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/modern")
+sys.path.insert(0, "lab/modern")
 import numpy as np
 import vec
 

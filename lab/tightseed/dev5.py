@@ -1,6 +1,6 @@
 """Dev only: e2e tracks for snap and Spark crop seeds at 960, plus an overlay of the seed boxes on main stairs."""
 import sys
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/tightseed")
+sys.path.insert(0, "lab/tightseed")
 from core import *
 import dev1, seeds as sd, tread, vis
 

@@ -6,8 +6,8 @@ from pathlib import Path
 
 import numpy as np
 
-R = Path("/Users/tsharma/Github/Meta/data/lab/tightseed")
-OUT = Path("/Users/tsharma/Github/Meta/data/lab/audit2")
+R = Path("data/lab/tightseed")
+OUT = Path("data/lab/audit2")
 T = {k: v for k, v in json.load(open(R / "truth.json")).items() if not k.startswith("_")}
 FRESH = {k: v for k, v in json.load(open(R / "truth_fresh.json")).items() if not k.startswith("_")}
 ALL = {**T, **FRESH}

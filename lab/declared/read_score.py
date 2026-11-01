@@ -1,10 +1,10 @@
 """Score Spark reads against the hand truth in data/lab/declared/truth.json. No model calls."""
 import json, re, sys, collections
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/declared")
+sys.path.insert(0, "lab/declared")
 import read_spark as RS
 import rules as R
 import run as RN
-T = json.load(open("/Users/tsharma/Github/Meta/data/lab/declared/truth.json"))
+T = json.load(open("data/lab/declared/truth.json"))
 out = {}
 # clinic doors
 truth = {x.upper() for k in ("doors_079", "doors_080", "doors_081") for x in T["nibs_clinic"][k]}
@@ -36,7 +36,7 @@ for k, want in (("c161", T["nibs_clinic"]["exit_capacity_sum_161"]), ("c162", T[
     both, merged = RN.C.dedupe_markers(e)
     out[f"exits_{k}"] = dict(want_sum=want, raw_sum=[sum(x[3] for x in q) for q in e], dedup_sum=[sum(x[3] for x in q) for q in merged], both_sum=sum(x[3] for x in both), with_cap=[sum(1 for x in q if x[3]) for q in merged], total=[len(q) for q in merged], caps=[sorted(x[3] for x in q if x[3]) for q in merged])
 # title blocks against Round 1 truth
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/bakeoff")
+sys.path.insert(0, "lab/bakeoff")
 import truth_meta as tm
 import sheets as sh
 tb = RS.load("tbc/")

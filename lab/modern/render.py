@@ -3,7 +3,7 @@ import json, sys, time
 from pathlib import Path
 import pymupdf as fitz
 
-ROOT = Path("/Users/tsharma/Github/Meta")
+ROOT = Path(".")
 OUT = ROOT / "data/lab/modern/render"
 IDS = "nibs_clinic wfu_efird wfu_huffman mml_capitol mml_baxter mml_abbot carpinteria_adu1 usc_leconte brandeis_hall".split()
 

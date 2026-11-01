@@ -1,10 +1,10 @@
 """Does the wall-pen and arc recipe hold on the other vector sets? Pen table, arc count, overlay of the heaviest pen."""
 import sys, json
-sys.path.insert(0, '/Users/tsharma/Github/Meta/lab/walls')
+sys.path.insert(0, 'lab/walls')
 import collections
 import cv2, fitz, numpy as np, vec
-D = '/Users/tsharma/Github/Meta/data/plans/'
-O = '/Users/tsharma/Github/Meta/data/lab/walls/'
+D = 'data/plans/'
+O = 'data/lab/walls/'
 Q = 72 * 0.25 / 0.3048   # 1/4 in = 1 ft in points per metre
 SETS = {'mml_capitol': ('THE-CAPITOL.pdf', 3, Q), 'mml_baxter': (None, 3, Q), 'mml_abbot': (None, 3, Q), 'usc_leconte': ('USC_LeConte_Bid_Drawings.pdf', 2, Q), 'carpinteria_adu1': ('plan1.pdf', 7, Q), 'wfu_efird': ('Efird.pdf', 1, None), 'brandeis_hall': (None, 0, Q)}
 cat = {e['id']: e for e in json.load(open(D + 'catalog.json'))}

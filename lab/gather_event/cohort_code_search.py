@@ -4,7 +4,7 @@
 The repository search in cohort_search.py sees only name, description and topics, so it misses
 entries whose domain appears only in the README. This script searches file contents.
 
-Run: /Users/tsharma/Github/Meta/.venv/bin/python /Users/tsharma/Github/Meta/lab/gather_event/cohort_code_search.py
+Run: .venv/bin/python lab/gather_event/cohort_code_search.py
 Writes: data/lab/gather_event/cohort_code_hits.json and cohort_code_queries.tsv.
 """
 import json
@@ -13,7 +13,7 @@ import time
 import urllib.parse
 from pathlib import Path
 
-OUT = Path("/Users/tsharma/Github/Meta/data/lab/gather_event")
+OUT = Path("data/lab/gather_event")
 DOMAIN = ['"plan review"', '"plan check"', '"plan checker"', '"building code"', '"building permit"', '"permit review"',
           '"permit application"', '"floor plan"', '"floorplan"', '"blueprint"', 'egress', 'zoning', '"city hall"',
           '"fire code"', '"life safety"', '"architectural drawing"', '"construction drawings"', '"code compliance"',

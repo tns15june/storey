@@ -1,10 +1,10 @@
 """Can Spark pick the wall pens? One image per pen, ask which show cut walls. usage: pens.py"""
 import json, sys
-sys.path.insert(0, '/Users/tsharma/Github/Meta/lab'); sys.path.insert(0, '/Users/tsharma/Github/Meta/lab/walls')
+sys.path.insert(0, 'lab'); sys.path.insert(0, 'lab/walls')
 import cv2, fitz, numpy as np
 import metalab as m, vec
-D = '/Users/tsharma/Github/Meta/data/plans/'
-O = '/Users/tsharma/Github/Meta/data/lab/walls/'
+D = 'data/plans/'
+O = 'data/lab/walls/'
 SHEETS = {'clinic_f1': ('nibs_clinic/2012-03-27-ClinicRedactedDrawings/Clinic_052_Composite First Floor Plan.pdf', 0), 'clinic_f2': ('nibs_clinic/2012-03-27-ClinicRedactedDrawings/Clinic_059_Composite Second Floor Plan.pdf', 0), 'capitol': ('mml_capitol/THE-CAPITOL.pdf', 3), 'baxter': ('mml_baxter/THE-BAXTER.pdf', 3), 'leconte': ('usc_leconte/USC_LeConte_Bid_Drawings.pdf', 2)}
 SC = {'type': 'object', 'additionalProperties': False, 'required': ['wall_images'], 'properties': {'wall_images': {'type': 'array', 'items': {'type': 'integer'}}}}
 PR = 'Each numbered image shows the strokes of one pen from the same architectural floor plan sheet, in the same position. Images are numbered from 0 in the order given. Which images contain building walls drawn in plan, meaning long pairs of parallel lines that bound rooms and corridors? Include a pen if it draws any such walls, new or existing. Leave out pens that only draw text, grid lines, dimensions, furniture, fixtures, stairs or symbols. Return the image numbers.'

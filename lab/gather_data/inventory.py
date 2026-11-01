@@ -1,6 +1,6 @@
 """Measure every PDF under data/plans: vector vs scan, floor-plan pages, code-sheet pages. Renders plan pages to PNG.
 
-Run: /Users/tsharma/Github/Meta/.venv/bin/python -I lab/gather_data/inventory.py
+Run: .venv/bin/python -I lab/gather_data/inventory.py
 Output: data/lab/gather_data/inventory.json and data/lab/gather_data/pages/<id>/*.png
 """
 import json

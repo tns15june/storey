@@ -1,7 +1,7 @@
 """Dev only, no API. Print rows, votes, ink ratios and where each row sits against truth, to set radius, tolerance and the ink threshold."""
 import sys
 
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/presence")
+sys.path.insert(0, "lab/presence")
 import numpy as np
 
 import cells as C

@@ -3,7 +3,7 @@ import json, sys
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 import cv2, fitz, numpy as np
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab"); sys.path.insert(0, str(Path(__file__).parent))
+sys.path.insert(0, "lab"); sys.path.insert(0, str(Path(__file__).parent))
 import metalab as m
 import key as K
 from exits import PROMPT

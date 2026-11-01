@@ -2,7 +2,7 @@
 Usage: ts_overlay.py out.jpg stack stair [stack stair ...]"""
 import json, sys
 import cv2, numpy as np
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/audit2")
+sys.path.insert(0, "lab/audit2")
 import rescore_tightseed as S
 R = S.R
 def tile(st, k, f, base):

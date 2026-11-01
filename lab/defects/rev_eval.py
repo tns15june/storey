@@ -1,6 +1,6 @@
 """Score the revision test. Thresholds chosen on dev buildings, applied to holdout."""
 import json, numpy as np, sys
-r = json.load(open('/Users/tsharma/Github/Meta/data/lab/defects/revision.json'))
+r = json.load(open('data/lab/defects/revision.json'))
 DEV = ('bme_f', 'habs_stelizabeths_center')
 rows = []
 for t, it in r.items():
@@ -25,4 +25,4 @@ d = [x for x in rows if x['b'] in DEV]
 best = max(np.arange(.1, .8, .01), key=lambda t: sum(pix(x, t) for x in d if x['truth']) - sum(pix(x, t) for x in d if not x['truth']))
 print('pixel diff thr fitted on dev', round(float(best), 2))
 res[f'registered pixel diff > {best:.2f}'] = rep(lambda x: pix(x, best), 'pix', rows)
-json.dump(res, open('/Users/tsharma/Github/Meta/data/lab/defects/revision_scores.json', 'w'), indent=1)
+json.dump(res, open('data/lab/defects/revision_scores.json', 'w'), indent=1)

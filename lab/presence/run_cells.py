@@ -4,7 +4,7 @@ A cell whose registered place is blank paper gets no crop: nothing is drawn ther
 import json
 import sys
 
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/presence")
+sys.path.insert(0, "lab/presence")
 import cells as C
 import crop
 import planted

@@ -6,7 +6,7 @@ from pathlib import Path
 import numpy as np
 import pymupdf as fitz
 
-ROOT = Path("/Users/tsharma/Github/Meta")
+ROOT = Path(".")
 
 
 def open_page(id, file, page):

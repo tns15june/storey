@@ -1,7 +1,7 @@
 """Run 0 alone on the 15 plants, from the raw Spark run, nearest entity claim within 40 px of the erased box. No API."""
 import json, math
-O = "/Users/tsharma/Github/Meta/data/lab/presence/"
-TR = json.load(open("/Users/tsharma/Github/Meta/lab/presence/truth.json")); T = TR["buildings"]
+O = "data/lab/presence/"
+TR = json.load(open("lab/presence/truth.json")); T = TR["buildings"]
 IDX = json.load(open(O + "sheets/index.json"))
 def d(p, b): return math.hypot(max(b[0] - p[0], 0, p[0] - b[2]), max(b[1] - p[1], 0, p[1] - b[3]))
 found = 0; rows = []

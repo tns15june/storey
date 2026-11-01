@@ -8,10 +8,10 @@ from pathlib import Path
 warnings.filterwarnings("ignore")
 import fitz  # noqa: E402
 
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/declared")
+sys.path.insert(0, "lab/declared")
 import rules as R  # noqa: E402
 
-ROOT = Path("/Users/tsharma/Github/Meta")
+ROOT = Path(".")
 PLANS = ROOT / "data/plans"
 CLINIC = PLANS / "nibs_clinic/2012-03-27-ClinicRedactedDrawings"
 PDF = {"mml_capitol": PLANS / "mml_capitol/THE-CAPITOL.pdf", "mml_baxter": PLANS / "mml_baxter/THE-BAXTER.pdf", "mml_abbot": PLANS / "mml_abbot/THE-ABBOT.pdf",

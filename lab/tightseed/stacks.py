@@ -4,9 +4,9 @@ import warnings; warnings.filterwarnings("ignore")
 import json, sys
 from pathlib import Path
 import cv2, numpy as np
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/align")
+sys.path.insert(0, "lab/align")
 import reg
-ROOT = Path("/Users/tsharma/Github/Meta"); OUT = ROOT / "data/lab/tightseed/stacks"; AUD = ROOT / "data/lab/audit"
+ROOT = Path("."); OUT = ROOT / "data/lab/tightseed/stacks"; AUD = ROOT / "data/lab/audit"
 
 
 def ink_box(ink, pct=(0.3, 99.7), pad=12):

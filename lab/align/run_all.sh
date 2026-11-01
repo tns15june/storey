@@ -2,7 +2,7 @@
 # One command for the whole experiment. Cached Spark and SAM results are reused, so a rerun spends nothing.
 # The landmark truth in data/lab/align/truth/ is not regenerated here: it holds eye checks. To redo it run truth_pages.py, reread the pages, then truth_fix.py.
 set -e
-cd /Users/tsharma/Github/Meta
+cd "$(dirname "$0")/../.." || exit 1
 export LAB_NAME=align LAB_BUDGET=3 LAB_TOTAL=60
 P=".venv/bin/python -I"
 $P lab/align/render.py

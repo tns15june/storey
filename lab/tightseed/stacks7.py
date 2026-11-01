@@ -2,7 +2,7 @@
 import warnings; warnings.filterwarnings("ignore")
 import json, sys
 import fitz, cv2, numpy as np
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/tightseed"); sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/align")
+sys.path.insert(0, "lab/tightseed"); sys.path.insert(0, "lab/align")
 import reg, stacks as st, stacks5
 stacks5.abbot()
 from stacks4 import page, P

@@ -1,7 +1,7 @@
 """Recompute the tables an applicant declared on a real exit plan, from its vector text alone.
 
 Sheet A012, The Center for Learning and Resilience (Bid Addendum 3, page 2).
-Run: /Users/tsharma/Github/Meta/.venv/bin/python -I /Users/tsharma/Github/Meta/lab/gather_practice/declared_a012.py
+Run: .venv/bin/python -I lab/gather_practice/declared_a012.py
 Writes data/lab/gather_practice/declared_a012.json. No model is used.
 """
 import collections

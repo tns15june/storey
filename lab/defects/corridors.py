@@ -1,6 +1,6 @@
 """No-AI checks for what the stack tracker cannot see: can you walk along a corridor (band flood), and how wide is it (clear run across the band)."""
 import sys
-sys.path.insert(0, '/Users/tsharma/Github/Meta/lab/defects')
+sys.path.insert(0, 'lab/defects')
 from common import *
 from plant import draw_wall, erase
 from seeds import *

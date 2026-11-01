@@ -1,7 +1,7 @@
 """Spark proposes stairs, shafts, exit doors and corridors on every aligned sheet. Output seeds_raw.json plus overlays."""
 import sys, json
 from concurrent.futures import ThreadPoolExecutor
-sys.path.insert(0, '/Users/tsharma/Github/Meta/lab'); sys.path.insert(0, '/Users/tsharma/Github/Meta/lab/defects')
+sys.path.insert(0, 'lab'); sys.path.insert(0, 'lab/defects')
 import metalab as m
 from common import *
 box = {"type": "object", "additionalProperties": False, "required": ["label", "x_min", "y_min", "x_max", "y_max"], "properties": {"label": {"type": "string"}, "x_min": {"type": "integer"}, "y_min": {"type": "integer"}, "x_max": {"type": "integer"}, "y_max": {"type": "integer"}}}

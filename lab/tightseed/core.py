@@ -4,10 +4,10 @@ import hashlib, json, os, subprocess, sys
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 import cv2, numpy as np
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab"); sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/align")
+sys.path.insert(0, "lab"); sys.path.insert(0, "lab/align")
 import metalab as m
 
-ROOT = Path("/Users/tsharma/Github/Meta"); R = ROOT / "data/lab/tightseed"; ST = R / "stacks"; SAMD = R / "sam"; SPK = R / "spark"
+ROOT = Path("."); R = ROOT / "data/lab/tightseed"; ST = R / "stacks"; SAMD = R / "sam"; SPK = R / "spark"
 for d in (SAMD, SPK, R / "crops"):
     d.mkdir(exist_ok=True)
 TRUTH = json.load(open(R / "truth.json"))

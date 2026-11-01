@@ -1,12 +1,12 @@
 """Audit: second independent run of the 45-sheet title read and of F2 door tiles. Writes only to data/lab/audit."""
-import sys, json; sys.path.insert(0,"/Users/tsharma/Github/Meta/lab/bakeoff"); sys.path.insert(0,"/Users/tsharma/Github/Meta/lab/doors"); sys.path.insert(0,"/Users/tsharma/Github/Meta/lab")
+import sys, json; sys.path.insert(0,"lab/bakeoff"); sys.path.insert(0,"lab/doors"); sys.path.insert(0,"lab")
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 import numpy as np, fitz
 import metalab as m
 import e1_meta as e1, truth_meta as tm, sheets as s
 from common import rows
-A=Path("/Users/tsharma/Github/Meta/data/lab/audit"); F=A/"titles_run2.json"
+A=Path("data/lab/audit"); F=A/"titles_run2.json"
 base={x['key']:x for x in rows('meta') if x['cfg']=='s13-low-2k' and x['run']==0}
 def one(k):
     r,i=m.spark(e1.PROMPT,images=[s.full(k,2000)],model='muse-spark-1.3',schema=e1.SCHEMA,effort='low')

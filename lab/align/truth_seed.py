@@ -6,7 +6,7 @@ import sys
 import cv2
 import numpy as np
 
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/align")
+sys.path.insert(0, "lab/align")
 import reg
 
 REF = {"bme_f": 1, "bme_k": 1, "schenley": 1, "habs_stelizabeths_center": 1, "habs_stelizabeths_atkins": 1, "habs_va_bldg1": 1,

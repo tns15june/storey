@@ -4,7 +4,7 @@ import re
 import unicodedata
 from pathlib import Path
 
-OUT = Path("/Users/tsharma/Github/Meta/data/lab/align")
+OUT = Path("data/lab/align")
 S = json.load(open(OUT / "spark_sheets.json"))
 I = json.load(open(OUT / "sheets/index.json"))
 pdf = json.load(open(OUT / "pdf_order.json"))

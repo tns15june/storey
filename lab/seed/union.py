@@ -1,6 +1,6 @@
 """No-human pipeline: Spark boxes on every sheet, cluster across floors, seed SAM once per cluster, Spark crop gate, score.
 Usage: union.py <variant> [buildings]. Cached by sam_track.run and the gate file."""
-import sys; sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/seed"); sys.path.insert(0, "/Users/tsharma/Github/Meta/lab")
+import sys; sys.path.insert(0, "lab/seed"); sys.path.insert(0, "lab")
 from common import *
 from sam_track import frames, video, spark_boxes, pad, run, REPEAT
 from concurrent.futures import ThreadPoolExecutor

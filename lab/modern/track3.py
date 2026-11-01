@@ -1,6 +1,6 @@
 """Erase controls with the prompt on the floor where the stair is drawn longest. Run like track.py."""
 import copy, json, sys
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/modern")
+sys.path.insert(0, "lab/modern")
 import track as T
 
 BASE = copy.deepcopy(T.GT)

@@ -5,7 +5,7 @@ import json
 import sys
 from concurrent.futures import ThreadPoolExecutor
 
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/presence")
+sys.path.insert(0, "lab/presence")
 import pres
 from pres import OUT, SH
 import metalab as m

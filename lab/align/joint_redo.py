@@ -4,11 +4,11 @@ import sys
 
 import cv2
 
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab")
+sys.path.insert(0, "lab")
 import metalab as m
 from pathlib import Path
 
-OUT = Path("/Users/tsharma/Github/Meta/data/lab/align")
+OUT = Path("data/lab/align")
 S = json.load(open(OUT / "spark_sheets.json"))
 schema = {"type": "object", "additionalProperties": False, "required": ["bottom_to_top"], "properties": {"bottom_to_top": {"type": "array", "items": {"type": "integer"}}}}
 for bid in ("schenley", "mml_baxter", "nibs_clinic"):

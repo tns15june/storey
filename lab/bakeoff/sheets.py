@@ -8,7 +8,7 @@ import numpy as np
 warnings.filterwarnings("ignore")
 import fitz  # noqa: E402
 
-ROOT = Path("/Users/tsharma/Github/Meta")
+ROOT = Path(".")
 P = ROOT / "data/plans"
 OUT = ROOT / "data/lab/bakeoff"
 N = "nibs_clinic/2012-03-27-ClinicRedactedDrawings/"

@@ -1,6 +1,6 @@
 """Align each building's floors to its reference floor, crop to the plan, write stack/<b>/<level>.png, report the ECC score."""
 import sys
-sys.path.insert(0, '/Users/tsharma/Github/Meta/lab/defects')
+sys.path.insert(0, 'lab/defects')
 from common import *
 for b in (sys.argv[1:] or BUILDINGS):
     fl = CAT[b]['floors'][::-1]  # top floor first

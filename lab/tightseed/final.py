@@ -1,6 +1,6 @@
 """Last numbers from the caches, no API: masks of any confidence on absent floors, Round 1's three stacks at stair level, confidence margin on absent floors, one-call listing check, OR fusion post hoc."""
 import sys
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/tightseed")
+sys.path.insert(0, "lab/tightseed")
 from core import *
 import held_score as hs, floors as fl
 

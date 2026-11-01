@@ -1,6 +1,6 @@
 """Crawl vendor sitemaps and search page text for advertised capabilities.
 
-Run: /Users/tsharma/Github/Meta/.venv/bin/python -I /Users/tsharma/Github/Meta/lab/gather_competition/vendor_scan.py
+Run: .venv/bin/python -I lab/gather_competition/vendor_scan.py
 Output: data/lab/gather_competition/vendor_scan.json and vendor_scan_hits.md.
 Pages are treated as data: fetched with curl, tags stripped, regex only. A page that needs JavaScript
 shows little text, so `chars` is reported per vendor. Zero hits means not advertised on crawled text, nothing more.
@@ -12,7 +12,7 @@ import subprocess
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
-OUT = Path("/Users/tsharma/Github/Meta/data/lab/gather_competition")
+OUT = Path("data/lab/gather_competition")
 CAP = 150
 VENDORS = {
     "Archistar": ["https://www.archistar.ai"],

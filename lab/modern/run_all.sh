@@ -1,6 +1,6 @@
 #!/bin/sh
 # Reproduce the modern CAD experiment. API spend about 0.70 USD.
-cd /Users/tsharma/Github/Meta || exit 1
+cd "$(dirname "$0")/../.." || exit 1
 PY=.venv/bin/python
 export LAB_NAME=modern LAB_BUDGET=4 LAB_TOTAL=60
 $PY -I lab/modern/vec.py && $PY -I lab/modern/render.py && $PY -I lab/modern/stack.py && $PY -I lab/modern/stair_eval.py \

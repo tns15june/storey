@@ -1,6 +1,6 @@
 """Input tokens versus sheet resolution, from the input_tokens endpoint (no generation, no charge documented)."""
 import json, sys
-sys.path.insert(0, '/Users/tsharma/Github/Meta/lab'); sys.path.insert(0, '/Users/tsharma/Github/Meta/lab/bakeoff')
+sys.path.insert(0, 'lab'); sys.path.insert(0, 'lab/bakeoff')
 import metalab as m, sheets as s
 rows = []
 for key in ('n161', 'u1'):

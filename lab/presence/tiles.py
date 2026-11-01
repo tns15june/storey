@@ -7,7 +7,7 @@ from pathlib import Path
 import cv2
 import numpy as np
 
-OUT = Path("/Users/tsharma/Github/Meta/data/lab/presence")
+OUT = Path("data/lab/presence")
 b, tag, half, zoom = sys.argv[1], sys.argv[2], int(sys.argv[3]), float(sys.argv[4])
 pts = [tuple(map(float, a.split(","))) for a in sys.argv[5:]]
 n = len(json.load(open(OUT / "sheets/index.json"))[b])

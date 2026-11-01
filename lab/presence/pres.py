@@ -6,7 +6,7 @@ from pathlib import Path
 import cv2
 import numpy as np
 
-ROOT = Path("/Users/tsharma/Github/Meta")
+ROOT = Path(".")
 sys.path.insert(0, str(ROOT / "lab"))
 sys.path.insert(0, str(ROOT / "lab/align"))
 import reg  # noqa: E402

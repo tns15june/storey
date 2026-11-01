@@ -4,11 +4,11 @@ Run: env LAB_NAME=agent LAB_BUDGET=5 LAB_TOTAL=75 .venv/bin/python lab/agent/e2e
 """
 import collections, json, re, sys
 from pathlib import Path
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/agent")
+sys.path.insert(0, "lab/agent")
 import fixture as F  # before loop: fixture sets the path order for lab/modern's vec
 import loop
 
-D = Path("/Users/tsharma/Github/Meta/data/lab/agent/e2e"); D.mkdir(exist_ok=True)
+D = Path("data/lab/agent/e2e"); D.mkdir(exist_ok=True)
 MODELS = {"spark": "muse-spark-1.3", "wonder": "muse-wonder-1.0"}
 NUM = re.compile(r"\d+(?:\.\d+)?")
 

@@ -1,7 +1,7 @@
 """Overlay of the soft-plant floor as actually sent, with the returned mask box and conf. No API."""
 import json, sys
 import cv2, numpy as np
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/audit2")
+sys.path.insert(0, "lab/audit2")
 import sam_erasure as E
 core = E.core
 tiles = []

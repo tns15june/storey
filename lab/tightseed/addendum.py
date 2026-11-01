@@ -1,7 +1,7 @@
 """Secondary arms declared after the freeze and before any held-out score was printed."""
 import hashlib, json, time
 from pathlib import Path
-p = Path("/Users/tsharma/Github/Meta/data/lab/tightseed/rule_addendum.json")
+p = Path("data/lab/tightseed/rule_addendum.json")
 A = {
  "declared_before_first_heldout_score": True,
  "arm_f": "per-stair local video: window = 3x the snap seed, min side 320 px, each frame scaled so the long side is 960, one object per video, same presence and hit rules. Tests whether SAM's own input resolution is the limit.",

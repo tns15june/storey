@@ -1,7 +1,7 @@
 """Truth for a stack no model has seen, written before the post-hoc recipe is run on it. East block of Royce Phase 1. No API."""
 import hashlib, json, shutil, time
 from pathlib import Path
-R = Path("/Users/tsharma/Github/Meta/data/lab/tightseed")
+R = Path("data/lab/tightseed")
 def rep(b, fl): return {str(f): b for f in fl}
 all4 = range(4)
 T = {"_note": "Fresh confirmation stack. Same labeller, by eye from grid views, written before any model call on this window. Same field rules as truth.json.",

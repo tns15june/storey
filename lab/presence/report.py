@@ -4,7 +4,7 @@ import json
 import sys
 from collections import Counter
 
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/presence")
+sys.path.insert(0, "lab/presence")
 import numpy as np
 
 import cells as C

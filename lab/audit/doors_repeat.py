@@ -1,10 +1,10 @@
 """Audit: second run of F2 5x5 low-effort door tiles against the IFC key. Writes only to data/lab/audit."""
-import sys, json; sys.path.insert(0,"/Users/tsharma/Github/Meta/lab"); sys.path.insert(0,"/Users/tsharma/Github/Meta/lab/doors")
+import sys, json; sys.path.insert(0,"lab"); sys.path.insert(0,"lab/doors")
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 import numpy as np, fitz
 import metalab as m, key as K, spark_tiles as T
-F=Path("/Users/tsharma/Github/Meta/data/lab/audit/doors_F2_run2.json")
+F=Path("data/lab/audit/doors_F2_run2.json")
 tag="F2"; A,L,arcs,reg=K.clinic_key(tag); G=[T.arc_point(l) for l in L]; h=np.array(G)
 box=(h[:,0].min()-30,h[:,1].min()-30,h[:,0].max()+30,h[:,1].max()+30)
 def one(rc):

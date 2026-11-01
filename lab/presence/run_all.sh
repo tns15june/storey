@@ -3,7 +3,7 @@
 # Truth is not regenerated here: lab/presence/truth.json is hashed in data/lab/presence/truth_meta.json. Its source is truth_src.py.
 # data/lab/presence/cells/*.json are the record of evidence: crop.py reuses a nearby cached answer, so rebuilding them can change a cell.
 set -e
-cd /Users/tsharma/Github/Meta
+cd "$(dirname "$0")/../.." || exit 1
 export LAB_NAME=presence LAB_BUDGET=6 LAB_TOTAL=75
 P=".venv/bin/python -I"
 $P lab/presence/pres.py

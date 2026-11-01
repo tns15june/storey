@@ -1,11 +1,11 @@
 """Clinic, both floors. Walls from the heavy pen, doors from vector arcs. Truth from the IFC model of the same building (independent of the sheet)."""
 import json, sys
-sys.path.insert(0, '/Users/tsharma/Github/Meta/lab/walls')
+sys.path.insert(0, 'lab/walls')
 import collections
 import cv2, fitz, numpy as np
 import ifc, plan as P, score as S, vec
-D = '/Users/tsharma/Github/Meta/data/plans/nibs_clinic/'
-O = '/Users/tsharma/Github/Meta/data/lab/walls/'
+D = 'data/plans/nibs_clinic/'
+O = 'data/lab/walls/'
 PPM = 1000 / (150 * 0.352778)
 PXM = 40.0                 # raster pixels per metre
 SC = PXM / PPM             # pixels per point

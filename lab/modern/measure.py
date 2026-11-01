@@ -4,7 +4,7 @@ Run: .venv/bin/python -I lab/modern/measure.py  (no API calls). Writes data/lab/
 All geometry is converted to the rendered page frame first; rotation is the trap on these PDFs.
 """
 import json, math, re, statistics as st, sys, time
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/modern")
+sys.path.insert(0, "lab/modern")
 import cv2, numpy as np, pymupdf as fitz
 import vec
 ROOT = vec.ROOT

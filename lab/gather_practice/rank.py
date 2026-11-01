@@ -1,6 +1,6 @@
 """Count how many jurisdictions print each egress and life-safety check in their public lists.
 
-Run: /Users/tsharma/Github/Meta/.venv/bin/python -I /Users/tsharma/Github/Meta/lab/gather_practice/rank.py
+Run: .venv/bin/python -I lab/gather_practice/rank.py
 Reads data/lab/gather_practice/text/*.txt (made by fetch.py), writes rank.csv and rank_samples.txt.
 This ranks how many cities print an item, not how often it is issued. No public data gives that for commercial egress.
 """

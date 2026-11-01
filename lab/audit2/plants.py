@@ -7,8 +7,8 @@ import sys
 import cv2
 import numpy as np
 
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/presence")
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/defects")
+sys.path.insert(0, "lab/presence")
+sys.path.insert(0, "lab/defects")
 import pres
 from pres import OUT, SH, T, box_dist, reg
 from plant import erase

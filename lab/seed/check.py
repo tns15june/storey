@@ -1,5 +1,5 @@
 """Self-check for the geometry helpers. No API calls, no data needed beyond the catalog and truth files."""
-import sys; sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/seed")
+import sys; sys.path.insert(0, "lab/seed")
 from common import iou, hit, to_px, TRUTH
 assert to_px({"x_min": 100, "y_min": 200, "x_max": 300, "y_max": 400}, 2000, 1000) == [200, 200, 600, 400]  # x then y, the bug that gave 0/5 on the first score
 assert to_px({"x_min": 300, "y_min": 1001, "x_max": 100, "y_max": 200}, 2000, 1000) == [200, 200, 600, 999]  # swapped and out of range are clamped

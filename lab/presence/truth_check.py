@@ -2,7 +2,7 @@
 import json, sys
 from pathlib import Path
 import cv2, numpy as np
-ROOT = Path("/Users/tsharma/Github/Meta"); OUT = ROOT / "data/lab/presence"
+ROOT = Path("."); OUT = ROOT / "data/lab/presence"
 T = json.load(open(ROOT / "lab/presence/truth.json"))["buildings"]; D = json.load(open(OUT / "draft.json"))
 tiles = []
 for b, t in T.items():

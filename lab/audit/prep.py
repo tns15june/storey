@@ -1,5 +1,5 @@
 """Audit held-out stacks: aligned 2000 px sheets and grids. No API calls."""
-import sys; sys.path.insert(0,"/Users/tsharma/Github/Meta/lab/seed")
+import sys; sys.path.insert(0,"lab/seed")
 from common import *
 A=ROOT/"data/lab/audit"; A.mkdir(exist_ok=True)
 for bid,ref in (("habs_va_bldg1",1),("bme_k",1),("wfu_huffman",1)):

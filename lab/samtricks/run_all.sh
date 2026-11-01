@@ -1,6 +1,6 @@
 #!/bin/zsh
 # Rebuilds every samtricks score from the frozen truth and the saved results. It calls the API only for a result missing from disk.
-cd /Users/tsharma/Github/Meta
+cd "$(dirname "$0")/../.." || exit 1
 export LAB_NAME=samtricks LAB_BUDGET=3 LAB_TOTAL=75
 PY=.venv/bin/python
 $PY lab/samtricks/item1.py dev

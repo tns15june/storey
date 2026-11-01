@@ -6,8 +6,8 @@ import sys
 import threading
 from concurrent.futures import ThreadPoolExecutor
 
-sys.path.insert(0, '/Users/tsharma/Github/Meta/lab')
-sys.path.insert(0, '/Users/tsharma/Github/Meta/lab/bakeoff')
+sys.path.insert(0, 'lab')
+sys.path.insert(0, 'lab/bakeoff')
 import metalab as m  # noqa: E402
 import sheets as s  # noqa: E402
 

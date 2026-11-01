@@ -1,6 +1,6 @@
 """Numbers for report.md that need no API: Spark-only recall, duplicate-sheet check, union rule, Wilson intervals, spend."""
 import sys, json, itertools
-sys.path.insert(0, '/Users/tsharma/Github/Meta/lab/defects'); sys.path.insert(0, '/Users/tsharma/Github/Meta/lab')
+sys.path.insert(0, 'lab/defects'); sys.path.insert(0, 'lab')
 from eval_hybrid import *
 from common import load_sheet
 from plant import rescan

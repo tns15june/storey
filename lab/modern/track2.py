@@ -1,10 +1,10 @@
 """Follow-up on the tracker's weak pair: repeats, a longer prompt box, prompting the other floor, and a local crop around the stairs.
 
-Run: cd /Users/tsharma/Github/Meta && LAB_NAME=modern LAB_BUDGET=4 LAB_TOTAL=60 .venv/bin/python lab/modern/track2.py
+Run: LAB_NAME=modern LAB_BUDGET=4 LAB_TOTAL=60 .venv/bin/python lab/modern/track2.py
 """
 import copy, json, sys
 from concurrent.futures import ThreadPoolExecutor
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/modern")
+sys.path.insert(0, "lab/modern")
 import track as T
 
 BASE, RECT = copy.deepcopy(T.GT), {k: list(v["rect"]) for k, v in T.P.items()}

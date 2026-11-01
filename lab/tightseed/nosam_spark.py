@@ -1,6 +1,6 @@
 """POST HOC comparator: no SAM. The P box, unmoved, on every floor of the registered stack, with one Spark verdict per floor. Only clusters seeded on a truth stair: spend control."""
 import sys
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/tightseed")
+sys.path.insert(0, "lab/tightseed")
 from core import *
 import multi as mu, held_score as hs
 

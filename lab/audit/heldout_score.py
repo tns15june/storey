@@ -1,5 +1,5 @@
 """Audit: score the held-out stacks. No API."""
-import sys; sys.path.insert(0,"/Users/tsharma/Github/Meta/lab/seed")
+import sys; sys.path.insert(0,"lab/seed")
 from common import *
 A=ROOT/"data/lab/audit"; T=json.load(open(ROOT/"lab/audit/truth.json")); NF={"habs_va_bldg1":5,"bme_k":4,"wfu_huffman":4}
 tot=dict(n=0,seeded=0,best=0,worst=0,anyc=0,spark=0,base=0,floors=0)

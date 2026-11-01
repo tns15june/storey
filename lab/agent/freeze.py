@@ -1,7 +1,7 @@
 """Select the 32 checked cases, shuffle, rename, write truth and rule, print sha256. Run once, before any model call on these sheets. No API."""
 import hashlib, json, random, shutil, sys, time
 from pathlib import Path
-ROOT = Path("/Users/tsharma/Github/Meta"); D = ROOT / "data/lab/agent"; CAND = D / "cand"; OUT = D / "cases"
+ROOT = Path("."); D = ROOT / "data/lab/agent"; CAND = D / "cand"; OUT = D / "cases"
 sys.path.insert(0, str(ROOT / "lab/agent"))
 import prompts
 PICK = """stair_bad_E stair_bad_B stair_bad_F stair_bad_D stair_good_bme__14_0 stair_good_bme__6_3 stair_good_habs_4_0 stair_good_wfu__2_1

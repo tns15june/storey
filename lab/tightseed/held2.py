@@ -1,6 +1,6 @@
 """Spark crop verdict on mask boxes of tracks seeded on a truth stair. Tags on the command line. Cached per mask."""
 import sys
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/tightseed")
+sys.path.insert(0, "lab/tightseed")
 from core import *
 import multi as mu
 

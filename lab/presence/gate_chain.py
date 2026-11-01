@@ -1,6 +1,6 @@
 """Post hoc, no API, used by no score. Does the floor that failed the gate pass against its neighbour instead of the reference floor?"""
 import sys
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/presence")
+sys.path.insert(0, "lab/presence")
 import numpy as np
 import pres
 from pres import T, reg, ctr, apply_pt

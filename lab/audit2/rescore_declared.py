@@ -1,8 +1,8 @@
 """Retally declared from flags and verdicts, and diff the pre-freeze-named v2a flags against v2. No API. Run with -I."""
 import json, sys, collections
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/declared")
+sys.path.insert(0, "lab/declared")
 import verdicts as V
-D = "/Users/tsharma/Github/Meta/data/lab/declared/"
+D = "data/lab/declared/"
 a = json.load(open(D + "flags_held_v2a.json")); b = json.load(open(D + "flags_held_v2.json"))
 ia = {f["id"]: f for f in a["flags"]}; ib = {f["id"]: f for f in b["flags"]}
 print("v2a", len(ia), "v2", len(ib), "only v2a", sorted(set(ia) - set(ib))[:20], "only v2", sorted(set(ib) - set(ia))[:20])

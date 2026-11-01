@@ -1,6 +1,6 @@
 #!/bin/sh
 # Rebuilds every number from the call cache in data/lab/samcraft/cache. Cached calls cost nothing; calls that failed the first time are retried.
-cd /Users/tsharma/Github/Meta
+cd "$(dirname "$0")/../.." || exit 1
 export LAB_NAME=samcraft LAB_BUDGET=4 LAB_TOTAL=60
 PY=.venv/bin/python
 $PY lab/samcraft/check.py

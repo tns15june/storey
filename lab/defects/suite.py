@@ -1,7 +1,7 @@
 """The planted defect suite. Each case edits real sheets, runs the tracker, stores per-floor metrics. Cached: rerun is free.
 Usage: suite.py [pilot|all]"""
 import sys, random, traceback, time
-sys.path.insert(0, '/Users/tsharma/Github/Meta/lab/defects')
+sys.path.insert(0, 'lab/defects')
 from track import *
 from plant import *
 from seeds import *

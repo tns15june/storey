@@ -1,6 +1,6 @@
 """POST HOC pooled scores for recipe P on the held-out stacks, with seed IoU and the wrong passes first. No API."""
 import sys
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/tightseed")
+sys.path.insert(0, "lab/tightseed")
 from core import *
 import held_score as hs, multi as mu
 stacks = sys.argv[1:] or HELD

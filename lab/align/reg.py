@@ -5,7 +5,7 @@ from pathlib import Path
 import cv2
 import numpy as np
 
-OUT = Path("/Users/tsharma/Github/Meta/data/lab/align")
+OUT = Path("data/lab/align")
 SPARK = json.load(open(OUT / "spark_sheets.json"))
 INDEX = json.load(open(OUT / "sheets/index.json"))
 

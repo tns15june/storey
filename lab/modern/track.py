@@ -1,12 +1,12 @@
 """SAM floor-stack tracker on clean CAD sheets, across framing, resolution, registration and erase controls.
 
-Run: cd /Users/tsharma/Github/Meta && LAB_NAME=modern LAB_BUDGET=4 LAB_TOTAL=60 .venv/bin/python lab/modern/track.py
+Run: LAB_NAME=modern LAB_BUDGET=4 LAB_TOTAL=60 .venv/bin/python lab/modern/track.py
 Needs lab/modern/render.py and lab/modern/stack.py first. Ground truth boxes were checked by eye on montages.
 """
 import json, sys, time
 from concurrent.futures import ThreadPoolExecutor
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab")
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/modern")
+sys.path.insert(0, "lab")
+sys.path.insert(0, "lab/modern")
 import cv2, numpy as np
 import metalab as m
 import stack as S

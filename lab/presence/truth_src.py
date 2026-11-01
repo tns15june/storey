@@ -12,7 +12,7 @@ from pathlib import Path
 
 import cv2
 
-ROOT = Path("/Users/tsharma/Github/Meta")
+ROOT = Path(".")
 D = json.load(open(ROOT / "data/lab/presence/draft.json"))
 
 

@@ -1,5 +1,5 @@
 """Does zoomed Spark re-grounding fix offset boxes on small stairs? Crop each cluster's seed, ask Spark again at 4x, re-track. Usage: rebox.py [buildings]"""
-import sys; sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/seed"); sys.path.insert(0, "/Users/tsharma/Github/Meta/lab")
+import sys; sys.path.insert(0, "lab/seed"); sys.path.insert(0, "lab")
 from common import *
 from union import cluster, CONF, evaluate
 from sam_track import frames, run

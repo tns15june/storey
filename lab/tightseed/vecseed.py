@@ -1,6 +1,6 @@
 """Vector stair runs per floor, mapped into stack px, clustered like Spark boxes. No API. wfu_huffman and mml_abbot only."""
 import sys, json
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/tightseed"); sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/modern")
+sys.path.insert(0, "lab/tightseed"); sys.path.insert(0, "lab/modern")
 from core import *
 import reg, vec, pymupdf as fitz
 

@@ -5,7 +5,7 @@ Baselines: always-present over the truth object list, and run 0 alone."""
 import json
 import sys
 
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/presence")
+sys.path.insert(0, "lab/presence")
 import numpy as np
 
 import pres

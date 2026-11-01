@@ -1,5 +1,5 @@
 """One image per building: a row per cluster, a column per floor, SAM mask painted, Spark member boxes drawn. Usage: montage.py variant [buildings]"""
-import sys, glob; sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/seed")
+import sys, glob; sys.path.insert(0, "lab/seed")
 from common import *
 var = sys.argv[1]
 for p in sorted(glob.glob(str(OUT / "sam" / f"result_{var}__*.json"))):

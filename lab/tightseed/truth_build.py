@@ -1,6 +1,6 @@
 """Write truth before any model call on tightseed frames. Audit boxes are warped through H; new stacks are read by eye from zoomed grid views. No API."""
 import sys, json, hashlib, time
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/tightseed"); sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/align")
+sys.path.insert(0, "lab/tightseed"); sys.path.insert(0, "lab/align")
 import truthview as tv
 R = tv.ROOT / "data/lab/tightseed"
 

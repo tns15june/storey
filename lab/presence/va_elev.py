@@ -1,8 +1,8 @@
 import json, sys
 import cv2, numpy as np
-sys.path.insert(0,'/Users/tsharma/Github/Meta/lab/defects')
+sys.path.insert(0,'lab/defects')
 from seeds import SEEDS
-R='/Users/tsharma/Github/Meta/data/lab/'
+R='data/lab/'
 orb=cv2.ORB_create(20000)
 def fit(src,dst):
     ka,da=orb.detectAndCompute(cv2.cvtColor(src,cv2.COLOR_BGR2GRAY),None); kb,db=orb.detectAndCompute(cv2.cvtColor(dst,cv2.COLOR_BGR2GRAY),None)

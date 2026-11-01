@@ -1,9 +1,9 @@
 """Views of the clinic stairs and life safety sheets for building the end-to-end fixture. No API."""
 import sys
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/agent")
+sys.path.insert(0, "lab/agent")
 import cv2, numpy as np, pymupdf as fitz, draw
-D = "/Users/tsharma/Github/Meta/data/plans/nibs_clinic/2012-03-27-ClinicRedactedDrawings/"
-O = "/Users/tsharma/Github/Meta/data/lab/agent/mine/"
+D = "data/plans/nibs_clinic/2012-03-27-ClinicRedactedDrawings/"
+O = "data/lab/agent/mine/"
 GT = {"1CS3": {"1": [1196, 286, 1249, 399], "2": [1194, 280, 1250, 400]}, "1AS1": {"1": [1581, 548, 1631, 644], "2": [1579, 547, 1634, 645]}, "1BS2": {"1": [1604, 1104, 1707, 1159], "2": [1582, 1103, 1702, 1153]}}
 S = {"1": "Clinic_052_Composite First Floor Plan.pdf", "2": "Clinic_059_Composite Second Floor Plan.pdf"}
 ims = []

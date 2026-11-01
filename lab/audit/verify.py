@@ -1,5 +1,5 @@
 """Audit: view held-out ghosts, one-to-one check, relaxed scoring, 2 more floor-compare runs."""
-import sys; sys.path.insert(0,"/Users/tsharma/Github/Meta/lab/seed"); sys.path.insert(0,"/Users/tsharma/Github/Meta/lab")
+import sys; sys.path.insert(0,"lab/seed"); sys.path.insert(0,"lab")
 from common import *
 import metalab as m, re
 src=open(ROOT/"lab/audit/heldout.py").read().replace("\nmain()\n","\n")

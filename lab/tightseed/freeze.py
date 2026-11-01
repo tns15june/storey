@@ -1,7 +1,7 @@
 """Freeze the decision rule from dev before any held-out model call. Refuses to overwrite."""
 import hashlib, json, time
 from pathlib import Path
-p = Path("/Users/tsharma/Github/Meta/data/lab/tightseed/rule.json")
+p = Path("data/lab/tightseed/rule.json")
 RULE = {
  "frozen_before_any_heldout_call": True,
  "dev_stacks": ["bme_f", "habs_stelizabeths_center", "mml_capitol"],

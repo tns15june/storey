@@ -8,8 +8,8 @@ import math
 import re
 import sys
 
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab")
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/declared")
+sys.path.insert(0, "lab")
+sys.path.insert(0, "lab/declared")
 import cv2  # noqa: E402
 import numpy as np  # noqa: E402
 import checks as C  # noqa: E402
@@ -181,7 +181,7 @@ if __name__ == "__main__" and sys.argv[1] == "look":
     print("specials", len(ok), len(sp), [k for k in sp if k not in ok])
     res = {r: {x["id"]: x["answer"] for x in RS._done[("v3judge", r)]["out"]["results"]} for r in (0, 1)}
     pairs = judge_pairs()
-    sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/declared")
+    sys.path.insert(0, "lab/declared")
     import verdicts as V
     dev = json.load(open(OUT / "flags_dev_v2.json"))["flags"]
     held = json.load(open(OUT / "flags_held_v2.json"))["flags"]

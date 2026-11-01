@@ -1,5 +1,5 @@
 import sys, tempfile
-sys.path.insert(0, '/Users/tsharma/Github/Meta/lab/defects')
+sys.path.insert(0, 'lab/defects')
 import suite
 from suite import *
 suite.RES = Path(tempfile.mkdtemp())

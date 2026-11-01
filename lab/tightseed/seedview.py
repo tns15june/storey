@@ -1,6 +1,6 @@
 """Where seeds landed: every cluster's loose, snap and Spark-crop box on its seed floor over the truth boxes of that floor. No API."""
 import sys
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/tightseed")
+sys.path.insert(0, "lab/tightseed")
 from core import *
 import vis
 for st in sys.argv[1:]:

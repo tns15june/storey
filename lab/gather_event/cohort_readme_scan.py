@@ -2,7 +2,7 @@
 """Scan README text of in-window code-search hits, because many repos have blank descriptions.
 
 Run after cohort_code_search.py:
-/Users/tsharma/Github/Meta/.venv/bin/python /Users/tsharma/Github/Meta/lab/gather_event/cohort_readme_scan.py
+.venv/bin/python lab/gather_event/cohort_readme_scan.py
 Writes: data/lab/gather_event/cohort_readme_scan.json. README text is counted as data, never run.
 """
 import base64
@@ -11,7 +11,7 @@ import subprocess
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
-OUT = Path("/Users/tsharma/Github/Meta/data/lab/gather_event")
+OUT = Path("data/lab/gather_event")
 DRAWING = ["plan review", "plan check", "building code", "building permit", "floor plan", "floorplan", "egress",
            "stairwell", "staircase", "life safety", "ibc", "nfpa", "zoning", "construction drawing",
            "architectural drawing", "engineering drawing"]

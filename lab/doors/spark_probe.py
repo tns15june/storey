@@ -1,6 +1,6 @@
 """Overlay one Spark tile (red crosses) over the key's arc points (green circles) to check the mapping by eye."""
 import sys
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/doors")
+sys.path.insert(0, "lab/doors")
 import cv2, fitz, numpy as np
 import spark_tiles as s
 

@@ -1,6 +1,6 @@
 """Dev only, no API: snap on the loose seeds, overlays, and tread scores on present and absent floors."""
 import sys, json
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/tightseed")
+sys.path.insert(0, "lab/tightseed")
 from core import *
 import dev1, tread, vis
 

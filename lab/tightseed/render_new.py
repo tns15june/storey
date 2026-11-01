@@ -3,7 +3,7 @@ import warnings; warnings.filterwarnings("ignore")
 import json, sys
 import fitz, cv2, numpy as np
 from pathlib import Path
-ROOT = Path("/Users/tsharma/Github/Meta"); OUT = ROOT / "data/lab/tightseed/raw"
+ROOT = Path("."); OUT = ROOT / "data/lab/tightseed/raw"
 def pix(pg, z):
     px = pg.get_pixmap(matrix=fitz.Matrix(z, z), alpha=False)
     return cv2.cvtColor(np.frombuffer(px.samples, np.uint8).reshape(px.h, px.w, 3), cv2.COLOR_RGB2BGR)

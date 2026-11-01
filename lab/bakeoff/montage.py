@@ -1,6 +1,6 @@
 """Throwaway viewer: bottom-right title crops for setting truth by eye."""
 import sys, cv2, numpy as np
-sys.path.insert(0, '/Users/tsharma/Github/Meta/lab/bakeoff')
+sys.path.insert(0, 'lab/bakeoff')
 import sheets as s
 keys = [k for k in s.ALL if s.ALL[k][1] is not None]
 V = s.OUT / 'view'

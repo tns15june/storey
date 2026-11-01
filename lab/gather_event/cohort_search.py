@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Read-only GitHub search for plan-review entries in the hackathon cohort.
 
-Run: /Users/tsharma/Github/Meta/.venv/bin/python /Users/tsharma/Github/Meta/lab/gather_event/cohort_search.py
+Run: .venv/bin/python lab/gather_event/cohort_search.py
 Writes: data/lab/gather_event/cohort_hits.json and cohort_queries.tsv.
 Uses `gh api` with GET only. Nothing is cloned or executed.
 """
@@ -11,7 +11,7 @@ import time
 import urllib.parse
 from pathlib import Path
 
-OUT = Path("/Users/tsharma/Github/Meta/data/lab/gather_event")
+OUT = Path("data/lab/gather_event")
 SINCE = "2026-10-20"
 DOMAIN = ['"plan review"', '"plan check"', '"plan checker"', '"building code"', "permit", "permitting",
           "zoning", '"floor plan"', "blueprint", "egress", '"city hall"', "IBC", '"fire code"',

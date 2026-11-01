@@ -1,11 +1,11 @@
 """Hybrid rule over the replayed runs. Fresh runs (id ending _f2 or _f2b...) are reported separately."""
 import sys, json, glob
-sys.path.insert(0, '/Users/tsharma/Github/Meta/lab/defects')
+sys.path.insert(0, 'lab/defects')
 import numpy as np
 from collections import defaultdict
 from rules import hybrid, findings, base_find
 from pathlib import Path
-OUT = Path('/Users/tsharma/Github/Meta/data/lab/defects')
+OUT = Path('data/lab/defects')
 SHAFT = {'elevator', 'xshaft_w', 'xshaft_e', 'xshaft_c', 'elev1', 'elev2', 'vent_w', 'vent_e'}
 DEV = ('bme_f', 'habs_stelizabeths_center')
 R = [json.load(open(p)) for p in glob.glob(str(OUT / 'runs2/*.json')) if not p.endswith('_t.json')]

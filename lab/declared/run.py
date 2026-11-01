@@ -3,7 +3,7 @@ import json
 import re
 import sys
 
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/declared")
+sys.path.insert(0, "lab/declared")
 import math  # noqa: E402
 
 import checks as C  # noqa: E402

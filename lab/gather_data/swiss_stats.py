@@ -1,6 +1,6 @@
 """Count buildings, floors and stair records in Swiss Dwellings v3 without unpacking the zip.
 
-Run: /Users/tsharma/Github/Meta/.venv/bin/python -I lab/gather_data/swiss_stats.py
+Run: .venv/bin/python -I lab/gather_data/swiss_stats.py
 Output: data/lab/gather_data/swiss_stats.json
 """
 import collections

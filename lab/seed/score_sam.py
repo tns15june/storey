@@ -1,5 +1,5 @@
 """Score SAM tracks against truth. No API calls. Writes sam_score.json and prints one row per run."""
-import sys, glob; sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/seed")
+import sys, glob; sys.path.insert(0, "lab/seed")
 from common import *
 
 

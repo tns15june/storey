@@ -3,7 +3,7 @@ import json, random, re, sys, zipfile
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 import cv2, numpy as np
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab"); sys.path.insert(0, str(Path(__file__).parent))
+sys.path.insert(0, "lab"); sys.path.insert(0, str(Path(__file__).parent))
 import metalab as m
 import key as K
 from spark_tiles import PROMPT, SCHEMA, CACHE, nms, score, tiles

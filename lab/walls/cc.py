@@ -6,7 +6,7 @@ import xml.etree.ElementTree as ET
 import cv2
 import numpy as np
 
-PATH = '/Users/tsharma/Github/Meta/data/plans/cubicasa5k/cubicasa5k.zip'
+PATH = 'data/plans/cubicasa5k/cubicasa5k.zip'
 Z = zipfile.ZipFile(PATH)
 LOCK = threading.Lock()
 

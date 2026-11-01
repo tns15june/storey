@@ -1,10 +1,10 @@
 """Spark door boxes on tiles: recall against GT doors, then carve into blockers and score. Same 22 test plans. No API calls."""
 import json, os, sys
-sys.path.insert(0, '/Users/tsharma/Github/Meta/lab/walls')
+sys.path.insert(0, 'lab/walls')
 import multiprocessing as mp
 import cv2, numpy as np
 import cc, plan as P, score as S
-T = '/Users/tsharma/Github/Meta/data/lab/walls/tiles/'
+T = 'data/lab/walls/tiles/'
 
 
 def one(h):
@@ -41,4 +41,4 @@ if __name__ == '__main__':
     tab = {k: S.summary([r[k] for r in rs]) for k in ('thick', 'block', 'block_pad0', 'block_keepheavy', 'block_pad0_keepheavy')}
     for k in tab:
         print(k, json.dumps(tab[k]))
-    json.dump(dict(recall=float(np.mean([x for r in rs for x in r['hit']])), precision=float(np.mean([x for r in rs for x in r['prec']])), n=len(rs), tab=tab), open('/Users/tsharma/Github/Meta/data/lab/walls/tiles22.json', 'w'), indent=1)
+    json.dump(dict(recall=float(np.mean([x for r in rs for x in r['hit']])), precision=float(np.mean([x for r in rs for x in r['prec']])), n=len(rs), tab=tab), open('data/lab/walls/tiles22.json', 'w'), indent=1)

@@ -1,8 +1,8 @@
 """The flag lost between v2a and v2, plus a seeded sample of held-out flags for a second reader. No API."""
 import json, random, sys
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/declared")
+sys.path.insert(0, "lab/declared")
 import verdicts as V
-D = "/Users/tsharma/Github/Meta/data/lab/declared/"
+D = "data/lab/declared/"
 a = json.load(open(D + "flags_held_v2a.json")); b = json.load(open(D + "flags_held_v2.json"))
 ib = {f["id"] for f in b["flags"]}
 for f in a["flags"]:
@@ -16,4 +16,4 @@ random.seed(20261031)
 pick = random.sample(by["real"], 5) + random.sample(by["false"], 5) + random.sample(by["likely"], 2)
 for f in pick:
     print(f["id"], "|", f["sheet"], "|", f["text"][:170])
-json.dump([f["id"] for f in pick], open("/Users/tsharma/Github/Meta/data/lab/audit2/declared_pick.json", "w"))
+json.dump([f["id"] for f in pick], open("data/lab/audit2/declared_pick.json", "w"))

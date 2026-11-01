@@ -1,5 +1,5 @@
 import sys, json
-sys.path.insert(0, '/Users/tsharma/Github/Meta/lab/defects')
+sys.path.insert(0, 'lab/defects')
 from common import *
 raw = json.load(open(OUT/'seeds_raw.json'))
 tiles=[]

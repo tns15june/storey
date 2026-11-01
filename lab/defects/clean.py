@@ -1,6 +1,6 @@
 """Untouched stacks: track every seed and print presence per floor."""
 import sys
-sys.path.insert(0, '/Users/tsharma/Github/Meta/lab/defects')
+sys.path.insert(0, 'lab/defects')
 from track import *
 from seeds import SEEDS
 from concurrent.futures import ThreadPoolExecutor

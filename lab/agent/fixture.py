@@ -1,13 +1,13 @@
 """End-to-end agent fixture: tools for the clinic, backed by saved results. Real saved data with three changes, listed in e2e_truth.json. No API."""
 import json, math, sys
 from pathlib import Path
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/modern"); sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/agent")
+sys.path.insert(0, "lab/modern"); sys.path.insert(0, "lab/agent")
 import cv2, numpy as np, pymupdf as fitz
 import vec  # lab/modern's vec, before routelib
 import draw, routelib as RL
 from build_cases import clinic_span, CLINIC55, route_img
 
-ROOT = Path("/Users/tsharma/Github/Meta")
+ROOT = Path(".")
 D = ROOT / "data/lab/agent"; MINE = D / "mine"
 DIR = RL.K.D + "2012-03-27-ClinicRedactedDrawings/"
 SHEETS = {"052": ("Clinic_052_Composite First Floor Plan.pdf", "Composite First Floor Plan, 1:150"),

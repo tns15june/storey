@@ -6,7 +6,7 @@ import sys
 import cv2
 import numpy as np
 
-import sys; sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/presence")
+import sys; sys.path.insert(0, "lab/presence")
 import pres
 from pres import OUT, T, GATE, reg, ctr
 

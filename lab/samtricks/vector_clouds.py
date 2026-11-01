@@ -6,7 +6,7 @@ import sys
 import fitz
 import numpy as np
 
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/samtricks")
+sys.path.insert(0, "lab/samtricks")
 import reg
 
 fitz.TOOLS.mupdf_display_errors(False)

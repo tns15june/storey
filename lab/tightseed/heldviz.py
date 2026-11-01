@@ -1,6 +1,6 @@
 """Overlay per stair per floor for one method: hand box magenta, seed blue, mask green when right, red when wrong, grey under conf .5. No API."""
 import sys
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/tightseed")
+sys.path.insert(0, "lab/tightseed")
 from core import *
 import vis
 

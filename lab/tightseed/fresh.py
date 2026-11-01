@@ -1,6 +1,6 @@
 """POST HOC recipe P on a stack no model has seen. Truth was written first. Prints wrong passes first."""
 import sys
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/tightseed")
+sys.path.insert(0, "lab/tightseed")
 from core import *
 import dev1, post1, post2, multi as mu, held_score as hs
 

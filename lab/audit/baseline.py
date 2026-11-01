@@ -1,7 +1,7 @@
 """Audit: no-model baseline for seed e2e: claim every main stair exists at one place on every floor."""
 import json
-t=json.load(open('/Users/tsharma/Github/Meta/lab/seed/truth.json'))
-cat={x['id']:x for x in json.load(open('/Users/tsharma/Github/Meta/data/plans/catalog.json'))}
+t=json.load(open('lab/seed/truth.json'))
+cat={x['id']:x for x in json.load(open('data/plans/catalog.json'))}
 tot=ok=0;ends=[]
 for b,v in t.items():
     if b.startswith('_'):continue

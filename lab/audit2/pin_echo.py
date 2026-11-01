@@ -3,7 +3,7 @@ For each flag SAM cancels on Ppin, was that floor itself a prompt floor for the 
 import json
 import sys
 
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/audit2")
+sys.path.insert(0, "lab/audit2")
 import rescore_tightseed as S
 
 

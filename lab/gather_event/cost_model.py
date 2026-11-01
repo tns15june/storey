@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Cost and size figures for a 100-sheet drawing set, from list prices. Calls no API.
 
-Run: /Users/tsharma/Github/Meta/.venv/bin/python /Users/tsharma/Github/Meta/lab/gather_event/cost_model.py
+Run: .venv/bin/python lab/gather_event/cost_model.py
 Writes: data/lab/gather_event/cost_model.json
 """
 import base64
@@ -10,8 +10,8 @@ from pathlib import Path
 
 import cv2
 
-PLANS = Path("/Users/tsharma/Github/Meta/data/plans")
-OUT = Path("/Users/tsharma/Github/Meta/data/lab/gather_event/cost_model.json")
+PLANS = Path("data/plans")
+OUT = Path("data/lab/gather_event/cost_model.json")
 
 # USD per 1M tokens, from docs/pricing-rate-limits.md, read 2026-10-31.
 SPARK = dict(input=1.25, cached=0.15, output=4.25)

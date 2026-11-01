@@ -1,6 +1,6 @@
 """Comparator: Round 1 one-call stair list on the held-out frames. Strict: every listed stair within 120 px of a truth stair must be right; best-listed beside it, marked. Cached."""
 import sys
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/tightseed")
+sys.path.insert(0, "lab/tightseed")
 from core import *
 
 ORDER = {"bme_k": "lower ground, ground, first, second", "habs_va_bldg1": "ground, first, second, third, fourth", "wfu_huffman": "ground, first, second, third",

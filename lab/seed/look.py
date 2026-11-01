@@ -1,4 +1,4 @@
-import sys; sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/seed")
+import sys; sys.path.insert(0, "lab/seed")
 from common import *
 for bid in sys.argv[1:]:
     fl = CAT[bid]["floors"]

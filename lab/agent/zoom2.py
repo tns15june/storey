@@ -1,9 +1,9 @@
 """Sheet 057 (Block 1E, 1:50) and sheet 052 near the S1 leak, plus door pixels of the IFC mask near it. No API."""
 import json, sys
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/agent")
+sys.path.insert(0, "lab/agent")
 from routelib import *
 import draw, pymupdf as fitz
-O = "/Users/tsharma/Github/Meta/data/lab/agent/mine/"
+O = "data/lab/agent/mine/"
 res = json.load(open(O + "routes.json"))
 r = next(x for x in res["1"] if x["room"] == 100)
 d = load(1)

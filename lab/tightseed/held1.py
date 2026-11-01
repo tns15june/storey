@@ -1,6 +1,6 @@
 """Held-out runs under the frozen rule: every seed method on every stack, all cached. Prints no scores."""
 import sys
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/tightseed")
+sys.path.insert(0, "lab/tightseed")
 from core import *
 import dev1, seeds as sd, multi as mu
 

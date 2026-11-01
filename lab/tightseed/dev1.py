@@ -1,6 +1,6 @@
 """Dev only: Spark grounding, hand-box tracks at 960 and 2000, loose tracks, and a probe of one object id on two frames."""
 import sys
-sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/tightseed")
+sys.path.insert(0, "lab/tightseed")
 from core import *
 
 

@@ -5,8 +5,8 @@ import math
 from collections import Counter
 from pathlib import Path
 
-OUT = Path("/Users/tsharma/Github/Meta/data/lab/presence")
-TR = json.load(open("/Users/tsharma/Github/Meta/lab/presence/truth.json"))
+OUT = Path("data/lab/presence")
+TR = json.load(open("lab/presence/truth.json"))
 T = TR["buildings"]
 HELD = [b for b, t in T.items() if t["split"] == "heldout"]
 INK_LOW, INK_HIGH = .40, .90
@@ -90,7 +90,7 @@ def main():
             if x["fam"] == "stair" and x["v"] >= 2 and x["state"]:
                 n[(x["state"], x["crop"])] += 1
     print(" ", dict(n))
-    json.dump(rows, open("/Users/tsharma/Github/Meta/data/lab/audit2/presence_planted.json", "w"), indent=1)
+    json.dump(rows, open("data/lab/audit2/presence_planted.json", "w"), indent=1)
 
 
 main()

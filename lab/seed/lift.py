@@ -1,5 +1,5 @@
 """Elevators and toilets as tracked objects, plus a planted shift test: can tracks measure a known misregistration?"""
-import sys; sys.path.insert(0, "/Users/tsharma/Github/Meta/lab/seed"); sys.path.insert(0, "/Users/tsharma/Github/Meta/lab")
+import sys; sys.path.insert(0, "lab/seed"); sys.path.insert(0, "lab")
 from common import *
 from union import cluster, CONF
 from sam_track import run, video, frames, REPEAT, token
