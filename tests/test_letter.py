@@ -391,7 +391,7 @@ GAP_TEXT = (f"{ASK[9]} for Stair B missing on the Ground Floor. It is found on B
 FLOOR_TEXT = f"{ASK[3]} for the floor name which differs. The title block says MAIN FLOOR PLAN and the drawing says Ground Floor Plan."
 ROOM_TEXT = f"{ASK[16]} for Room 2B19 name. The plan shows OFFICE and both schedules show WATER LAB, and each room needs one name."
 HALL_TEXT = f"{ASK[14]} in Hall 200 which is narrower than its printed width. It measures 3'-5\" clear against 3'-9 1/2\" printed."
-LOAD_TEXT = f"{ASK[6]} for Room 119 occupant load. Room 119 gives 1 where 2 is declared. A load rounded down is unsafe, and the declared load needs to match the room sum."
+LOAD_TEXT = f"{ASK[6]} for Room 119 occupant load. Room 119 gives 1 where 2 is declared. A load rounded down is unsafe, and it needs a declared load that matches the room sum."
 ROUTE_TEXT = f"{ASK[13]} for the travel path to Main Entry, at least 180 ft along the drawn route against a 200 ft limit."
 INDEX_TEXT = f"{ASK[2]} for sheet AD-901, which is on the index and not in the set."
 
