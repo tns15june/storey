@@ -1,0 +1,2444 @@
+{
+ "set": "mml_capitol",
+ "pdf_sha256": "3527108acfc08ee87fadaace106de10500207cb8020958d92b85e0a22996caa9",
+ "written": "2026-11-01, before any evaluation run",
+ "labeller": "The assistant, not a licensed examiner. Two auditors with different methods worked independently and blind to any pipeline output, then one adjudicator opened the sheets and ruled on each item.",
+ "auditors": {
+  "A": {
+   "method": "sheet by sheet in page order",
+   "listed": 83,
+   "limits": "All 22 pages were read from the text layer and from rendered images, with vector line positions used for measurements. Images of A1.0 to A3.0 dropped out of my context during the first pass, so I viewed those sheets again in the second pass; the findings rest on images I actually saw. The title blocks say \"Do not scale\", so measured lengths show what is drawn, not a printed value; I used the scale printed on each drawing, except where D40 shows it is wrong. The only area table holds: 576 x 3 = 1,728 and 16'-0\" x 36'-0\" = 576. The set has no occupant load table. Table R302.1(1) on A1.0 is an image and was read by eye. Two panel cells on E7.1 are cut off in the source. Red blanks were treated as intentional under the disclaimer, unless noted. Not done: load calculations, receptacle spacing, duct and pipe sizing, structural checks, and code review beyond the notes printed in the set. P1.1 and M1.1 are schematic by their own notes, so routes were not raised. No second reader checked this list: the harness advisor tool was called once near the end, timed out and returned nothing, and no other model was used. Blindness rules were kept: I opened only the PDF and my scratch folder, ran no git, and read no keys."
+  },
+  "B": {
+   "method": "item by item, tables first",
+   "listed": 75,
+   "limits": "Blindness held: I opened only the PDF and files in my scratch folder. Text came from the PDF text layer with positions corrected for page rotation. Positions are fractions of the viewed sheet. Measured lengths came from vector geometry at the printed scale, but sheets say 'Do not scale', so measured-only findings are marked likely or unsure. Printed-string conflicts are the firm ones. The advisor review timed out, so there was no second reader. Table R302.1(1) and the renderings are raster and were read by eye. Code clauses were compared only with what the set quotes, not with the published codes. Duct and pipe routes were treated as schematic per the sheet notes. Two E7.1 cells are truncated. No exit, corridor, occupancy, construction type or sprinkler statement is printed, so kind 11 and part of kind 3 had little to compare; the only exit-path finding is D17. PDF bookmarks spell the job 'Capital', but that is not on a sheet and is not listed. IDs skip D40 and D77 onward because those items were merged or dropped."
+  }
+ },
+ "adjudicator_notes": "Result: 87 items, 49 real, 27 likely, 11 not_a_defect. All 83 Auditor A items and all 75 Auditor B items are mapped (B has no D40). Six source items are split across two truth items: A-D23 (T28, T29), B-D16 (T20, T21), B-D17 (T22, T23), B-D27 (T31, T39), B-D29 (T34, T62), B-D35 (T31, T36). Merged by root cause: A-D29, A-D43 and B-D29 into T34, covering all four elevations; A-D36 to A-D39 and B-D36 into T41, covering four strings. T87 is new (found_by empty); it was met while measuring the stair and is ruled not_a_defect because it has no comparator in the set, but the measurement stays on record for a human examiner.\n\nCorrections to auditor claims: T24: A4.0 shows both sizes on one window (frame 2'-0\", casing 2'-5\"), so the elevations do not simply agree with the schedule. T53: the ground C window is about 1'-9\" from the elevation position, and 1'-11\" is the gap between the two plans. T33: A and B used different faces; both give about a 1'-0\" shift in the first riser. T34: the root cause is the heavy GROUND LEVEL line sitting about 5 pt off the level series; A3.0 does not have this offset. T29: POWDER RM moved here from A-D23.\n\nMethod: every item was checked against the text layer with positions, rendered tiles at 170 to 300 dpi, and vector line data. Text was transformed by each page's rotation (270 on pages 0-9 and 21, 90 on pages 10-20), so all positions are fractions of the sheet as displayed. Scales used: 18 pt/ft for 1/4\", 36 for 1/2\", 54 for 3/4\", 108 for 1-1/2\". Every sheet says \"Do not scale\", so a mismatch resting only on a scaled reading with no figured value on either side was usually ruled likely.\n\nCoverage per sheet. p0 A1.0 cover: 22 index rows against 22 title blocks, project data, 4 area rows (576 x 3 = 1,728 and 16' x 36' = 576 both hold), raster table read at 300 dpi, code notes. p1 A2.0 foundation: 14 printed dimensions, details 1, 2, 3, 6, 4 wall types. p2 A2.1 ground: 54 dimensions (46 on the plan), 8 door tags to 8 rows, 8 window tags to 3 rows (A 7, C 1, counts agree), 7 finish rows, 4 window and door type keys, details 3 and 4. p3 A2.2 main: 51 dimensions (43 on the plan), 8 door tags to 8 rows, 7 window tags (A 6, C 1, counts agree), 7 finish rows, stair numbers 1-16. p4 A2.3 upper: 39 dimensions (31 on the plan), 9 door tags to 9 rows, 6 window tags (A 4, B 2, counts agree), 10 finish rows, detail 3. p5 A2.4: 2 drawings, 6 slope tags. p6 A3.0: 14 level and dimension values, 2 drawings, 12 room labels, 5 callouts, 16 risers. p7 A4.0: 57 dimension and level values, 4 elevations, 20 windows positioned against 21 on the plans, level lines on all four. p8 A5.0: 12 elevations against 3 tags, 3 doors measured. p9 A5.1: 6 kitchen elevations, 23 cabinet labels, detail 7 finish text. p10 E0.1: legends and general notes, read for references and symbols only. p11 E1.1: 3 plans, room tags, fixture tags against 6 schedule rows. p12 E2.1: 3 plans, 4 SD tags, 4 EF-1, 2 HPU, 2 AHU, 2 DWH labels, 2 keynotes. p13 E5.1: 2 drawings, 4 conduit rows, fault current note, panel sizes against E7.1. p14 E7.1: 6 fixture rows, 66 circuit entries, panel headers. p15 P0.1: notes, 5 insulation rows, code references. p16 P1.1: 4 plans, fixture tags against 9 schedule rows. p17 P6.1: 2 heater rows (recovery and draw arithmetic hold), 1 tank row, 9 fixture rows, 2 schematics. p18 M0.1: notes A to T, read for references. p19 M1.1: 3 plans, wall caps, roof cap note, equipment tags. p20 M6.1: 1 fan row, 2 AHU rows, 2 HPU rows, comments, detail 1. p21 L1.0: 3 lettered and 3 numbered details, notes.\n\nLimits: nothing was unreadable. The R302.1(1) table on A1.0 is raster only. Two E7.1 cells are truncated as printed (T86). The set does not define its LEFT and RIGHT swing convention, so swing was compared only where a conflict arose, such as door 8. Structural adequacy and code compliance beyond what the set itself quotes were not reviewed.",
+ "items": [
+  {
+   "id": "T01",
+   "kind": 1,
+   "pages": [
+    0,
+    17,
+    18
+   ],
+   "sheets": [
+    "A1.0",
+    "P6.1",
+    "M0.1"
+   ],
+   "where": "A1.0 Drawing Schedule, Plumbing Series row, x 0.57-0.66, y 0.64; P6.1 title block x 0.93, y 0.90",
+   "statement": "The sheet index gives P6.1 the title of the HVAC cover sheet. The sheet is the plumbing schedules sheet, and M0.1 already carries that index title.",
+   "evidence": "A1.0: \"P6.1\" \"HVAC Cover Sheet\"; P6.1 title block: \"PLUMBING SCHEDULES\"; A1.0: \"M0.1 HVAC Cover Sheet\"; M0.1 title block: \"HVAC COVER SHEET\".",
+   "status": "real",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "A-D01",
+    "B-D01"
+   ],
+   "reason": "The index row and the title block are both legible and give different titles for one sheet."
+  },
+  {
+   "id": "T02",
+   "kind": 1,
+   "pages": [
+    0,
+    5,
+    6
+   ],
+   "sheets": [
+    "A1.0",
+    "A2.4",
+    "A3.0"
+   ],
+   "where": "A1.0 Drawing Schedule x 0.57, y 0.43-0.44; title blocks x 0.93, y 0.90",
+   "statement": "Two index titles differ in wording from their title blocks.",
+   "evidence": "\"A2.4 Attic & Roof Plan\" against \"ATTIC & ROOF PLANS\"; \"A3.0 Building Section & Wall Section\" against \"BUILDING AND WALL SECTION\".",
+   "status": "not_a_defect",
+   "found_by": [
+    "B"
+   ],
+   "source_ids": [
+    "B-D02"
+   ],
+   "reason": "Each pair names the same content and differs only by a plural or a joined phrase."
+  },
+  {
+   "id": "T03",
+   "kind": 2,
+   "pages": [
+    2,
+    0,
+    3
+   ],
+   "sheets": [
+    "A2.1",
+    "A1.0",
+    "A2.2"
+   ],
+   "where": "A2.1 title block x 0.93, y 0.90; drawing label x 0.57, y 0.72",
+   "statement": "The A2.1 title block names the wrong floor and repeats the title of A2.2.",
+   "evidence": "A2.1 title block: \"MAIN FLOOR\" \"PLAN\"; drawing label on the same sheet: \"Ground Floor Plan\"; index: \"A2.1 Ground Floor Plan\"; schedules on the sheet: \"GROUND LEVEL DOOR SCHEDULE\"; A2.2 title block: \"MAIN FLOOR\" \"PLAN\".",
+   "status": "real",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "A-D02",
+    "B-D03"
+   ],
+   "reason": "The title block contradicts the drawing label, the index and the schedules on the same sheet."
+  },
+  {
+   "id": "T04",
+   "kind": 2,
+   "pages": [
+    5,
+    0
+   ],
+   "sheets": [
+    "A2.4",
+    "A1.0"
+   ],
+   "where": "A2.4 labels at x 0.08 and x 0.53, y 0.72; title block x 0.93, y 0.90",
+   "statement": "Both drawings on A2.4 are labelled Roof Plan and neither is labelled as an attic plan, although the title block and index promise one. Drawing 2 shows the walls with the roof dashed over them, so it is the attic view.",
+   "evidence": "Labels: \"2\" \"Roof Plan\" and \"1\" \"Roof Plan\"; title block: \"ATTIC & ROOF\" \"PLANS\"; index: \"A2.4 Attic & Roof Plan\".",
+   "status": "real",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "A-D03",
+    "B-D04"
+   ],
+   "reason": "Two drawings share one label and the attic drawing the sheet title promises is not named."
+  },
+  {
+   "id": "T05",
+   "kind": 2,
+   "pages": [
+    6,
+    0
+   ],
+   "sheets": [
+    "A3.0",
+    "A1.0"
+   ],
+   "where": "A3.0 labels at x 0.08 and x 0.30, y 0.95; callout \"2 A3.0\" x 0.84, y 0.92",
+   "statement": "The wall section is labelled Building Section, so A3.0 has two drawings with one title and no drawing called wall section.",
+   "evidence": "Labels: \"2\" \"Building Section\" and \"1\" \"Building Section\"; title block: \"BUILDING AND\" \"WALL SECTION\"; index: \"A3.0 Building Section & Wall Section\".",
+   "status": "real",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "A-D04",
+    "B-D05"
+   ],
+   "reason": "Drawing 2 is the wall detail called out from drawing 1 and it carries the wrong title."
+  },
+  {
+   "id": "T06",
+   "kind": 2,
+   "pages": [
+    9,
+    0
+   ],
+   "sheets": [
+    "A5.1",
+    "A1.0"
+   ],
+   "where": "A5.1 detail 7 label x 0.36-0.40, y 0.95; title block x 0.93, y 0.90",
+   "statement": "A5.1 holds an exterior finish drawing under an interior elevations title.",
+   "evidence": "Title block and index: \"INTERIOR\" \"ELEVATIONS\" / \"A5.1 Interior Elevations\"; label: \"7\" \"Exterior Finish\" \"Material Options\".",
+   "status": "not_a_defect",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "A-D83",
+    "B-D06"
+   ],
+   "reason": "A sheet title names the main content, and an extra detail on the sheet contradicts nothing."
+  },
+  {
+   "id": "T07",
+   "kind": 12,
+   "pages": [
+    21
+   ],
+   "sheets": [
+    "L1.0"
+   ],
+   "where": "Detail labels x 0.27, x 0.50, x 0.72, y 0.96; note x 0.05-0.23, y 0.63 and y 0.69",
+   "statement": "Detail number 3 is used twice and number 2 is not used, while the notes on the sheet refer to Details 1-3.",
+   "evidence": "\"3\" \"Existing House - Corner Lot\"; \"3\" \"Existing House - Alley Lot\"; \"1\" \"Existing House - Standard Lot\"; notes: \"In Details A-C & Details 1-3\" and \"Details 1-3, propose adding buildings\".",
+   "status": "real",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "A-D72",
+    "B-D07"
+   ],
+   "reason": "The picture and the text layer both show the duplicate number, so a reference to Detail 2 or 3 is ambiguous."
+  },
+  {
+   "id": "T08",
+   "kind": 12,
+   "pages": [
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20
+   ],
+   "sheets": [
+    "E0.1",
+    "E1.1",
+    "E2.1",
+    "E5.1",
+    "E7.1",
+    "P0.1",
+    "P1.1",
+    "P6.1",
+    "M0.1",
+    "M1.1",
+    "M6.1"
+   ],
+   "where": "Left margin stamp x 0.02, y 0.93 on pages 10-20; title block x 0.93-0.96, y 0.06",
+   "statement": "The engineering sheets carry a plot stamp about seven weeks older than their title block date, and they lack the MML Review Set line that the A sheets and L1.0 carry.",
+   "evidence": "Margin stamps \"8/23/2023 10:14:29 AM\" and \"8/23/2023 10:16:18 AM\" against title block \"15 October 2023\"; \"MML Review Set\" appears only on pages 0-9 and 21.",
+   "status": "not_a_defect",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "A-D05",
+    "B-D74"
+   ],
+   "reason": "A plot stamp records when a file was printed and does not conflict with the set date in the title block."
+  },
+  {
+   "id": "T09",
+   "kind": 3,
+   "pages": [
+    0,
+    21
+   ],
+   "sheets": [
+    "A1.0",
+    "L1.0"
+   ],
+   "where": "A1.0 PROJECT DATA x 0.29-0.40, y 0.34; title block x 0.93-0.96, y 0.73-0.79",
+   "statement": "The project name in the project data does not match the name on every title block, and it calls a two-family building a cottage residence.",
+   "evidence": "\"Project Name:\" \"Prototype Cottage Residence\" against title block \"THE CAPITOL\"; index heading \"Duplex Series\"; \"R302.3 Two-family dwellings.\"; L1.0 \"Proposed\" \"Duplex\".",
+   "status": "real",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "A-D06",
+    "B-D08"
+   ],
+   "reason": "The filled-in project field names a different project from all 22 title blocks."
+  },
+  {
+   "id": "T10",
+   "kind": 3,
+   "pages": [
+    0,
+    1,
+    10,
+    15,
+    18
+   ],
+   "sheets": [
+    "A1.0",
+    "A2.0",
+    "E0.1",
+    "P0.1",
+    "M0.1"
+   ],
+   "where": "A1.0 Governing Codes x 0.29, y 0.51-0.53; A2.0 detail 2 x 0.52, y 0.76; P0.1 note x 0.70-0.88, y 0.25-0.27; E0.1 note 1 x 0.84, y 0.15",
+   "statement": "Governing codes are stated differently across the set. A1.0 lists only the residential and barrier free codes, while the trade sheets rely on other codes and a later plumbing edition, and the mechanical and electrical notes are open-ended.",
+   "evidence": "A1.0: \"2015 Michigan Residential Code\", \"Michigan Barrier Free Codes\"; A2.0: \"IRC 2015\"; P0.1: \"ASHRAE 90.1-2013\", \"2015 INTERNATIONAL ENERGY CONSERVATION CODE (IECC)\", \"2015 MICHIGAN MECHANICAL CODE\", \"2018 MICHIGAN PLUMBING CODE (MPC)\", commercial sections \"C404\" and \"C403.2.10\"; E0.1 note 1: \"LATEST ACCEPTED EDITION\"; M0.1 note A: \"LATEST EDITIONS\".",
+   "status": "likely",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "A-D07",
+    "B-D10"
+   ],
+   "reason": "The lists differ, but P0.1 also says to verify the codes in effect, so this is a gap in the code list more than a direct conflict."
+  },
+  {
+   "id": "T11",
+   "kind": 3,
+   "pages": [
+    0,
+    1,
+    6
+   ],
+   "sheets": [
+    "A1.0",
+    "A2.0",
+    "A3.0"
+   ],
+   "where": "A1.0 Table R302.1(1), raster image, x 0.29-0.43, y 0.62-0.73, first row; R302.3 text x 0.29-0.42, y 0.73-0.81",
+   "statement": "The exterior wall table misquotes both test standards that the same sheet and A2.0 quote correctly. The table is an image, so the text layer does not contain it.",
+   "evidence": "Table: \"accordance with STM E199 or URL 263 with exposure from both sides\"; R302.3 on A1.0 and A2.0: \"ASTM E119 or UL 263\"; A3.0: \"ASTM E119 - 1 HR\".",
+   "status": "real",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "A-D08",
+    "B-D09"
+   ],
+   "reason": "Read at 300 dpi the table prints STM E199 and URL 263, which do not exist as stated elsewhere in the set."
+  },
+  {
+   "id": "T12",
+   "kind": 3,
+   "pages": [
+    0,
+    19,
+    1,
+    6,
+    3,
+    4
+   ],
+   "sheets": [
+    "A1.0",
+    "M1.1",
+    "A2.0",
+    "A3.0",
+    "A2.2",
+    "A2.3"
+   ],
+   "where": "A1.0 red note x 0.29-0.42, y 0.87-0.91; M1.1 main plan wall caps at (0.522,0.308), (0.507,0.445), (0.667,0.518); upper plan (0.710,0.478)",
+   "statement": "A1.0 forbids penetrations through SIPs, but M1.1 runs four vents through the main and upper exterior walls, which are Wall Type #2 SIP.",
+   "evidence": "A1.0: \"PENETRATIONS SHALL NOT BE PERMITTED through FIRE RATED WALLS and STRUCTURAL INSULATED PANELS (SIPS).\"; M1.1 main: EF-1 \"WALL CAP\", \"4\"Ø DRYER VENT\" \"WALL CAP\", \"RANGE HOOD VENT\" \"WALL CAP\"; M1.1 upper: \"6\"ø OA\" \"WALL CAP\"; A2.0 detail 2: \"MAIN LEVEL - UNIT 2\", \"Wall Type #2:\", \"Exterior SIP Wall\"; A3.0: \"Exterior 6\" Structural Insulated Panel (SIP)\".",
+   "status": "real",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "A-D09",
+    "B-D12"
+   ],
+   "reason": "The note is unconditional and the four drawn wall caps pass through walls the set defines as SIP."
+  },
+  {
+   "id": "T13",
+   "kind": 3,
+   "pages": [
+    0
+   ],
+   "sheets": [
+    "A1.0"
+   ],
+   "where": "BUILDING DATA box x 0.71-0.93, y 0.81-0.90; job number x 0.93, y 0.885 on all 22 sheets",
+   "statement": "The BUILDING DATA box is empty, so the set states no number of stories, occupancy, construction type or sprinkler status anywhere, and the job number is a placeholder.",
+   "evidence": "Heading \"BUILDING DATA\" with no content below it; \"Job Number:\" \"2023xx\" on all 22 sheets; disclaimer: \"Some items are indicated as blanks for local verification.\"",
+   "status": "likely",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "A-D10",
+    "B-D73"
+   ],
+   "reason": "The empty box is on the sheet, but the disclaimer allows blanks for local verification, although this box has none of the red blank lines used elsewhere."
+  },
+  {
+   "id": "T14",
+   "kind": 4,
+   "pages": [
+    13
+   ],
+   "sheets": [
+    "E5.1"
+   ],
+   "where": "Riser diagram note x 0.45-0.49, y 0.33-0.36",
+   "statement": "The printed fault current does not follow from the stated basis. A 50 kVA, 240 V transformer at 2.5% impedance with an infinite primary gives about 8,333 A.",
+   "evidence": "\"IS.C. (L-L): 9657 AMPS\"; \"BASED ON AN ASSUMPTION OF 50KVA TRANSFORMER WITH AN INFINITE PRIMARY AND A 2.5% IMPEDENCE\". 50,000 / 240 / 0.025 = 8,333 A.",
+   "status": "likely",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "A-D11",
+    "B-D68"
+   ],
+   "reason": "The stated inputs give a different value, but the printed figure may include a factor the note does not state."
+  },
+  {
+   "id": "T15",
+   "kind": 4,
+   "pages": [
+    20,
+    14
+   ],
+   "sheets": [
+    "M6.1",
+    "E7.1"
+   ],
+   "where": "M6.1 Air Handling Unit Schedule x 0.84-0.85, y 0.33-0.34; E7.1 Panel A1 ckt 18, Panel A2 ckt 29",
+   "statement": "Electric heat MCA is higher than the stated kW gives.",
+   "evidence": "\"5\" KW, \"32\" MCA, \"240V / 1Ø\"; 5 kW / 240 V = 20.8 A, 26 A at 125%; E7.1 \"AHU-1 CLOSET 002\" \"35\", \"AHU-2 CLOSET 206\" \"35\".",
+   "status": "not_a_defect",
+   "found_by": [
+    "B"
+   ],
+   "source_ids": [
+    "B-D69"
+   ],
+   "reason": "MCA is a manufacturer value, and the printed 32 agrees with the 35 A breakers on E7.1, so nothing on the sheets shows it is wrong."
+  },
+  {
+   "id": "T16",
+   "kind": 5,
+   "pages": [
+    2,
+    3
+   ],
+   "sheets": [
+    "A2.1",
+    "A2.2"
+   ],
+   "where": "A2.1 Ground Level Door Schedule row 8, x 0.25-0.40, y 0.771",
+   "statement": "Door 8 on A2.1 has a material in the swing column and the wrong material. The matching door on A2.2 and door 1 of the same type are right.",
+   "evidence": "A2.1 row 8: \"8\" \"A\" \"36\" x 80\"\" \"STEEL\" \"WOOD\" \"PAINTED\" \"ENTRY\"; A2.1 row 1: \"LEFT\" \"STEEL\"; A2.2 row 8: \"RIGHT\" \"STEEL\". A2.1 and A2.2 both draw a swing door hinged at the plan-left jamb, which is the right side seen from outside.",
+   "status": "real",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "A-D12",
+    "B-D13"
+   ],
+   "reason": "The schedule picture shows STEEL under SWING and WOOD under MATERIAL for a type A entry door."
+  },
+  {
+   "id": "T17",
+   "kind": 5,
+   "pages": [
+    3,
+    2,
+    4
+   ],
+   "sheets": [
+    "A2.2",
+    "A2.1",
+    "A2.3"
+   ],
+   "where": "Window schedules, row B: A2.2 y 0.628; A2.1 y 0.632; A2.3 y 0.664; x 0.27-0.29",
+   "statement": "Window B has a different height on A2.2 from the other two schedules.",
+   "evidence": "A2.2: \"B\" \"0\" \"1'-5\"\" \"1'-5\"\"; A2.1: \"B\" \"0\" \"1'-5\"\" \"1'-6\"\"; A2.3: \"B\" \"2\" \"1'-5\"\" \"1'-6\"\".",
+   "status": "real",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "A-D13",
+    "B-D19"
+   ],
+   "reason": "One window mark has two printed heights, even though the row has quantity 0 on A2.2."
+  },
+  {
+   "id": "T18",
+   "kind": 5,
+   "pages": [
+    2,
+    3
+   ],
+   "sheets": [
+    "A2.1",
+    "A2.2"
+   ],
+   "where": "A2.1 door tag 4 at (0.700,0.364); schedule row 4 y 0.729",
+   "statement": "Door 4 is scheduled 42 in wide with type D, but the plan draws a double bifold in a 5'-1\" opening. The same closet door on A2.2 is scheduled 60 in, type C.",
+   "evidence": "A2.1 row 4: \"D\" \"42\" x 80\"\" \"BIFOLD\"; wall ends y 583.0 and 674.5 pt, 91.5 pt = 5'-1\" at 18 pt/ft, with two V leaves; A2.2 row 5: \"C\" \"60\" x 80\"\" \"BIFOLD\".",
+   "status": "real",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "A-D14",
+    "B-D15"
+   ],
+   "reason": "The width and the door type both disagree with the drawn opening and with the matching row on A2.2."
+  },
+  {
+   "id": "T19",
+   "kind": 5,
+   "pages": [
+    2,
+    3
+   ],
+   "sheets": [
+    "A2.1",
+    "A2.2"
+   ],
+   "where": "A2.1 door tag 2 at (0.712,0.479); schedule row 2 y 0.708",
+   "statement": "Cased opening 2 is scheduled 36 in wide but drawn 32 in. The same opening on A2.2 is scheduled 32 in.",
+   "evidence": "A2.1 row 2: \"F\" \"36\" x 80\"\" \"CASED OPENING\"; wall ends x 1821.24 and 1869.24 pt, 48 pt = 2'-8\"; A2.2 row 3: \"F\" \"32\" x 80\"\" \"CASED OPENING\", drawn 2'-8\".",
+   "status": "real",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "A-D15",
+    "B-D14"
+   ],
+   "reason": "The vector gap is exactly 2'-8\" and the same opening one floor up is scheduled 32 in."
+  },
+  {
+   "id": "T20",
+   "kind": 5,
+   "pages": [
+    2
+   ],
+   "sheets": [
+    "A2.1"
+   ],
+   "where": "A2.1 door tag 3 at (0.698,0.449), Closet 002; schedule row 3 y 0.719",
+   "statement": "Door 3 is scheduled 36 in wide but the wall opening is drawn 3'-4\" wide.",
+   "evidence": "Row 3: \"D\" \"36\" x 80\"\" \"BIFOLD\" \"CLOSET\"; wall ends y 757.0 and 817.0 pt, 60 pt = 3'-4\".",
+   "status": "likely",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "A-D16",
+    "B-D16"
+   ],
+   "reason": "The gap is measured from vectors, but 4 in at a bifold may be a rough opening and the sheet says not to scale."
+  },
+  {
+   "id": "T21",
+   "kind": 5,
+   "pages": [
+    9,
+    2
+   ],
+   "sheets": [
+    "A5.1",
+    "A2.1"
+   ],
+   "where": "A5.1 kitchen elevation 1, door at x 0.17-0.23, y 0.11-0.27; A2.1 door tag 3 at (0.698,0.449)",
+   "statement": "Kitchen elevation 1 draws a four panel swing door with a knob where A2.1 has bifold door 3 to Closet 002.",
+   "evidence": "A2.1 row 3: \"D\" \"36\" x 80\"\" \"BIFOLD\"; the plan draws a bifold V. A5.1 elevation 1 shows one leaf with four panels and a knob, which is door type B.",
+   "status": "real",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "A-D20",
+    "B-D16"
+   ],
+   "reason": "The elevation looks west at that wall and shows a different door type from both the schedule and the plan."
+  },
+  {
+   "id": "T22",
+   "kind": 5,
+   "pages": [
+    4
+   ],
+   "sheets": [
+    "A2.3"
+   ],
+   "where": "A2.3 door tag 3 at (0.690,0.564), Closet 202; schedule row 3 y 0.753",
+   "statement": "Door 3 is scheduled 32 in wide but the opening is drawn 2'-5\" wide. Doors 7, 8 and 9, also 32 in bifolds, are drawn 2'-8\".",
+   "evidence": "Row 3: \"D\" \"32\" x 80\"\" \"BIFOLD\"; wall ends y 965.68 and 1009.66 pt, 44 pt = 2'-5\".",
+   "status": "likely",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "A-D17",
+    "B-D17"
+   ],
+   "reason": "The measured gap is 3 in short of the schedule, but it is a closet door with no figured width on the plan."
+  },
+  {
+   "id": "T23",
+   "kind": 5,
+   "pages": [
+    4
+   ],
+   "sheets": [
+    "A2.3"
+   ],
+   "where": "A2.3 door tag 1 at (0.690,0.395), between Stair Hall 100 and Hall 200; schedule row 1 y 0.733",
+   "statement": "The only path from the bedrooms to the stair is a cased opening drawn 2'-1 1/2\" wide. The schedule says 32 in, and every other opening on the sheet is drawn at its scheduled width except door 3.",
+   "evidence": "Row 1: \"F\" \"32\" x 80\"\" \"CASED OPENING\"; wall ends y 661.96 and 700.18 pt, 38.2 pt = 2'-1 1/2\".",
+   "status": "real",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "A-D64",
+    "B-D17"
+   ],
+   "reason": "The vector gap is 6 1/2 in short of the schedule at the one opening on the exit path from the upper floor."
+  },
+  {
+   "id": "T24",
+   "kind": 5,
+   "pages": [
+    2,
+    3,
+    4,
+    7
+   ],
+   "sheets": [
+    "A2.1",
+    "A2.2",
+    "A2.3",
+    "A4.0"
+   ],
+   "where": "Every window on the three plans, for example A2.3 tag A at (0.716,0.235) and tag B at (0.683,0.235); schedules x 0.27-0.29; A4.0 Right Elevation windows y 0.25-0.29",
+   "statement": "Windows are drawn narrower on the plans than the schedule width. The plan gaps match the 2'-0\" frame on A4.0, and the schedule sizes match the outer casing on A4.0, so the schedule seems to list the trim size and not the window.",
+   "evidence": "Schedules: A and C \"2'-5\"\" wide, A \"4'-5\"\" high, B \"1'-5\"\" wide. A2.3 gaps: A 36 pt = 2'-0\", B 20 pt = 1'-1 1/3\". A4.0 Right Elevation window A: frame 36.1 pt = 2'-0\" wide, casing 43.5 pt = 2'-5\" wide and 79.5 pt = 4'-5\" high.",
+   "status": "likely",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "A-D18",
+    "B-D20"
+   ],
+   "reason": "The plan and schedule differ, but A4.0 shows both sizes on one window, so it may be a matter of what the schedule measures."
+  },
+  {
+   "id": "T25",
+   "kind": 5,
+   "pages": [
+    8,
+    4
+   ],
+   "sheets": [
+    "A5.0",
+    "A2.3"
+   ],
+   "where": "A5.0 elevation 10, door x 0.36-0.40, y 0.76-0.91; A2.3 door tag 4 at (0.729,0.490)",
+   "statement": "The upper bathroom door on elevation 10 is drawn 3'-0\" wide where the schedule and plan say 32 in, and its knob is on the hinge side shown by the plan.",
+   "evidence": "A2.3 row 4: \"B\" \"32\" x 80\"\" \"LEFT\"; A5.0 elevation 10 door x 931.0 to 1039.0 pt, 108 pt = 3'-0\" at 1/2\" scale. Door 4 hinges at the west jamb, which is the right side when looking south; elevation 10 shows the knob at the right.",
+   "status": "likely",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "A-D19",
+    "B-D18"
+   ],
+   "reason": "The measurements hold, but both points are scaled from a sheet that says to use figured dimensions."
+  },
+  {
+   "id": "T26",
+   "kind": 5,
+   "pages": [
+    3,
+    2
+   ],
+   "sheets": [
+    "A2.2",
+    "A2.1"
+   ],
+   "where": "A2.2 door tag 6 at (0.715,0.333); dashed arc to the north of it; schedule row 6 y 0.746",
+   "statement": "A2.2 draws a dashed door swing at opening 6, but the schedule row is a plain cased opening. The like opening 5 on A2.1 is scheduled as optional.",
+   "evidence": "A2.2 row 6: \"F\" \"32\" x 80\"\" \"-\" \"CASED OPENING\"; A2.1 row 5: \"F or B\" \"36\" x 80\"\" \"LEFT\" \"CASED OPENING or DOOR\".",
+   "status": "likely",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "A-D21",
+    "B-D21"
+   ],
+   "reason": "The dashed arc is drawn, but a dashed door may be a drafting way to show an option."
+  },
+  {
+   "id": "T27",
+   "kind": 6,
+   "pages": [
+    4,
+    11,
+    12,
+    16,
+    19
+   ],
+   "sheets": [
+    "A2.3",
+    "E1.1",
+    "E2.1",
+    "P1.1",
+    "M1.1"
+   ],
+   "where": "A2.3 plan room tag at (0.722,0.268) to (0.717,0.275); finish schedule rows y 0.516 and y 0.558",
+   "statement": "Bedroom 2 carries Bedroom 1's number on A2.3, so 201 is used twice and 205 is not on the plan. The schedule and all trade plans use 205.",
+   "evidence": "A2.3 plan: \"Bedroom 2\" \"201\" and \"Bedroom 1\" \"201\"; A2.3 finish schedule: \"205\" \"BEDROOM 2\"; E1.1, E2.1, P1.1 and M1.1: \"BEDROOM 2\" \"205\".",
+   "status": "real",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "A-D22",
+    "B-D22"
+   ],
+   "reason": "The plan tag conflicts with the schedule on the same sheet and with four trade plans."
+  },
+  {
+   "id": "T28",
+   "kind": 6,
+   "pages": [
+    3
+   ],
+   "sheets": [
+    "A2.2"
+   ],
+   "where": "Main Level Finish Schedule, room column x 0.27, y 0.516",
+   "statement": "A room name is misspelled in the A2.2 finish schedule.",
+   "evidence": "Schedule: \"102\" \"KTICHEN\"; plan: \"Kitchen\" \"102\".",
+   "status": "real",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "A-D23",
+    "B-D23"
+   ],
+   "reason": "The schedule entry does not match the plan room name."
+  },
+  {
+   "id": "T29",
+   "kind": 6,
+   "pages": [
+    3,
+    4,
+    6,
+    11,
+    12,
+    14,
+    16,
+    19
+   ],
+   "sheets": [
+    "A2.2",
+    "A2.3",
+    "A3.0",
+    "E1.1",
+    "E2.1",
+    "E7.1",
+    "P1.1",
+    "M1.1"
+   ],
+   "where": "A2.2 room tag (0.690,0.586) and schedule (0.274,0.548); E1.1 room tag (0.402,0.694); E7.1 panel header (0.545,0.299)",
+   "statement": "Three rooms are written differently between sheets. Room 100 has two spellings, room 105 is abbreviated in its schedule, and room 006 loses the word Office on E7.1.",
+   "evidence": "Architectural sheets: \"Stair Hall\" / \"STAIR HALL\"; trade sheets: \"STAIR/HALL\". Plan: \"Powder Room\" against schedule \"POWDER RM\". Plans: \"BEDROOM/OFFICE\" \"006\" against E7.1 \"Location: BEDROOM 006\" and \"RECEPT BEDROOM 006\".",
+   "status": "likely",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "A-D23",
+    "A-D24",
+    "B-D25"
+   ],
+   "reason": "The variants are on the sheets, but the room numbers tie them together and nothing depends on the wording."
+  },
+  {
+   "id": "T30",
+   "kind": 6,
+   "pages": [
+    3,
+    8
+   ],
+   "sheets": [
+    "A2.2",
+    "A5.0"
+   ],
+   "where": "A2.2 detail 4 label (0.116,0.431); A5.0 elevations 5-8 labels y 0.62-0.63",
+   "statement": "The main level room is a powder room on the plan, but its detail and its elevations call it a bathroom.",
+   "evidence": "\"Main Level Bathroom Layout\" and \"Bathroom Elevations\" against room tag \"Powder Room\" \"105\".",
+   "status": "likely",
+   "found_by": [
+    "A"
+   ],
+   "source_ids": [
+    "A-D25"
+   ],
+   "reason": "The names differ, but a powder room is a kind of bathroom and the callouts tie the drawings together."
+  },
+  {
+   "id": "T31",
+   "kind": 7,
+   "pages": [
+    1,
+    2,
+    3,
+    7
+   ],
+   "sheets": [
+    "A2.0",
+    "A2.1",
+    "A2.2",
+    "A4.0"
+   ],
+   "where": "Right hand dimension strings: A2.0 x 0.78, A2.1 x 0.80-0.82, A2.2 x 0.79-0.83; left strings A2.0 x 0.63-0.65",
+   "statement": "The same exterior stairs have different lengths on the foundation, ground and main plans, so the overall length changes too. A4.0 draws about 13'-9\" and 10'-1\", which matches A2.2.",
+   "evidence": "Rear: A2.0 \"13'-9\"\" (\"9'-9\"\" + \"4'-0\"\"), A2.1 \"14'-0\"\", A2.2 \"13'-9\"\" (\"10'-0\"\" + \"3'-9\"\"). Front: A2.0 \"9'-11\"\" (\"4'-0\"\" + \"5'-11\"\"), A2.1 \"10'-5\"\", A2.2 \"10'-2\"\" (\"3'-9\"\" + \"6'-5\"\"). Overall: A2.0 \"60'-0\"+/-\", A2.1 \"60'-5\"\", A2.2 \"60'+/-\".",
+   "status": "real",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "A-D26",
+    "B-D27",
+    "B-D35"
+   ],
+   "reason": "All values are printed and one stair cannot have three lengths."
+  },
+  {
+   "id": "T32",
+   "kind": 7,
+   "pages": [
+    1,
+    2,
+    3
+   ],
+   "sheets": [
+    "A2.0",
+    "A2.1",
+    "A2.2"
+   ],
+   "where": "A2.0 top string, last segment x 0.75, y 0.07; bottom string x 0.75, y 0.72",
+   "statement": "The rear stair foundation is 2 in narrower than the stair it carries and than the front stair foundation.",
+   "evidence": "A2.0 top: \"4'-3\"\"; A2.0 bottom: \"4'-5\"\"; A2.1 and A2.2 stair width: \"4'-5\"\" at both ends.",
+   "status": "likely",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "A-D27",
+    "B-D28"
+   ],
+   "reason": "The printed values differ, but a foundation need not match the stair width exactly."
+  },
+  {
+   "id": "T33",
+   "kind": 7,
+   "pages": [
+    3,
+    4,
+    6
+   ],
+   "sheets": [
+    "A2.2",
+    "A2.3",
+    "A3.0"
+   ],
+   "where": "A2.2 stair x 0.68-0.70, y 0.49-0.57; A3.0 section 1 stair x 0.37-0.56, y 0.40-0.59",
+   "statement": "The interior stair has 16 risers on both the plans and the section, but the treads and the start position differ.",
+   "evidence": "Plans: tread pitch 15.75 pt at 18 pt/ft = 10 1/2\", 15 treads = 13'-1 1/2\", first riser about 3'-11 1/2\" from the front wall inner face. Section: tread 33 pt at 36 pt/ft = 11\", 15 treads = 13'-9\", first riser about 2'-11 1/2\" from the same face. No printed dimension on either.",
+   "status": "likely",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "A-D28",
+    "B-D30"
+   ],
+   "reason": "The difference is real in the vectors, but there is no figured dimension and the sheets say not to scale."
+  },
+  {
+   "id": "T34",
+   "kind": 10,
+   "pages": [
+    7,
+    6
+   ],
+   "sheets": [
+    "A4.0",
+    "A3.0"
+   ],
+   "where": "A4.0 Front Elevation strings x 0.164 and x 0.286-0.294, y 0.30-0.42; Rear Elevation x 0.293, y 0.78-0.85; datum lines on all four elevations",
+   "statement": "On A4.0 the heavy GROUND LEVEL line sits about 3 1/3 in above where the level series puts it, on all four elevations. As a result the strings to the landing add to 8'-9\" while the landing is drawn on the MAIN LEVEL 9'-1\" line, and the other string on the Front Elevation adds to 9'-1\". A3.0 has no such offset.",
+   "evidence": "Front and Rear: \"7'-9\"\" + \"1'-0\"\" = 8'-9\"; level label \"MAIN LEVEL\" \"9'-1\"\"; Front right side: \"4'-1\"\" + \"4'-0\"\" + \"1'-0\"\" = 9'-1\". Front Elevation lines at 18 pt/ft: GROUND LEVEL y 712.7, Ceiling 8'-0\" y 573.8 (7'-8.6\" above), MAIN LEVEL y 554.2 (8'-9.7\" above), landing top y 555.1. Stair: 15 risers at 10.5 pt = 7\" above the heavy line, ending at y 555.1. The heavy line to Ceiling 8'-0\" is 139.0 pt on Right, 138.1 pt on Rear and 138.3 pt on Left, against 144 pt for 8'-0\". A3.0 section 1 datums scale correctly at 36 pt/ft.",
+   "status": "real",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "A-D29",
+    "A-D43",
+    "B-D29"
+   ],
+   "reason": "Printed strings on one sheet give two heights for one level, and the drawn lines show why."
+  },
+  {
+   "id": "T35",
+   "kind": 8,
+   "pages": [
+    1,
+    2,
+    3
+   ],
+   "sheets": [
+    "A2.0",
+    "A2.1",
+    "A2.2"
+   ],
+   "where": "A2.0 Foundation Plan top string, x 0.65-0.75, y 0.07",
+   "statement": "The top string adds to 16'-11\" on a 16'-0\" foundation. The 4'-7\" witness starts on the left dimension string, 11 in outside the foundation wall at no element.",
+   "evidence": "\"4'-7\"\" + \"8'-1\"\" + \"4'-3\"\" = 16'-11\"; bottom string \"16'-0\"\"; A2.1 and A2.2 top string: \"3'-6\"\" + \"8'-1\"\" + \"4'-5\"\" = 16'-0\".",
+   "status": "real",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "A-D30",
+    "B-D34"
+   ],
+   "reason": "The arithmetic fails and the picture shows the first tick off the wall."
+  },
+  {
+   "id": "T36",
+   "kind": 8,
+   "pages": [
+    1,
+    3
+   ],
+   "sheets": [
+    "A2.0",
+    "A2.2"
+   ],
+   "where": "A2.0 right strings x 0.78 and x 0.80; A2.2 x 0.80 and x 0.83",
+   "statement": "The overalls are larger than the strings they should total. The difference between the three plans is covered in T31.",
+   "evidence": "A2.0: \"13'-9\"\" + \"36'-0\"\" + \"9'-11\"\" = 59'-8\" against \"60'-0\"+/-\". A2.2: \"13'-9\"\" + \"36'-0\"\" + \"10'-2\"\" = 59'-11\" against \"60'+/-\".",
+   "status": "not_a_defect",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "A-D31",
+    "B-D35"
+   ],
+   "reason": "The +/- marks both overalls as approximate, so the strings do not need to total them."
+  },
+  {
+   "id": "T37",
+   "kind": 8,
+   "pages": [
+    2
+   ],
+   "sheets": [
+    "A2.1"
+   ],
+   "where": "Right side, x 0.796-0.809, y 0.14-0.23",
+   "statement": "The rear stair string adds to more than its overall. The stair run is drawn 10'-0\"; the 10'-6\" dimension runs 6 in past the landing edge and overlaps the 4'-0\".",
+   "evidence": "\"10'-6\"\" + \"4'-0\"\" = 14'-6\" against \"14'-0\"\". Drawn: stair run 10'-0\".",
+   "status": "real",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "A-D32",
+    "B-D31"
+   ],
+   "reason": "The arithmetic fails and the two dimension segments visibly overlap."
+  },
+  {
+   "id": "T38",
+   "kind": 8,
+   "pages": [
+    2
+   ],
+   "sheets": [
+    "A2.1"
+   ],
+   "where": "Right side, x 0.785-0.809, y 0.63-0.69",
+   "statement": "The front stair string adds to more than its overall. The stair run is drawn 6'-5\"; the 6'-8\" dimension overlaps the landing by 3 in.",
+   "evidence": "\"4'-0\"\" + \"6'-8\"\" = 10'-8\" against \"10'-5\"\".",
+   "status": "real",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "A-D33",
+    "B-D32"
+   ],
+   "reason": "The arithmetic fails and the two dimension segments visibly overlap."
+  },
+  {
+   "id": "T39",
+   "kind": 8,
+   "pages": [
+    2
+   ],
+   "sheets": [
+    "A2.1"
+   ],
+   "where": "Left side, x 0.627-0.648, y 0.47-0.69; right side x 0.809",
+   "statement": "The left and right overalls to the front of the stair differ by 3 in on the same plan. The left string stops 3 in short of the stair base, at no element.",
+   "evidence": "Left: \"36'-0\"\" (parts) + \"4'-0\"\" + \"6'-2\"\" = \"46'-2\"\"; right: \"36'-0\"\" + \"10'-5\"\" = 46'-5\". Left end tick y 1249 pt, stair base y 1253.5 pt.",
+   "status": "real",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "A-D34",
+    "B-D27"
+   ],
+   "reason": "Both overalls run from the rear wall to the end of one stair and they print different totals."
+  },
+  {
+   "id": "T40",
+   "kind": 8,
+   "pages": [
+    2,
+    3
+   ],
+   "sheets": [
+    "A2.1",
+    "A2.2"
+   ],
+   "where": "A2.1 left overall (0.640,0.354); parts x 0.648, y 0.29-0.46",
+   "statement": "The 21'-5 1/2\" dimension on A2.1 belongs to the main floor. On the ground floor the wall it should reach is 22'-5 1/2\" from the rear, and its witness ends 1'-0\" short at no wall.",
+   "evidence": "A2.1: \"21'-5 1/2\"\" against \"8'-7\"\" + \"5'-11 1/2\"\" + \"3'-8 1/2\"\" + \"4'-2 1/2\"\" = 22'-5 1/2\", remainder \"13'-6 1/2\"\". Dimension y 418.0 to 804.28 pt; wall witness y 822.28 pt. A2.2: \"14'-6 1/2\"\" + \"21'-5 1/2\"\" = 36'-0\".",
+   "status": "real",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "A-D35",
+    "B-D33"
+   ],
+   "reason": "The dimension equals neither its parts nor any distance to a wall on this plan."
+  },
+  {
+   "id": "T41",
+   "kind": 8,
+   "pages": [
+    2,
+    3,
+    4
+   ],
+   "sheets": [
+    "A2.1",
+    "A2.2",
+    "A2.3"
+   ],
+   "where": "A2.1 x 0.659, y 0.49-0.59; A2.2 x 0.788, y 0.27-0.59; A2.3 x 0.698, y 0.25-0.36 and y 0.479, x 0.67-0.74",
+   "statement": "Four dimension strings miss their overalls by 1/2 in, and one closet width differs by 1/2 in between two strings. The pattern points to rounding of the printed values.",
+   "evidence": "A2.1: \"4'-2\"\" + \"4'-0\"\" + \"5'-4\"\" = 13'-6\" against \"13'-6 1/2\"\". A2.2: \"5'-6\"\" + \"10'-8\"\" + \"10'-6\"\" + \"4'-0\"\" + \"5'-4 1/2\"\" = 36'-0 1/2\" against \"36'-0\"\". A2.3: \"5'-4 1/2\"\" + \"5'-3\"\" + \"3'-11 1/2\"\" = 14'-7\" against \"14'-6 1/2\"\", with outer string \"5'-2 1/2\"\". A2.3: \"4'-1\"\" + \"3'-9 1/2\"\" + \"8'-1\"\" = 15'-11 1/2\" against \"16'-0\"\".",
+   "status": "likely",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "A-D36",
+    "A-D37",
+    "A-D38",
+    "A-D39",
+    "B-D36"
+   ],
+   "reason": "The sums fail, but misses of 1/2 in on these strings look like rounding of the printed values."
+  },
+  {
+   "id": "T42",
+   "kind": 8,
+   "pages": [
+    6
+   ],
+   "sheets": [
+    "A3.0"
+   ],
+   "where": "Drawing 2 scale note at (0.054,0.964)",
+   "statement": "The wall section is drawn at 3/4 in scale but labelled 1/2 in. Section 1 is truly 1/2 in.",
+   "evidence": "Label \"1/2\" = 1'-0\"\". Drawing 2: Upper to Main datums 490.5 pt for 9'-1\" = 54 pt/ft (3/4\" = 1'-0\"). Drawing 1: 327 pt for 9'-1\" = 36 pt/ft.",
+   "status": "real",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "A-D40",
+    "B-D37"
+   ],
+   "reason": "The datum spacing is exact and gives a scale 1.5 times the printed one."
+  },
+  {
+   "id": "T43",
+   "kind": 8,
+   "pages": [
+    1,
+    6
+   ],
+   "sheets": [
+    "A2.0",
+    "A3.0"
+   ],
+   "where": "A2.0 detail 2 x 0.51-0.70, y 0.84-0.89; A3.0 detail 2 x 0.10, y 0.68-0.78; upper note x 0.07, y 0.40-0.43",
+   "statement": "The rated floor note gives joists at 16 in on center, but both details draw them at 12 in. The upper floor note on A3.0 gives 12 in.",
+   "evidence": "Notes: \"over  11 - 7/8\" TJI wood joist spaced at 16\"\" \"o.c.\"; A3.0 upper: \"11-7/8\" wood\" \"I-joists at 12\"\" \"o.c.\". A2.0 detail 2 joist webs 108 pt apart at 1-1/2\" scale = 12\"; A3.0 detail 2 joists 54 pt apart at 3/4\" scale = 12\".",
+   "status": "likely",
+   "found_by": [
+    "A"
+   ],
+   "source_ids": [
+    "A-D41"
+   ],
+   "reason": "The note and the drawn spacing differ, but a detail may show joists only for illustration."
+  },
+  {
+   "id": "T44",
+   "kind": 8,
+   "pages": [
+    9
+   ],
+   "sheets": [
+    "A5.1"
+   ],
+   "where": "Kitchen elevation 3 label (0.698,0.279); elevation 6 label (0.649,0.552)",
+   "statement": "Two cabinet labels do not match the drawn widths. By label the elevation 3 run is 63 in and the elevation 6 run is 60 in; as drawn they are the reverse.",
+   "evidence": "\"B30\" drawn 80.5 pt = 26.8\" (3 pt per inch); \"B9\" drawn 36 pt = 12\". \"30\" Stove\" drawn 30\" in both.",
+   "status": "likely",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "A-D42",
+    "B-D59"
+   ],
+   "reason": "The widths are measured, but the elevations carry no figured cabinet dimensions."
+  },
+  {
+   "id": "T45",
+   "kind": 9,
+   "pages": [
+    16,
+    21,
+    0
+   ],
+   "sheets": [
+    "P1.1",
+    "L1.0",
+    "A1.0"
+   ],
+   "where": "P1.1 underground plan notes (0.175,0.251) and (0.159,0.758)",
+   "statement": "Two notes refer to a site plan that is not in the set. L1.0 Options shows lot layouts but no water or sewer routing.",
+   "evidence": "\"SEE SITE PLAN\" twice; index has only \"L1.0\" \"Options\" under \"Site Series\".",
+   "status": "real",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "A-D44",
+    "B-D42"
+   ],
+   "reason": "The referenced sheet does not exist in the index or the set."
+  },
+  {
+   "id": "T46",
+   "kind": 9,
+   "pages": [
+    20
+   ],
+   "sheets": [
+    "M6.1"
+   ],
+   "where": "Heat Pump Unit Schedule note x 0.85, y 0.40-0.415",
+   "statement": "The note refers to a schedule that is not on the sheet. The schedule there is the Air Handling Unit Schedule.",
+   "evidence": "\"RATED CAPACITIES ARE PER AHRI STANDARD. REER TO FAN COIL SCHEDULE\" \"ON THIS SHEET TO SEE PERFORMANCE CAPACITIES AT DESIGN CONDITIONS.\"; sheet schedules: \"EXHAUST FAN SCHEDULE\", \"AIR HANDLING UNIT SCHEDULE\", \"HEAT PUMP UNIT SCHEDULE\"; comment 1 of the same schedule says \"AIR HANDLING UNIT SCHEDULE\".",
+   "status": "real",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "A-D45",
+    "B-D41"
+   ],
+   "reason": "No fan coil schedule exists on the sheet."
+  },
+  {
+   "id": "T47",
+   "kind": 9,
+   "pages": [
+    1,
+    2,
+    3,
+    4
+   ],
+   "sheets": [
+    "A2.0",
+    "A2.1",
+    "A2.2",
+    "A2.3"
+   ],
+   "where": "A2.0 detail 6 note x 0.24-0.32, y 0.497-0.506; window schedule NOTES columns",
+   "statement": "The header detail sends the reader to the window schedule for jack stud counts, but no window schedule gives them. The NOTES column is blank on all three.",
+   "evidence": "\"Multiple jack studs may be required.\" \"Refer to window schedule for details.\"; schedule columns \"MARK\" \"QTY\" \"WIDTH\" \"HEIGHT\" \"DESCRIPTION\" \"NOTES\" with NOTES empty.",
+   "status": "real",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "A-D46",
+    "B-D76"
+   ],
+   "reason": "The referenced content is absent from all three schedules."
+  },
+  {
+   "id": "T48",
+   "kind": 9,
+   "pages": [
+    14,
+    11
+   ],
+   "sheets": [
+    "E7.1",
+    "E1.1"
+   ],
+   "where": "E7.1 Light Fixture Schedule row D, NOTES x 0.856, y 0.231; E1.1 kitchens x 0.43-0.47 and x 0.65-0.69, y 0.49-0.54",
+   "statement": "The schedule refers to the lighting plan for track lengths, but E1.1 prints no lengths.",
+   "evidence": "\"SEE LIGHTING PLAN FOR TRACK SECTION LENGTH\"; E1.1 tracks carry only tag \"D\" and subscripts \"a\", \"b\", \"c\".",
+   "status": "likely",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "A-D47",
+    "B-D44"
+   ],
+   "reason": "No length is printed, but the track is drawn to scale, so the plan may be meant to show it graphically."
+  },
+  {
+   "id": "T49",
+   "kind": 9,
+   "pages": [
+    18,
+    10,
+    0
+   ],
+   "sheets": [
+    "M0.1",
+    "E0.1",
+    "A1.0"
+   ],
+   "where": "M0.1 note E x 0.57, y 0.15-0.16; note J y 0.25-0.256; note S y 0.448-0.455; E0.1 General x 0.135, y 0.739-0.751",
+   "statement": "General notes refer to drawings and specifications that are not in the set, and to gas service and roof top equipment that the building does not have. Range, water heaters and heat pumps are all electric.",
+   "evidence": "\"UNDERGROUND GAS SERVICE BY UTILITY COMPANY, REFER TO CIVIL DRAWINGS.\"; \"COORDINATE WITH ARCHITECTURAL AND STRUCTURAL DRAWINGS FOR EXACT LOCATION OF ROOF TOP EQUIPMENT.\"; \"REFLECTED CEILING AND STRUCTURAL PLANS\"; \"SEE SPECIFICATION DIV 26 FOR ADDITIONAL REQUIREMENTS.\"; A1.0 index has no civil, structural, ceiling or specification sheet; E2.1 \"14-50R\" \"RANGE\"; P6.1 \"SHORT ELECTRIC WATER HEATER\".",
+   "status": "real",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "A-D48",
+    "B-D43"
+   ],
+   "reason": "The notes are boilerplate, but they cite documents the index does not contain and a gas service that no sheet shows."
+  },
+  {
+   "id": "T50",
+   "kind": 9,
+   "pages": [
+    4,
+    8
+   ],
+   "sheets": [
+    "A2.3",
+    "A5.0"
+   ],
+   "where": "A2.3 tag (0.728,0.460) and detail 3 tag (0.37,0.12); A5.0 elevations 9-12, y 0.75-0.95",
+   "statement": "The elevation numbers around the upper bathroom tag do not match the views on A5.0. They are turned one quarter. The ground bathroom tag 1-4 and powder room tag 5-8 use the same layout correctly.",
+   "evidence": "Tag: \"9\" north, \"10\" east, \"11\" south, \"12\" west. A5.0: 12 shows the lavatory and front of the water closet (north view), 9 the blank tub wall with the shower head at the left (east), 10 the door (south), 11 the side of the fixtures (west).",
+   "status": "real",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "A-D49",
+    "B-D45"
+   ],
+   "reason": "Checked against the ground bathroom convention, every number on this tag points at the wrong wall."
+  },
+  {
+   "id": "T51",
+   "kind": 10,
+   "pages": [
+    7,
+    3,
+    8
+   ],
+   "sheets": [
+    "A4.0",
+    "A2.2",
+    "A5.0"
+   ],
+   "where": "A4.0 Left Elevation window, x 0.561-0.577, y 0.725-0.771",
+   "statement": "The Left Elevation shows a main level window about 4'-7\" from the rear corner. A2.2 shows that wall solid, the schedule quantities are all used elsewhere, and A5.0 elevation 8 of that wall has no window.",
+   "evidence": "A2.2 west wall has no gap and no tag; A2.2 schedule \"A\" \"6\", with 6 A tags on the other walls; A4.0 casing x 1453.7 to 1497.2 pt.",
+   "status": "real",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "A-D50",
+    "B-D51"
+   ],
+   "reason": "The elevation draws an opening that the plan, schedule count and interior elevation all lack."
+  },
+  {
+   "id": "T52",
+   "kind": 10,
+   "pages": [
+    7,
+    3
+   ],
+   "sheets": [
+    "A4.0",
+    "A2.2"
+   ],
+   "where": "A4.0 Right Elevation window, x 0.695-0.712, y 0.247-0.293",
+   "statement": "The Right Elevation shows five main level windows and A2.2 shows four on that wall. The extra window is about 9'-6\" from the rear corner, where A2.2 has a solid wall.",
+   "evidence": "A4.0 centers 5'-6\", 9'-6\", 19'-8\", 26'-6\", 30'-6\" from the front corner. A2.2 strings from the rear: \"5'-6\"\", \"10'-8\"\", \"10'-6\"\", \"4'-0\"\", with four tags A, C, A, A.",
+   "status": "real",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "A-D51",
+    "B-D50"
+   ],
+   "reason": "The vector centers match the plan except for one added window."
+  },
+  {
+   "id": "T53",
+   "kind": 10,
+   "pages": [
+    7,
+    2,
+    3
+   ],
+   "sheets": [
+    "A4.0",
+    "A2.1",
+    "A2.2"
+   ],
+   "where": "A4.0 Right Elevation ground C window x 0.648-0.664, y 0.342-0.370; A2.1 tag C at (0.773,0.425)",
+   "statement": "The ground level C window is about 1'-9\" from where A4.0 draws it. A4.0 stacks it directly under the main level C window, but the two plans place them 1'-11\" apart.",
+   "evidence": "A2.1 center \"4'-6 1/2\"\" + \"7'-1\"\" + \"6'-5 1/2\"\" = 18'-1\" from the rear; A2.2 \"5'-6\"\" + \"10'-8\"\" = 16'-2\"; A4.0 both at 16'-3 1/2\" from the rear (center x 1701.15 pt on both floors). The other four ground windows on that elevation match A2.1.",
+   "status": "real",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "A-D52",
+    "B-D52"
+   ],
+   "reason": "The printed plan string and the elevation place the window in different bays."
+  },
+  {
+   "id": "T54",
+   "kind": 10,
+   "pages": [
+    4,
+    7,
+    6,
+    9
+   ],
+   "sheets": [
+    "A2.3",
+    "A4.0",
+    "A3.0",
+    "A5.1"
+   ],
+   "where": "A2.3 tags B at (0.683,0.235) and (0.682,0.589); schedule row B y 0.664; A4.0 Front x 0.19, y 0.17-0.20 and Rear x 0.27, y 0.63-0.67",
+   "statement": "Two B windows on the upper plan do not appear on the elevations. Front and Rear each show only the two A windows at upper level, and the A1.0 renderings and A5.1 options agree with them.",
+   "evidence": "A2.3 schedule \"B\" \"2\" \"1'-5\"\" \"1'-6\"\"; A2.3 strings \"3'-2\"\" from the left wall at front and rear; A4.0 Front and Rear have no casing there.",
+   "status": "real",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "A-D53",
+    "B-D49"
+   ],
+   "reason": "The plan and schedule show two windows that no elevation draws."
+  },
+  {
+   "id": "T55",
+   "kind": 10,
+   "pages": [
+    2,
+    7
+   ],
+   "sheets": [
+    "A2.1",
+    "A4.0"
+   ],
+   "where": "A2.1 tag A at (0.752,0.253); A4.0 Rear Elevation near (0.20,0.84)",
+   "statement": "The ground level window in the rear wall of Bedroom/Office 006 is not shown on the Rear Elevation.",
+   "evidence": "A2.1 rear wall window 4'-0\" from the east corner; A4.0 Rear Elevation shows the stair and board skirt across that position.",
+   "status": "not_a_defect",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "A-D54",
+    "B-D53"
+   ],
+   "reason": "The stair and skirt stand in front of that window, so an elevation would not show it."
+  },
+  {
+   "id": "T56",
+   "kind": 10,
+   "pages": [
+    5,
+    6,
+    7
+   ],
+   "sheets": [
+    "A2.4",
+    "A3.0",
+    "A4.0"
+   ],
+   "where": "A2.4 Roof Plan 1 slope tags x 0.712, y 0.393 and y 0.430; A3.0 x 0.80-0.81, y 0.20; A4.0 x 0.74, y 0.11",
+   "statement": "The center roof slope on the roof plan disagrees with the section and elevations, which label and draw 3:12. The 6:12 slopes agree.",
+   "evidence": "A2.4: \"4:12\" (two tags); A3.0 and A4.0: \"12\" / \"3\".",
+   "status": "real",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "A-D55",
+    "B-D48"
+   ],
+   "reason": "The printed slopes differ and the drawn geometry follows 3:12."
+  },
+  {
+   "id": "T57",
+   "kind": 10,
+   "pages": [
+    6,
+    2,
+    3,
+    4
+   ],
+   "sheets": [
+    "A3.0",
+    "A2.1",
+    "A2.2",
+    "A2.3"
+   ],
+   "where": "Section line 2'-9\" from the left wall on A2.0 to A2.3; A3.0 section 1 end walls x 0.32-0.33 and x 0.81-0.82, y 0.17-0.80",
+   "statement": "Section 1 cuts through openings that it does not draw. The line passes through door 1 at ground and main level and the two B windows at upper level, but A3.0 shows solid wall at all of them.",
+   "evidence": "A2.1: section line x 1783.1 pt, door 1 opening x 1747.7 to 1801.7 pt. A2.2: line x 1791.2 pt, door 1 opening x 1758.3 to 1812.3 pt. A2.3: line x 1760.6 pt, rear B window gap x 1758.3 to 1778.3 pt. A3.0 wall hatch is continuous at both ends on all three levels.",
+   "status": "real",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "A-D56",
+    "B-D75"
+   ],
+   "reason": "The rooms on the section match the line position, so the line is where it is drawn and the missing openings are a true conflict."
+  },
+  {
+   "id": "T58",
+   "kind": 10,
+   "pages": [
+    7
+   ],
+   "sheets": [
+    "A4.0"
+   ],
+   "where": "Right Elevation note (0.827,0.291); same note on Front (0.341,0.291), Rear (0.346,0.769), Left (0.848,0.769)",
+   "statement": "The ground level siding exposure differs on one of the four elevation notes.",
+   "evidence": "Right: \"board with 6\" exposure & smooth\"; other three: \"board with 5\" exposure & smooth\".",
+   "status": "real",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "A-D57",
+    "B-D54"
+   ],
+   "reason": "One building finish has two printed exposures on one sheet."
+  },
+  {
+   "id": "T59",
+   "kind": 10,
+   "pages": [
+    9,
+    7,
+    6
+   ],
+   "sheets": [
+    "A5.1",
+    "A4.0",
+    "A3.0"
+   ],
+   "where": "A5.1 detail 7 x 0.47-0.72, y 0.82-0.90; A4.0 notes y 0.25-0.30",
+   "statement": "The finish options on A5.1 do not match the finishes on A4.0 and A3.0.",
+   "evidence": "A5.1: \"Staggered shingle fiber cement\" \"siding with 6\" exposure + board & batten\", \"Cement fiber board lap siding with 6\"\", \"Smooth nominal 6\" cement fiber boards\". A4.0: \"shingle cement board with 5\"\" \"exposure & smooth nominal 4\"\" \"corner boards\". A3.0: \"shingle siding with 5\"\" \"exposure\".",
+   "status": "likely",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "A-D58",
+    "B-D55"
+   ],
+   "reason": "The values differ, but A5.1 lists options and the elevations may show a base case."
+  },
+  {
+   "id": "T60",
+   "kind": 10,
+   "pages": [
+    8,
+    2,
+    7
+   ],
+   "sheets": [
+    "A5.0",
+    "A2.1",
+    "A4.0"
+   ],
+   "where": "A5.0 elevation 2, x 0.31-0.43, y 0.10-0.28; A2.1 tag A at (0.773,0.364)",
+   "statement": "Bathroom elevation 2 shows the east wall of Bathroom 004 with no window. A2.1 and the Right Elevation both have a window there.",
+   "evidence": "A2.1 tag \"A\" in the Bathroom 004 east wall, with the gap also drawn in detail 4; A5.0 elevation 2 shows only the grab bar and shower head.",
+   "status": "real",
+   "found_by": [
+    "A"
+   ],
+   "source_ids": [
+    "A-D59"
+   ],
+   "reason": "Tag 2 looks east at that wall and the elevation omits a window shown on two other sheets."
+  },
+  {
+   "id": "T61",
+   "kind": 10,
+   "pages": [
+    8,
+    3
+   ],
+   "sheets": [
+    "A5.0",
+    "A2.2"
+   ],
+   "where": "A5.0 elevation 8, x 0.64-0.76, y 0.42-0.59; A2.2 detail 4 tag (0.143,0.27)",
+   "statement": "Powder room elevation 8 is mirrored. Looking west, the water closet at the north end should be on the right, but it repeats the arrangement of elevation 6.",
+   "evidence": "Elevation 8 and elevation 6 both show the water closet at left and the lavatory at right; A2.2 has the water closet at the north wall and the lavatory at the south.",
+   "status": "real",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "A-D60",
+    "B-D46"
+   ],
+   "reason": "Opposite walls cannot show the fixtures in the same order."
+  },
+  {
+   "id": "T62",
+   "kind": 10,
+   "pages": [
+    6,
+    7
+   ],
+   "sheets": [
+    "A3.0",
+    "A4.0"
+   ],
+   "where": "A3.0 drawing 2 x 0.19-0.23, y 0.86-0.89; section 1 x 0.28-0.32, y 0.78; A4.0 labels (0.390,0.426-0.432) and strings \"6\"\" at (0.164,0.415)",
+   "statement": "Grade differs between sheets. A4.0 sets a flat grade 6 in below Ground Level, while A3.0 brings a sloped grade to about 1 in below it at the wall. The A4.0 label also lacks a minus sign.",
+   "evidence": "A4.0: \"Grade\" \"0'-6\"\", dimension \"6\"\", \"GROUND\" \"LEVEL\" \"0'-0\"\". A3.0: grade line starts about 1\" below \"0'-0\"\" at the wall and slopes away, with no printed value.",
+   "status": "likely",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "A-D61",
+    "B-D29"
+   ],
+   "reason": "A3.0 has no figured grade, so the conflict rests on a scaled reading of a sloped line."
+  },
+  {
+   "id": "T63",
+   "kind": 10,
+   "pages": [
+    9,
+    12,
+    19
+   ],
+   "sheets": [
+    "A5.1",
+    "E2.1",
+    "M1.1"
+   ],
+   "where": "A5.1 elevations 3 and 6 above the stove, x 0.63-0.69, y 0.13-0.21 and y 0.40-0.47; E2.1 (0.469,0.550); M1.1 (0.609,0.505)",
+   "statement": "The kitchen elevations show no range hood or microwave, only a framed opening over the stove. E2.1 has a microwave outlet and M1.1 has a range hood vent at that spot.",
+   "evidence": "E2.1: \"MICRO\", \"14-50R\" \"RANGE\"; E7.1: \"* MICRO KITCHEN 001\"; M1.1: \"RANGE HOOD VENT\"; A5.1: \"30\" Stove\" with nothing above it.",
+   "status": "likely",
+   "found_by": [
+    "A"
+   ],
+   "source_ids": [
+    "A-D62"
+   ],
+   "reason": "The appliance is missing from the elevation, but elevations sometimes leave out appliances supplied later."
+  },
+  {
+   "id": "T64",
+   "kind": 10,
+   "pages": [
+    7
+   ],
+   "sheets": [
+    "A4.0"
+   ],
+   "where": "Right Elevation front stair x 0.45-0.51, y 0.33-0.42; Left Elevation x 0.79-0.86, y 0.80-0.90",
+   "statement": "The lower flight of the front stair is drawn with rails and posts but no infill, against the note on the same sheet.",
+   "evidence": "Note on Front Elevation: \"Metal\" \"& glass\" \"guardrails\" \"& railing\" \"Openings\" \"4\" or less.\"",
+   "status": "not_a_defect",
+   "found_by": [
+    "A"
+   ],
+   "source_ids": [
+    "A-D63"
+   ],
+   "reason": "The note calls for glass, and clear panels on a side view can be drawn with no infill lines."
+  },
+  {
+   "id": "T65",
+   "kind": 10,
+   "pages": [
+    6,
+    7
+   ],
+   "sheets": [
+    "A3.0",
+    "A4.0"
+   ],
+   "where": "A3.0 drawing 2 x 0.215, y 0.63-0.65; drawing 1 x 0.875, y 0.60-0.62",
+   "statement": "A ceiling level is labelled as a floor level on the wall section.",
+   "evidence": "Drawing 2: \"MAIN\" \"LEVEL\" \"8'-0\"\" directly below \"MAIN\" \"LEVEL\" \"9'-1\"\"; drawing 1 and A4.0: \"Ceiling\" \"8'-0\"\".",
+   "status": "real",
+   "found_by": [
+    "B"
+   ],
+   "source_ids": [
+    "B-D56"
+   ],
+   "reason": "One level cannot be 9'-1\" and 8'-0\", and the other two ceilings on that drawing are labelled Ceiling Height."
+  },
+  {
+   "id": "T66",
+   "kind": 10,
+   "pages": [
+    6,
+    7
+   ],
+   "sheets": [
+    "A3.0",
+    "A4.0"
+   ],
+   "where": "A3.0 x 0.87, y 0.17-0.18",
+   "statement": "The roof level on the section has no counterpart on the elevations.",
+   "evidence": "A3.0: \"ROOF\" \"28'-9\"\"; A4.0 shows only \"ROOF APEX\" \"31'-3\"\" and \"Ceiling\" \"25'-8\"\".",
+   "status": "not_a_defect",
+   "found_by": [
+    "B"
+   ],
+   "source_ids": [
+    "B-D57"
+   ],
+   "reason": "An extra datum on a section contradicts nothing, and its spacing is correct at the drawing scale."
+  },
+  {
+   "id": "T67",
+   "kind": 12,
+   "pages": [
+    12,
+    14,
+    20
+   ],
+   "sheets": [
+    "E2.1",
+    "E7.1",
+    "M6.1"
+   ],
+   "where": "E2.1 label (0.552-0.555,0.522-0.535); E7.1 Panel A2 ckt 33 (0.747,0.519); M6.1 row HPU-2 y 0.467",
+   "statement": "The HPU-2 disconnect is smaller than its breaker and the unit's maximum overcurrent protection. HPU-1 has no such conflict.",
+   "evidence": "E2.1: \"HPU-2\" \"30A-2P\" \"NEMA 3R\"; E7.1: \"HPU-2\" trip \"35\"; M6.1: MCA \"29.1\", MOCP \"35\". HPU-1: \"30A-2P\", trip \"25\", MOCP \"25\".",
+   "status": "real",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "A-D65",
+    "B-D62"
+   ],
+   "reason": "Three printed values on three sheets put a 30 A disconnect on a 35 A circuit."
+  },
+  {
+   "id": "T68",
+   "kind": 12,
+   "pages": [
+    14
+   ],
+   "sheets": [
+    "E7.1"
+   ],
+   "where": "Light Fixture Schedule rows A and F, x 0.544, y 0.208 and y 0.246",
+   "statement": "Fixture F has the same model number as fixture A under a different manufacturer, with different watts, color and lumens.",
+   "evidence": "A: \"JUNO\" \"JSF-11IN-35K-90CRI-MVOLTZT-WH\" \"15 W\" \"LED, 3500K, 1300LM, 90CRI\"; F: \"CLOUDY BAY\" \"JSF-11IN-35K-90CRI-MVOLTZT-WH\" \"10 W\" \"LED, 5000K, 600LM, 90CRI\".",
+   "status": "real",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "A-D66",
+    "B-D61"
+   ],
+   "reason": "One model string cannot describe two makers and a 35K string cannot be a 5000K fixture."
+  },
+  {
+   "id": "T69",
+   "kind": 12,
+   "pages": [
+    14,
+    11
+   ],
+   "sheets": [
+    "E7.1",
+    "E1.1"
+   ],
+   "where": "E7.1 Panel A2 ckt 1 (0.747,0.394) and ckt 11 (0.747,0.433); E1.1 upper plan stair fixtures",
+   "statement": "Room 201 is on two lighting circuits and Stair Hall 100 is on none, although E1.1 shows switches and stair lights for it. The first entry likely means 100.",
+   "evidence": "\"LTG RMS 101, 201\"; \"LTG RMS 200, 201, 202, 203\"; no Panel A2 lighting entry names 100; E1.1: \"UP TO LTG\", \"DOWN TO\" \"SWITCH\", fixture \"A\" over the stair.",
+   "status": "likely",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "A-D67",
+    "B-D26"
+   ],
+   "reason": "The list omits room 100, but a circuit description is shorthand and may not name every room it feeds."
+  },
+  {
+   "id": "T70",
+   "kind": 12,
+   "pages": [
+    11,
+    12,
+    2,
+    16
+   ],
+   "sheets": [
+    "E1.1",
+    "E2.1",
+    "A2.1",
+    "P1.1"
+   ],
+   "where": "E1.1 ground plan fixture C at (0.620,0.424), Closet 005; E2.1 receptacle (0.601,0.430)",
+   "statement": "A vanity fixture is shown in Closet 005, which has no lavatory. It looks carried over from the powder room in the same spot upstairs, as do the counter-height GFCI receptacle on E2.1 and the PRIVACY pocket door 7.",
+   "evidence": "E7.1: C = \"2' LED VANITY\"; A2.1 and P1.1 show no fixture in Closet 005; A2.1 row 7: \"POCKET\" \"PRIVACY\"; E0.1: \"RECEPTACLES WITH GFCI AND MOUNTED 4\" ABOVE COUNTER OR BACK SPLASH\".",
+   "status": "likely",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "A-D68",
+    "B-D64"
+   ],
+   "reason": "The fixture is drawn there, but a vanity bar in a closet is odd more than it is contradictory."
+  },
+  {
+   "id": "T71",
+   "kind": 12,
+   "pages": [
+    14,
+    12,
+    2,
+    3,
+    16,
+    19
+   ],
+   "sheets": [
+    "E7.1",
+    "E2.1",
+    "A2.1",
+    "A2.2",
+    "P1.1",
+    "M1.1"
+   ],
+   "where": "E7.1 Panels A1 and A2, x 0.51-0.89, y 0.39-0.53; E2.1 Closets 003 and 104; A2.1 W/D (0.686,0.374); A2.2 W/D (0.689,0.373)",
+   "statement": "The washer and dryer have no power. Both units show W/D, washer boxes and dryer vents, but neither panel lists a laundry or dryer circuit and E2.1 shows no outlet at them.",
+   "evidence": "\"W/D\" on A2.1 and A2.2; \"WB-1\" on P1.1; \"4\"Ø DRYER VENT\" on M1.1; no such entry among the 66 circuit entries on the two panels; E2.1 closets show only \"WTR HTR\" \"30A-2P\".",
+   "status": "real",
+   "found_by": [
+    "A"
+   ],
+   "source_ids": [
+    "A-D69"
+   ],
+   "reason": "The picture of E2.1 and every panel row confirm that equipment shown on three disciplines has no circuit."
+  },
+  {
+   "id": "T72",
+   "kind": 12,
+   "pages": [
+    12,
+    14,
+    9,
+    17
+   ],
+   "sheets": [
+    "E2.1",
+    "E7.1",
+    "A5.1",
+    "P6.1"
+   ],
+   "where": "E2.1 D.W. labels (0.640,0.565) and (0.444,0.555); A5.1 base cabinet labels y 0.279 and y 0.552",
+   "statement": "A dishwasher is powered on the electrical sheets but appears nowhere else. No kitchen elevation has one, and P6.1 has no connection for it.",
+   "evidence": "E7.1: \"* D.W. KITCHEN 001\", \"* D.W. KITCHEN 102\"; A5.1 labels: \"B3\", \"B9\", \"B12\", \"B19\", \"B21\", \"B30\", \"B42\", \"Sink\", \"30\" Stove\"; P6.1 fixture rows BT-1, FD-1, FD-2, LAV-1, LAV-2, SH-1, SK-1, WB-1, WC-1.",
+   "status": "likely",
+   "found_by": [
+    "A"
+   ],
+   "source_ids": [
+    "A-D70"
+   ],
+   "reason": "The omission is on the sheets, but an appliance may be left off the cabinet labels and fixture schedule."
+  },
+  {
+   "id": "T73",
+   "kind": 12,
+   "pages": [
+    0,
+    12
+   ],
+   "sheets": [
+    "A1.0",
+    "E2.1"
+   ],
+   "where": "A1.0 R314.3 x 0.43-0.56, y 0.48-0.51; E2.1 ground SD at (0.656,0.406); main plan x 0.36-0.50",
+   "statement": "Smoke alarms do not meet the rule on A1.0. Unit 1 has one alarm, inside Bedroom/Office 006, and none outside the sleeping room. The main level of Unit 2 has none, although the rule as quoted does not list a per-story alarm. The upper level meets the quoted rule.",
+   "evidence": "\"1. In each sleeping room.\" \"2. Outside each separate sleeping area in the immediate\" \"vicinity of of the bedrooms.\" E2.1 \"SD\" tags: ground 1, main 0, upper 3.",
+   "status": "likely",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "A-D71",
+    "B-D11"
+   ],
+   "reason": "The count is confirmed, but door 5 may be a cased opening, which leaves room 006 open to the rest of the unit."
+  },
+  {
+   "id": "T74",
+   "kind": 12,
+   "pages": [
+    13,
+    1
+   ],
+   "sheets": [
+    "E5.1",
+    "A2.0"
+   ],
+   "where": "E5.1 labels (0.276,0.445) and (0.625,0.445); A2.0 details 1, 2, 3, 6",
+   "statement": "Detail numbering has gaps, with no reference left dangling.",
+   "evidence": "E5.1: \"3\" \"120/240V ELECTRICAL RISER DIAGRAM\", \"1\" \"GROUNDING AND BONDING DETAIL (TYPICAL)\". A2.0 has details 1, 2, 3, 6 and blank boxes.",
+   "status": "not_a_defect",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "A-D73",
+    "B-D47"
+   ],
+   "reason": "Unused numbers contradict nothing and no callout points at a missing detail."
+  },
+  {
+   "id": "T75",
+   "kind": 8,
+   "pages": [
+    17
+   ],
+   "sheets": [
+    "P6.1"
+   ],
+   "where": "Detail 2 scale note (0.228,0.942)",
+   "statement": "The water piping schematic has a full size scale, which is not possible for a three level diagram. Detail 1 on the same sheet is not to scale.",
+   "evidence": "\"SCALE =  12\" = 1'-0\"\"; detail 1: \"NOT TO SCALE\".",
+   "status": "real",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "A-D74",
+    "B-D38"
+   ],
+   "reason": "The printed scale is false for a schematic spanning three floors."
+  },
+  {
+   "id": "T76",
+   "kind": 12,
+   "pages": [
+    17,
+    16,
+    2
+   ],
+   "sheets": [
+    "P6.1",
+    "P1.1",
+    "A2.1"
+   ],
+   "where": "P6.1 detail 2 ground level label (0.470,0.898-0.904)",
+   "statement": "The schematic shows a tub at ground level, but that bathroom has a shower with a floor drain.",
+   "evidence": "P6.1: \"TUB/\" \"SHOWER\"; P1.1 ground: \"SH-1\", \"FD-2\"; P6.1 schedule: \"SHOWER\", \"SHOWER DRAIN\"; no BT-1 on the ground plan; A2.1 detail 4 shows no tub.",
+   "status": "real",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "A-D75",
+    "B-D60"
+   ],
+   "reason": "The label and the tall fixture on the schematic contradict the plan and the fixture tags."
+  },
+  {
+   "id": "T77",
+   "kind": 12,
+   "pages": [
+    17,
+    21,
+    1,
+    0
+   ],
+   "sheets": [
+    "P6.1",
+    "L1.0",
+    "A2.0",
+    "A1.0"
+   ],
+   "where": "P6.1 note (0.199,0.826); L1.0 text (0.677,0.233); A1.0 energy table row, x 0.05-0.12, y 0.93",
+   "statement": "Notes refer to spaces the building does not have. It is slab on grade with no crawlspace or basement.",
+   "evidence": "P6.1: \"IF METERS ARE LOCATED IN\" \"CRAWLSPACE\"; L1.0: \"foundations and basement\" \"windows\"; A1.0: \"crawl spaces\"; A2.0: \"Slab on Grade Foundation\" \"with Frost Footing\".",
+   "status": "not_a_defect",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "A-D76",
+    "B-D67"
+   ],
+   "reason": "The P6.1 note is conditional, the L1.0 text is general guidance and the A1.0 row is a blank template line."
+  },
+  {
+   "id": "T78",
+   "kind": 12,
+   "pages": [
+    15
+   ],
+   "sheets": [
+    "P0.1"
+   ],
+   "where": "Pipe Insulation Schedule, fluid temperature column (0.712,0.222)",
+   "statement": "The row after 40 to 60 degrees is labelled greater than 40, which overlaps it. The value on the chilled fluid row should be below 40.",
+   "evidence": "\"40° TO 60°\" then \"> 40°\", with mean temp \"50°\" and \"0.20 - 0.26\".",
+   "status": "real",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "A-D77",
+    "B-D70"
+   ],
+   "reason": "The two rows overlap as printed, and the lower mean temperature shows the sign is reversed."
+  },
+  {
+   "id": "T79",
+   "kind": 12,
+   "pages": [
+    20
+   ],
+   "sheets": [
+    "M6.1"
+   ],
+   "where": "Air Handling Unit Schedule comment 6, x 0.606, y 0.262",
+   "statement": "The comment refers to equipment the system does not have. It uses heat pumps and air handlers, with no condensing unit or furnace.",
+   "evidence": "\"6. UNIT SHALL COMMUNICATE WITH CONDENSING UNIT TO MATCH CAPACITY TO DEMAND AND FURNACE FAN SPEED.\"; Heat Pump comment 5: \"UNIT SHALL COMMUNICATE WITH AHU TO MATCH CAPACITY TO DEMAND AND AHU FAN SPEED.\"",
+   "status": "likely",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "A-D78",
+    "B-D65"
+   ],
+   "reason": "The wording does not fit the schedules, but the intent is clear from the matching heat pump comment."
+  },
+  {
+   "id": "T80",
+   "kind": 12,
+   "pages": [
+    20,
+    19,
+    5
+   ],
+   "sheets": [
+    "M6.1",
+    "M1.1",
+    "A2.4"
+   ],
+   "where": "M6.1 EF comment 2 (0.579,0.142); M1.1 upper note (0.865,0.438)",
+   "statement": "The fan schedule requires a wall cap on every EF-1, but the two upper fans go to roof caps. A2.4 shows no roof penetrations.",
+   "evidence": "\"2. PROVIDE WITH WALL CAP INCLUDING BIRDSCREEN AND BACKDRAFT DAMPER.\"; EF-1 row comments \"1, 2\"; \"E.A. UP TO ROOF CAP\" with leaders to both upper fans.",
+   "status": "real",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "A-D79",
+    "B-D66"
+   ],
+   "reason": "One EF-1 row covers all four fans and two of them contradict its comment."
+  },
+  {
+   "id": "T81",
+   "kind": 12,
+   "pages": [
+    1,
+    2,
+    3,
+    4,
+    7
+   ],
+   "sheets": [
+    "A2.0",
+    "A2.1",
+    "A2.2",
+    "A2.3",
+    "A4.0"
+   ],
+   "where": "A2.0 detail 6 dimensions x 0.47-0.49, y 0.44-0.56",
+   "statement": "The window header detail fixes a 3'-0\" tall opening, which matches no scheduled window. A type A window under a 6'-8\" head has a sill near 2'-8\" on A4.0, not 3'-8\".",
+   "evidence": "\"3'-8\" Knee Wall Panel\", \"6'-8\" Header\", \"1'-4\" Header Panel\", \"8'-0\" Panel Height\"; schedule heights \"4'-5\"\", \"1'-6\"\", \"2'-7\"\". A3.0: \"See Sheet A 2.0\" \"Detail 6 for window\" \"header details.\"",
+   "status": "likely",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "A-D80",
+    "B-D58"
+   ],
+   "reason": "The detail may be a typical assembly with sample dimensions and not a specific window."
+  },
+  {
+   "id": "T82",
+   "kind": 9,
+   "pages": [
+    2,
+    4,
+    3
+   ],
+   "sheets": [
+    "A2.1",
+    "A2.3",
+    "A2.2"
+   ],
+   "where": "Finish schedules BASE column: A2.1 row 004 (0.346,0.537); A2.3 rows 203 and 204 (0.333,0.537-0.548); Finish Descriptions y 0.572",
+   "statement": "Bath base mark TB 2 is used in the finish schedules but not defined in Finish Descriptions, which list only TB1 and VB. Marks are also written differently between the two tables.",
+   "evidence": "Schedules: \"TB 2\", \"TILE 1\", \"CPT 1\", \"LVT\", \"PAINT\"; descriptions: \"TB1\", \"TILE1\", \"CPT1\", \"LVT 1\", \"PT1\".",
+   "status": "real",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "A-D81",
+    "B-D24"
+   ],
+   "reason": "The mark TB 2 has no definition on any sheet."
+  },
+  {
+   "id": "T83",
+   "kind": 12,
+   "pages": [
+    0,
+    6,
+    7,
+    8,
+    9,
+    10,
+    13,
+    20,
+    21
+   ],
+   "sheets": [
+    "A1.0",
+    "A3.0",
+    "A4.0",
+    "A5.0",
+    "A5.1",
+    "E0.1",
+    "E5.1",
+    "M6.1",
+    "L1.0"
+   ],
+   "where": "A1.0 (0.460,0.508); A3.0 and A4.0 disclaimers; E0.1 (0.834,0.258), (0.630,0.370), (0.674,0.735); E5.1 (0.490,0.355); M6.1 (0.849,0.408); L1.0 (0.679,0.329)",
+   "statement": "The set has text errors that do not change a value.",
+   "evidence": "\"vicinity of of the bedrooms.\"; \"adjustments required local permitting\"; \"Not for Construction, as it will be\" with no closing quote; \"ACCESIBLE\"; \"APPLICANCE\"; \"ACCESSABLE\"; \"IMPEDENCE\"; \"REER\"; \"should be capture water\".",
+   "status": "likely",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "A-D82",
+    "B-D71"
+   ],
+   "reason": "The errors are on the sheets, but they are spelling faults and not conflicts of fact."
+  },
+  {
+   "id": "T84",
+   "kind": 12,
+   "pages": [
+    17
+   ],
+   "sheets": [
+    "P6.1"
+   ],
+   "where": "Detail 1 x 0.24-0.27, y 0.16-0.18; detail 2 x 0.40, y 0.70 and x 0.35, y 0.84",
+   "statement": "The heat trap minimum differs between two details on the same sheet.",
+   "evidence": "Detail 1: \"12\" MIN\" twice with \"HEAT TRAPS PER ASHRAE 90.1\"; detail 2: \"HEAT TRAP\" \"MIN 8\"\" twice.",
+   "status": "real",
+   "found_by": [
+    "B"
+   ],
+   "source_ids": [
+    "B-D39"
+   ],
+   "reason": "Both details dimension the same heat trap loop at the water heater with different minimums."
+  },
+  {
+   "id": "T85",
+   "kind": 12,
+   "pages": [
+    17
+   ],
+   "sheets": [
+    "P6.1"
+   ],
+   "where": "Plumbing Fixture Connection Schedule row WC-1, x 0.54-0.68, y 0.400; detail 2 water closets",
+   "statement": "A tank type water closet is scheduled with a hot water connection.",
+   "evidence": "\"WC-1\" \"TANK TYPE WATER CLOSET\" COLD WATER \"1/2\"\", HOT WATER \"1/2\"\"; detail 2 draws one line to each water closet.",
+   "status": "real",
+   "found_by": [
+    "B"
+   ],
+   "source_ids": [
+    "B-D63"
+   ],
+   "reason": "The schedule row contradicts the schematic on the same sheet."
+  },
+  {
+   "id": "T86",
+   "kind": 12,
+   "pages": [
+    14
+   ],
+   "sheets": [
+    "E7.1"
+   ],
+   "where": "Panel A1 ckt 9 (0.545,0.425); Panel A2 ckt 14 (0.859,0.441)",
+   "statement": "Two circuit descriptions are cut off, so the rooms served cannot be read.",
+   "evidence": "\"LTG RMS 005, 006, 004, 00...\"; \"RECEPT POWDER ROOM...\".",
+   "status": "likely",
+   "found_by": [
+    "B"
+   ],
+   "source_ids": [
+    "B-D72"
+   ],
+   "reason": "The text is truncated on the sheet, but the likely rooms can be inferred from the plans."
+  },
+  {
+   "id": "T87",
+   "kind": 12,
+   "pages": [
+    6,
+    3,
+    4
+   ],
+   "sheets": [
+    "A3.0",
+    "A2.2",
+    "A2.3"
+   ],
+   "where": "A3.0 section 1, end of the floor over the stair at (0.405,0.419); stair below at y 0.54-0.55",
+   "statement": "Headroom at the interior stair scales to about 5'-9\" above the nosing line on A3.0, and about 6'-5\" using the plan position of the stair. The sheets print no headroom and no code value to compare it with.",
+   "evidence": "A3.0 floor edge x 1050.6, underside y 723.8 pt; nosing line at that x about y 931.4 pt; 207.6 pt at 36 pt/ft = 5'-9\"; to the tread top y 948 pt = 6'-2 1/2\". Ceiling \"17'-1\"\", \"MAIN\" \"LEVEL\" \"9'-1\"\".",
+   "status": "not_a_defect",
+   "found_by": [],
+   "source_ids": [],
+   "reason": "Met while measuring the stair for T33, but it is a scaled value with no comparator anywhere in the set, so it is not a conflict on the sheets."
+  }
+ ],
+ "coverage": [
+  {
+   "page": 0,
+   "sheet": "A1.0",
+   "what": "Cover sheet: renderings, project data, code notes, drawing schedule, legends, blanks for R-values and design criteria",
+   "compared": "22 index rows against 22 title blocks (number and title); 5 area values (576 x 3 = 1,728 and 16'-0\" x 36'-0\" = 576 both hold); 2 governing code lines against P0.1, A2.0, E0.1, M0.1; R314, R315, R302.3 and R302.4 notes against E2.1, A2.0, M1.1",
+   "note": "Table R302.1(1) is an image with no text layer; read from the picture at 300 dpi. Red blanks (R-values, loads, address, owner) treated as intentional per the disclaimer."
+  },
+  {
+   "page": 1,
+   "sheet": "A2.0",
+   "what": "Foundation plan and details 2, 3, 6, wall types",
+   "compared": "11 plan dimensions against strings and against A2.1 and A2.2; 3 detail references from A3.0 (details 2, 3, 6 all exist); section mark 1/A3.0; 4 wall types against A3.0 notes; detail 6 heights against 3 window types",
+   "note": "Dimensions checked against vector line positions at 18 pt/ft."
+  },
+  {
+   "page": 2,
+   "sheet": "A2.1",
+   "what": "Ground floor plan, finish, window and door schedules, bathroom and kitchen layouts, hardware text",
+   "compared": "8 door tags against 8 rows, both ways, with drawn width and swing; 8 window tags against 3 rows (A 7, C 1, B 0 all match); 7 room tags against 7 finish rows; about 40 dimensions added up and checked against vectors; 5 callouts, all resolve",
+   "note": "Door swings read from the plan arcs. Dashed outlines in Closet 005 and the kitchen are unlabelled; treated as soffit or clearance and not checked."
+  },
+  {
+   "page": 3,
+   "sheet": "A2.2",
+   "what": "Main floor plan, schedules, powder room and kitchen layouts",
+   "compared": "8 door tags against 8 rows with width and swing; 7 window tags against 3 rows (A 6, C 1 match); 7 room tags against 7 finish rows; about 40 dimensions; 5 callouts; interior riser numbers 1-9 and exterior stairs numbered 1-16 twice",
+   "note": "Exterior stair numbers read as 16 surfaces and 15 risers, which agrees with A4.0."
+  },
+  {
+   "page": 4,
+   "sheet": "A2.3",
+   "what": "Upper floor plan, schedules, typical bathroom layout",
+   "compared": "9 door tags against 9 rows with width and swing; 6 window tags against 3 rows (A 4, B 2 match); 10 room tags against 10 finish rows; about 30 dimensions; 3 callouts; riser numbers 3-16 against A2.2 (risers line up floor to floor)",
+   "note": "Risers 1 and 2 fall under Closet 202 in plan, so they are not numbered here; not a defect."
+  },
+  {
+   "page": 5,
+   "sheet": "A2.4",
+   "what": "Two roof plans and wall types",
+   "compared": "6 slope tags against A3.0 and A4.0; 2 drawing labels against title and index; 40'-0\" x 20'-0\" roof outline against A4.0 overhangs (agree); 2 section marks",
+   "note": "Drawn sizes taken from the 100 dpi picture and A4.0 vectors. No dimensions are printed on this sheet."
+  },
+  {
+   "page": 6,
+   "sheet": "A3.0",
+   "what": "Building section and wall section with notes",
+   "compared": "8 levels on section 1 and 9 on detail 2 against A4.0 and drawn spacing (all intervals agree at their scale); 16 risers and 15 treads against A2.2 and A2.3; 12 room labels against plans; 5 callouts; roof slope measured from vectors; end walls against plan openings",
+   "note": "Red dimension ticks on the footing have no values and were treated as blanks for local verification."
+  },
+  {
+   "page": 7,
+   "sheet": "A4.0",
+   "what": "Front, right, rear and left elevations",
+   "compared": "20 window casings measured from vectors against 21 plan windows; 4 door positions; 8 level labels per elevation; about 16 dimensions; 8 finish notes; stair risers and treads measured for 8 flights (7 in and 11 in throughout)",
+   "note": "Ground and level datums do not align by about 3 1/2 in, so heights were compared against both."
+  },
+  {
+   "page": 8,
+   "sheet": "A5.0",
+   "what": "12 bathroom elevations",
+   "compared": "12 elevations against 3 plan diamonds and layouts; ceiling heights (8'-0\" and 7'-6\") against A3.0; door widths against schedules; fixtures and windows per wall",
+   "note": "View direction taken from the diamond position, confirmed on the ground bathroom."
+  },
+  {
+   "page": 9,
+   "sheet": "A5.1",
+   "what": "6 kitchen elevations and exterior finish options",
+   "compared": "18 cabinet labels against drawn widths and heights; 2 plan diamonds; doors and windows per wall; finish options against A3.0 and A4.0; appliances against E2.1, M1.1, P6.1",
+   "note": "Widths measured at 3 pt per inch; differences of 1 in or less were ignored."
+  },
+  {
+   "page": 10,
+   "sheet": "E0.1",
+   "what": "Electrical legend, abbreviations and general notes",
+   "compared": "14 general notes and the mounting notes against E1.1, E2.1, E5.1 and the code list",
+   "note": "Generic legend; the sheet says the symbols are not a checklist, so unused symbols were not raised."
+  },
+  {
+   "page": 11,
+   "sheet": "E1.1",
+   "what": "Lighting plans for three floors",
+   "compared": "6 fixture tags against E7.1 (all defined); about 25 room tags against architectural plans; fixtures per room against rooms and panel circuits; switch subscripts a, b, c; stair up and down notes",
+   "note": "Background matches A2.1 window positions when measured."
+  },
+  {
+   "page": 12,
+   "sheet": "E2.1",
+   "what": "Power plans for three floors and 2 keynotes",
+   "compared": "8 equipment labels against E7.1, M6.1, P6.1; 4 SD tags against the A1.0 rule; 2 keynotes used and defined; kitchen outlets against A5.1",
+   "note": "Receptacles were reviewed by room, not counted against any requirement."
+  },
+  {
+   "page": 13,
+   "sheet": "E5.1",
+   "what": "Riser diagram and grounding detail",
+   "compared": "2 panels (125 A, 150 A, 30 and 36 circuits) against E7.1; 4 cable tags against panel sizes; fault current note against its stated basis",
+   "note": "Panel names, sizes and circuit counts agree with E7.1."
+  },
+  {
+   "page": 14,
+   "sheet": "E7.1",
+   "what": "Light fixture schedule and panels A1 and A2",
+   "compared": "6 fixture rows; 66 panel rows against E2.1, M6.1, P6.1 and room numbers; pole and spare continuity",
+   "note": "Two panel cells are cut off in the source: \"LTG RMS 005, 006, 004, 00...\" and \"RECEPT POWDER ROOM...\"."
+  },
+  {
+   "page": 15,
+   "sheet": "P0.1",
+   "what": "Plumbing legend, 11 general notes, pipe insulation schedule",
+   "compared": "5 insulation rows; code references against A1.0",
+   "note": "Generic legend; the sheet says not all symbols are used."
+  },
+  {
+   "page": 16,
+   "sheet": "P1.1",
+   "what": "Plumbing plans: underground, ground, main, upper",
+   "compared": "11 fixture and equipment tag types against P6.1 (all defined); riser callouts between floors; room tags; meter location; pipe sizes against the fixture schedule",
+   "note": "The sheet is schematic per P0.1 note A, so pipe routes were not treated as defects."
+  },
+  {
+   "page": 17,
+   "sheet": "P6.1",
+   "what": "Water heater, expansion tank and fixture schedules, two schematics",
+   "compared": "2 heater rows (recovery and first hour figures check out); 1 tank row; 9 fixture rows against P1.1; schematics by level against plans",
+   "note": "Heater and fixture tags agree with P1.1 and E2.1."
+  },
+  {
+   "page": 18,
+   "sheet": "M0.1",
+   "what": "HVAC legend and 20 general notes",
+   "compared": "General notes against sheets in the set",
+   "note": "Generic legend; the sheet says not all symbols are used."
+  },
+  {
+   "page": 19,
+   "sheet": "M1.1",
+   "what": "HVAC plans for three floors",
+   "compared": "5 equipment tag types against M6.1, E2.1 (locations agree); duct drop from upper to main (position agrees); wall and roof caps against wall types and A2.4; room tags",
+   "note": "Duct layout is schematic per M0.1 note K."
+  },
+  {
+   "page": 20,
+   "sheet": "M6.1",
+   "what": "Exhaust fan, air handling and heat pump schedules, upflow detail",
+   "compared": "1 + 2 + 2 schedule rows against E2.1 and E7.1; tons against MBH; schedule cross references",
+   "note": "Capacities at design conditions were not recalculated."
+  },
+  {
+   "page": 21,
+   "sheet": "L1.0",
+   "what": "Lot options, site notes, existing house diagrams",
+   "compared": "6 detail labels and numbers against the sheet's notes; lot width against the 16'-0\" building; site references from P1.1",
+   "note": "No scale and no utilities on the sheet; layouts checked for labels only."
+  }
+ ],
+ "counts": {
+  "items": 87,
+  "real": 49,
+  "likely": 27,
+  "not_a_defect": 11,
+  "found_by_A": 72,
+  "found_by_B": 70,
+  "found_by_both": 66,
+  "lincoln_petersen_total": 76.4
+ }
+}
