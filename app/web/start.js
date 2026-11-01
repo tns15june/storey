@@ -22,7 +22,7 @@ async function start() {
   if (r?.status === 401) {
     $('#locked').textContent = LOCKED
     $('#locked').hidden = false
-  } else if (r?.ok) {
+  } else if (r?.ok && r.headers.get('content-type')?.includes('json')) {   // a static host can answer an unknown path with a page
     document.body.dataset.mode = 'live'
     wireUpload($('#upload'), '/api/reviews')
     fill($('#past'), (await r.json()).map(pastRow), 'No reviews yet. Upload a set to start one.')
