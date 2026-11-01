@@ -1,0 +1,8 @@
+{
+ "samples": [
+  {"id": "habs_stelizabeths_center", "name": "St. Elizabeths Hospital, Center Building", "note": "5 floors of Historic American Buildings Survey drawings, public domain. Every stair followed floor to floor.", "jurisdictions": ["houston", "philadelphia", "seattle"]},
+  {"id": "mml_capitol", "name": "The Capitol, a Michigan pattern-book duplex", "note": "22-sheet CAD set with schedules. Real drafting errors found in the set.", "jurisdictions": ["houston", "philadelphia", "seattle"]},
+  {"id": "generated_710", "name": "Generated test set: a five-storey apartment block", "note": "Drawn from Swiss Dwellings geometry (CC BY 4.0) with 10 planted defects. Switch Houston to Seattle to see the single-exit rule change the stair items.", "jurisdictions": ["houston", "philadelphia", "seattle"]},
+  {"id": "generated_710_second", "name": "Mason Green, cycle 2", "note": "The same set resubmitted: five corrections clouded, one change not flagged. Open Second review.", "parent": "generated_710", "jurisdictions": ["houston", "philadelphia", "seattle"]}
+ ]
+}

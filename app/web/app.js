@@ -471,7 +471,8 @@ function renderSecond() {
   const { recheck, parent, sheets } = state.review
   const body = $('#second-body')
   if (!parent) return body.replaceChildren(el('p', { className: 'note', textContent: 'This is the first review of this set. Upload the resubmittal below to compare it with this review.' }))
-  const link = el('p', {}, el('a', { href: `index.html?review=${parent}`, textContent: 'Open the earlier review' }))
+  const earlier = SAMPLE ? state.sample?.parent && `index.html?sample=${encodeURIComponent(state.sample.parent)}` : `index.html?review=${parent}`   // a sample has no server, so it links the earlier sample
+  const link = el('p', {}, ...(earlier ? [el('a', { href: earlier, textContent: 'Open the earlier review' })] : []))
   if (!recheck) return body.replaceChildren(link, el('p', { className: 'note', textContent: 'The comparison with the earlier review did not finish. See Not checked.' }))
   const sheetName = id => nameOf(sheets.find(s => s.id === id))
   const crop = (url, label, id) => el('figure', {}, url ? el('img', { src: url, alt: `${label} drawing at comment ${id}` }) : el('div', { className: 'nocrop', textContent: 'No crop' }), el('figcaption', { textContent: label }))
@@ -646,6 +647,8 @@ async function loadSample(jurisdiction) {
 async function openSample() {
   const entry = (await samples()).find(s => s.id === SAMPLE)
   if (!entry) return cannotShow('There is no such sample review.')
+  state.sample = entry
+  $('#open-second').classList.toggle('live-only', !entry.parent)   // a sample with an earlier review shows the comparison; uploading needs the server
   document.querySelectorAll('#jurisdiction option').forEach(o => { if (!entry.jurisdictions.includes(o.value)) o.remove() })
   try {
     const review = await loadSample(entry.jurisdictions[0])
