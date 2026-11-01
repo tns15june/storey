@@ -1,0 +1,1226 @@
+{
+ "set": "army_bt_bcof",
+ "pdf_sha256": "0307ef8ad579b3df02092cb8606550670a36f3380cd7d0a4ea1b40feeff8c8b7",
+ "written": "2026-11-01, before any pipeline run on this set",
+ "labeller": "The assistant, not a licensed examiner. Two auditors with different methods worked independently and blind to any pipeline output, then one adjudicator opened the sheets and ruled on each item.",
+ "auditors": {
+  "A": {
+   "method": "sheet by sheet in page order",
+   "listed": 36,
+   "limits": "Positions are fractions in the reading frame: the page rotation is removed, so the sheet is 1224 x 792 pt landscape with the title block at the right. PyMuPDF's default frame keeps /Rotate 270 and is 792 x 1224. To convert, fx_default = y and fy_default = 1 - x.\n\nThis PDF is a 6-sheet extract, so the sheets named in D05 to D11 may exist in the full set. Each is reported because it is missing from this file.\n\nThe set has no cover sheet, sheet index or code summary, so kind 1 had nothing to compare and kind 3 covers only the area lines. Sheet numbers are unique, and there are no door tags or door schedule, so the door half of kind 5 could not be done. Door locations were compared between plans and elevations only. There are also no sections, details or roof plan, so roof and stair heights were checked only through elevation level marks and plan tread counts.\n\nNo corridor or stair width is printed. Kind 11 could only confirm which doors exist, and no exit count or width is printed to check.\n\nLengths were measured from vector line work at half the stated scale, to about 0.05 ft. The D22 areas are estimates, partly from the key plan. Recess and platform sizes are measured, not printed.\n\nSchedule cells came from the text layer and were spot-checked on the picture, not read cell by cell in images. The schedule tiles not viewed one by one were covered by that parse. Other tiles left unviewed held only material already seen at 100 dpi, such as title blocks or blank sheet. The review advisor was rate-limited, so this list has no second review. Only the PDF and files in my scratch folder were opened."
+  },
+  "B": {
+   "method": "item by item, tables first",
+   "listed": 39,
+   "limits": "Position fractions use the sheet turned upright: landscape, 1224 x 792 pt, title block at right, x from left, y from top. Each PDF page carries /Rotate 270, so a default render is portrait; to convert, portrait x fraction = y and portrait y fraction = 1 - x. The file is 6 sheets of a larger set (it refers to at least 8 sheets it does not hold). Sheet numbers are unique. There is no sheet index, code summary, door schedule, window schedule, section, roof plan or reflected ceiling plan, so kinds 1 and 3 had little to compare, door tag checks had nothing to run on, and roof and floor-to-floor checks rest on elevations only. Stair and corridor widths are not printed; measured flight widths are about 4'-3 for the exit stairs and 5'-2 for Stair 1, corridor about 6'-6. The sheets are half size: drawn scale measures 2.25 pt/ft on plans and 3.375 pt/ft on elevations, which equals the stated scale on a 22 x 34 sheet, not on this 11 x 17 page. Measured lengths on plans are good to about 3 in. Area measurements against the printed notes are approximate. The set comes from a coordinated model: grid positions, levels and most geometry agree on every sheet, so most findings are tags, numbering, title block and drafting items. Several items are marked unsure because the answer may sit on a sheet outside this excerpt."
+  }
+ },
+ "adjudicator_notes": "RESULT. 45 items from 36 Auditor A entries and 39 Auditor B entries: 20 real, 15 likely, 10 not_a_defect. Every auditor entry maps to at least one item. No new item was added: wing end doors, level heights, stair positions, room positions across floors and 102 schedule rows were all checked and gave nothing beyond the auditors' lists. SHEET-LEVEL FINDINGS. No sheet index exists on any of the 6 sheets, so kind 1 has only the check that the 6 sheet numbers are unique and that view tags name their own sheet, which they do. The file looks like a six-sheet excerpt, so J11 to J17 are real for the set as supplied and might clear in a full set. There is no code or project summary, only the two area notes (kind 3). No door tags and no corridor or stair width dimensions exist (kinds 5, 11). CORRECTIONS TO THE AUDITORS. Auditor A counted 10 A-301 strings; the sheets have 12, as Auditor B said. Auditor A's 49 first floor window openings is confirmed from elevation counts. Printed-against-drawn was measured on all 73 dimension values on 4 sheets by tick marks: all agree within about 1 inch at half the stated scale, so there is no kind 8 value failure. COVERAGE. A-101 (page 0), first floor composition plan, key plan, area note: 60 room tags against 59 rows both ways; 16 callout markers; 27 dimension values; 32 column and 20 row bubbles; 3 stairs plus the steel stair against A-102; 55 key plan segments; area note arithmetic; 0 window tags. A-102 (page 1), second floor composition plan, key plan, area note: 43 room tags against 43 rows both ways; 50 window tags against wall openings and elevations; 15 callout markers; 32 column and 20 row bubbles; no dimension strings exist on this sheet; both total area sums; recess and platform extents measured. A-201 (page 2), South Elevations, 2 views: 12 dimension values; 27 distinct column bubbles against 32; 12 level tags, drawn heights checked on view 1; 30 windows per floor; 5 callouts. A-202 (page 3), East and West Elevations: 13 dimension values; 20 bubbles on each view; 13 level tags, drawn heights checked on the East view; doors compared with A-101, namely wing end doors, stair exit doors and double doors; 2 callouts. A-203 (page 4), North Elevations, 2 views: 21 dimension values; all 32 column bubbles; 14 level tags; 19 windows per floor; doors on the north face compared with A-101, and the second floor double door compared with A-102; 3 callouts. I-601 (page 5), finish schedules and notes: 102 rows (59 + 43), checked by room type for consistent finishes, which found only rows 201 and 255; 13 notes; title block compared across all 6 sheets. COULD NOT READ. The FIRST FLOOR value on the A-202 East Elevation is covered by TOF and was read from the text layer only. Part of the A-203 view 2 first floor windows is hidden behind a screen wall; the visible tops were counted. The floor 2 area method is not stated on any sheet, so J32 stays likely.",
+ "items": [
+  {
+   "id": "J01",
+   "kind": 6,
+   "pages": [
+    1,
+    5
+   ],
+   "sheets": [
+    "A-102",
+    "I-601"
+   ],
+   "where": "A-102 plan tags 240 (0.638, 0.748), 241 (0.636, 0.471), 242 (0.325, 0.745), 243 (0.327, 0.473). I-601 second floor schedule, last four rows, x 0.417 to 0.74, y 0.534 to 0.566.",
+   "statement": "The four second floor general storage rooms are numbered 240 to 243 on the plan, but the schedule lists them as 252 to 255. It covers 4 plan tags with no row and 4 rows with no room. Every other second floor tag and row matches one to one.",
+   "evidence": "A-102: 'GEN. STOR' with '240', '241', '242', '243'. I-601: '252', '253', '254', '255', each 'GEN. STO.', following row '239'. Numbers 244 to 251 appear nowhere. Plan 43 tags, schedule 43 rows.",
+   "status": "real",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "D01",
+    "R1"
+   ],
+   "reason": "A both-way script comparison and the crops confirm it, and the leaders end in the middle storage room of each group, so these are the same four rooms under two sets of numbers."
+  },
+  {
+   "id": "J02",
+   "kind": 6,
+   "pages": [
+    0,
+    5
+   ],
+   "sheets": [
+    "A-101",
+    "I-601"
+   ],
+   "where": "A-101 tag at (0.471, 0.218). I-601 first floor schedule ends at row 158 at (0.053, 0.749).",
+   "statement": "Room tag 159 CTA on the plan has no row in the first floor finish schedule. It is the only first floor tag without a row.",
+   "evidence": "A-101: 'CTA' '159'; area note 'COVERED TRAINING = 7,717 SF'. I-601 last first floor row: '158' 'ELEC.'. Table title 'INTERIOR FINISH SCHEDULE FIRST FLOOR'. Plan 60 tags, schedule 59 rows.",
+   "status": "likely",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "D02",
+    "R2"
+   ],
+   "reason": "The missing row is confirmed, but the schedule is titled INTERIOR and CTA is a covered exterior area, so leaving it out may be deliberate."
+  },
+  {
+   "id": "J03",
+   "kind": 6,
+   "pages": [
+    0,
+    1,
+    5
+   ],
+   "sheets": [
+    "A-101",
+    "A-102",
+    "I-601"
+   ],
+   "where": "Storage tags with leaders on both plans at x 0.30 to 0.33 and x 0.61 to 0.64, y 0.38 to 0.82, core rooms at x 0.42 to 0.52, y 0.54 to 0.62, A-101 'SUPPLY STO.' at (0.51, 0.395). I-601 name columns at x 0.09 to 0.14 and x 0.45 to 0.50.",
+   "statement": "Plan and schedule spell the same room names differently on 24 rooms: 15 first floor STOR rooms, 8 second floor LUG. and CR rooms, and room 152. All are abbreviation differences with no change of meaning.",
+   "evidence": "Plan 'LUG. STOR', 'GEN. STOR', 'CR STOR', 'TA-50 STOR' against schedule 'LUG. STO.', 'GEN. STO.', 'CR STO.', 'TA-50 STO.' on 117 to 122, 127, 130, 131, 136 to 141, and 'LUG. STOR', 'CR STOR' against 'LUG. STO.', 'CR STO.' on 209 to 211, 213, 224, 226 to 228. Plan 'SUPPLY STO.' against schedule 152 'SUPPLY STORAGE'.",
+   "status": "likely",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "D33",
+    "R3"
+   ],
+   "reason": "The strings differ as stated, but each pair abbreviates the same word, so this is a wording inconsistency and not a conflict about which room is which."
+  },
+  {
+   "id": "J04",
+   "kind": 6,
+   "pages": [
+    0,
+    1,
+    5
+   ],
+   "sheets": [
+    "A-101",
+    "A-102",
+    "I-601"
+   ],
+   "where": "I-601 rows 127, 130, 131 at x 0.09, y 0.417 to 0.460; rows 217, 218, 219 at x 0.45, y 0.288 to 0.309. A-102 tags 217 (0.49, 0.61), 218 (0.51, 0.56), 219 (0.45, 0.56). A-101 tags 127 (0.44, 0.56), 130 (0.50, 0.56), 131 (0.49, 0.61).",
+   "statement": "The schedule names the same room type two ways between its two tables, and the second floor form does not match the plan label. It covers 3 rooms on each floor.",
+   "evidence": "First floor table: 'TA-50 STO.' (127, 130), 'GEN. STO.' (131). Second floor table: 'TA-50 STORAGE' (218, 219), 'GENERAL STORAGE' (217). Plans on both floors: 'TA-50 STOR', 'GEN. STOR'.",
+   "status": "likely",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "D33",
+    "R4"
+   ],
+   "reason": "The strings are as stated, but the meaning is the same in each pair, so this is an inconsistency of wording."
+  },
+  {
+   "id": "J05",
+   "kind": 6,
+   "pages": [
+    1,
+    0
+   ],
+   "sheets": [
+    "A-102",
+    "A-101"
+   ],
+   "where": "A-102 storage row south of CLASSROOM 212, between CR STOR 211 and GEN. STOR 240, at about (0.567, 0.664). Compare A-101 at the same spot between CR STOR 136 and GEN. STOR 138, about (0.558, 0.665).",
+   "statement": "An enclosed space about 3 ft by 6 ft has no tag, no door and no schedule row. It appears in only this one of the four matching storage groups on A-102 and not on A-101. GEN. STOR 240 is about 3'-6\" narrower than 241, 242 and 243 as a result.",
+   "evidence": "Wall pair at about x 690.4 and 697.3 pt, y 519 to 532 pt on A-102. No text inside it. Clear width of 240 is 22.7 pt, about 10.1 ft; clear width of the matching room in the north east group is 30.8 pt, about 13.7 ft. A-101 has a single wall at that point.",
+   "status": "likely",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "D32",
+    "R5"
+   ],
+   "reason": "The space is drawn and unlabelled as stated, but it is probably a chase and nothing else on the sheets contradicts it."
+  },
+  {
+   "id": "J06",
+   "kind": 5,
+   "pages": [
+    1,
+    4
+   ],
+   "sheets": [
+    "A-102",
+    "A-203"
+   ],
+   "where": "A-102 north wall of TOILET/SHOWER 235 and LAUNDRY 237: B tags at (0.566, 0.433), (0.574, 0.433), (0.592, 0.433), (0.602, 0.433); openings at x 0.571, 0.589, 0.597, y 0.441. A-203 view 1, block windows at x 0.405, 0.418, 0.443, y 0.24 and y 0.31.",
+   "statement": "Four B window tags sit on a wall that has three window openings, so one tag has no window. A-101 and A-203 both show three. The two tags at x 0.566 and 0.574 flank the first opening. The matching west block has 2 tags, 2 openings and 2 windows.",
+   "evidence": "Text layer 'B' at x 692.5, 702.6, 724.9, 736.3 pt. Openings on the line work at about x 699, 720, 731 pt. A-203 North Elevation A shows 3 windows on each floor between grids 13.8 and 13.2. The south wall of the same block has 6 tags and 6 openings.",
+   "status": "real",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "D03",
+    "W1"
+   ],
+   "reason": "The 900 dpi crop of A-102 shows four tags over three openings, and A-101 and A-203 agree on three."
+  },
+  {
+   "id": "J07",
+   "kind": 5,
+   "pages": [
+    1,
+    2,
+    4
+   ],
+   "sheets": [
+    "A-102",
+    "A-201",
+    "A-203"
+   ],
+   "where": "A-102 hexagon tags around the exterior walls: A along the wings at y 0.509 and 0.702, B at y 0.433 and 0.778, C at (0.434, 0.702), (0.522, 0.702), (0.455, 0.780), (0.501, 0.780).",
+   "statement": "The plan carries 50 window type tags, but none of the six sheets has a window schedule or type legend, so the tags point at nothing in this set.",
+   "evidence": "28 'A', 18 'B', 4 'C' tags. A-201 and A-203 say only 'WINDOW RE: SPECIFICATIONS'. No window schedule on any sheet.",
+   "status": "real",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "D04",
+    "W2"
+   ],
+   "reason": "The tag count is confirmed by script and no sheet defines the types, so the tags refer to something missing from the set."
+  },
+  {
+   "id": "J08",
+   "kind": 5,
+   "pages": [
+    0,
+    1
+   ],
+   "sheets": [
+    "A-101",
+    "A-102"
+   ],
+   "where": "A-101 exterior walls throughout, x 0.17 to 0.76, y 0.44 to 0.78. Compare A-102 tags.",
+   "statement": "The first floor plan has no window tags, though it draws 49 window openings of the same sizes on the same walls that A-102 tags as A, B and C.",
+   "evidence": "No span of the 3.1 pt tag size on A-101, against 50 on A-102. Windows per floor counted on the elevations: A-201 view 1 has 7 wing + 16 block, A-201 view 2 has 7, A-203 view 1 has 7 wing + 5 block, A-203 view 2 has 7, total 49.",
+   "status": "likely",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "D30",
+    "W2"
+   ],
+   "reason": "The absence is confirmed, but tagging one typical floor could be a deliberate convention."
+  },
+  {
+   "id": "J09",
+   "kind": 5,
+   "pages": [
+    1,
+    2
+   ],
+   "sheets": [
+    "A-102",
+    "A-201"
+   ],
+   "where": "A-102 south wall of PROFILE RECOVERY 204 at about (0.477, 0.772), between the portico piers. A-201 view 1 centre window at about (0.308, 0.27).",
+   "statement": "The three-bay window over the main entrance is drawn on A-102 and A-201 but has no tag on the plan, though the two windows beside it are tagged C and every other window on the plan has a tag.",
+   "evidence": "Three-panel opening between the piers with no hexagon tag; nearest tags 'C' at (0.455, 0.780) and (0.501, 0.780).",
+   "status": "likely",
+   "found_by": [
+    "A"
+   ],
+   "source_ids": [
+    "D31"
+   ],
+   "reason": "The missing tag is confirmed, but the unit may be a storefront outside the A, B and C window types."
+  },
+  {
+   "id": "J10",
+   "kind": 5,
+   "pages": [
+    0,
+    1
+   ],
+   "sheets": [
+    "A-101",
+    "A-102"
+   ],
+   "where": "A-101 and A-102, all door openings.",
+   "statement": "Doors have no tags on either plan and the set has no door schedule, so door sizes and types cannot be checked.",
+   "evidence": "No door tag text on A-101 or A-102. I-601 notes 6 and 11 mention 'INTERIOR HM DOORS AND FRAMES' and 'WOOD DOORS' but cite no schedule.",
+   "status": "not_a_defect",
+   "found_by": [
+    "B"
+   ],
+   "source_ids": [
+    "W3"
+   ],
+   "reason": "The absence is true, but no sheet refers to a door tag or door schedule, so there is no contradiction and no dangling reference."
+  },
+  {
+   "id": "J11",
+   "kind": 9,
+   "pages": [
+    0,
+    1,
+    2,
+    4
+   ],
+   "sheets": [
+    "A-101",
+    "A-102",
+    "A-201",
+    "A-203"
+   ],
+   "where": "A-101 marks at (0.413, 0.103), (0.496, 0.103), (0.408, 0.831), (0.496, 0.831). A-102 at (0.420, 0.072), (0.503, 0.073), (0.415, 0.847), (0.503, 0.847). A-201 at (0.214, 0.136), (0.346, 0.128). A-203 at (0.546, 0.081), (0.670, 0.135).",
+   "statement": "Section callouts 1/A-301 and 2/A-301 point at sheet A-301, which is not in the set. It covers 12 marks.",
+   "evidence": "12 strings 'A-301' with '1' or '2'. Sheets present: A-101, A-102, A-201, A-202, A-203, I-601.",
+   "status": "real",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "D05",
+    "X1"
+   ],
+   "reason": "All 12 marks are in the text layer and the picture, and no sheet A-301 is present."
+  },
+  {
+   "id": "J12",
+   "kind": 9,
+   "pages": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ],
+   "sheets": [
+    "A-101",
+    "A-102",
+    "A-201",
+    "A-202",
+    "A-203"
+   ],
+   "where": "A-101 at (0.279, 0.458), (0.279, 0.831), (0.084, 0.592), (0.324, 0.592), (0.360, 0.592), (0.787, 0.592). A-102 at (0.286, 0.457), (0.286, 0.830), (0.086, 0.590), (0.329, 0.590), (0.361, 0.590), (0.789, 0.590). A-201 at (0.279, 0.596). A-202 at (0.420, 0.103), (0.582, 0.513). A-203 at (0.184, 0.613).",
+   "statement": "Section callouts 1/A-302, 2/A-302 and 3/A-302 point at sheet A-302, which is not in the set. It covers 16 marks.",
+   "evidence": "16 strings 'A-302' with '1', '2' or '3'.",
+   "status": "real",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "D06",
+    "X2"
+   ],
+   "reason": "All 16 marks are present and no sheet A-302 is in the set."
+  },
+  {
+   "id": "J13",
+   "kind": 9,
+   "pages": [
+    0
+   ],
+   "sheets": [
+    "A-101"
+   ],
+   "where": "A-101, RECEPTION/CQ 106, marker at (0.471, 0.734).",
+   "statement": "Callout 2/A-406 points at sheet A-406, which is not in the set.",
+   "evidence": "'2' at (0.470, 0.707) and 'A-406' at (0.466, 0.731).",
+   "status": "real",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "D07",
+    "X4"
+   ],
+   "reason": "The marker is on the sheet and no sheet A-406 is in the set."
+  },
+  {
+   "id": "J14",
+   "kind": 9,
+   "pages": [
+    0,
+    1
+   ],
+   "sheets": [
+    "A-101",
+    "A-102"
+   ],
+   "where": "A-101 marker at (0.438, 0.495) in the south bay of MECHANICAL 156. A-102 marker at (0.445, 0.493) in MECHANICAL PLATFORM 233.",
+   "statement": "Two-way callouts 1 and 2 on A-407 point at sheet A-407, which is not in the set. It covers 2 markers.",
+   "evidence": "'A-407' with '1' and '2' on both plans.",
+   "status": "real",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "D08",
+    "X5"
+   ],
+   "reason": "Both markers are on the sheets and no sheet A-407 is in the set."
+  },
+  {
+   "id": "J15",
+   "kind": 9,
+   "pages": [
+    2
+   ],
+   "sheets": [
+    "A-201"
+   ],
+   "where": "A-201 South Elevation view 1, circles at (0.277, 0.280) and (0.274, 0.372).",
+   "statement": "Detail callouts 3/A-210 and 1/A-210 point at sheet A-210, which is not in the set.",
+   "evidence": "'A-210' with '3' and 'A-210' with '1'.",
+   "status": "real",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "D09",
+    "X3"
+   ],
+   "reason": "Both circles are on the sheet and no sheet A-210 is in the set."
+  },
+  {
+   "id": "J16",
+   "kind": 9,
+   "pages": [
+    5
+   ],
+   "sheets": [
+    "I-601"
+   ],
+   "where": "I-601 NOTES, note 9 at x 0.04 to 0.28, y 0.884.",
+   "statement": "Note 9 sends the reader to sheets A-501 and A-502 for ceiling heights and finishes. Neither sheet is in the set, and the schedule has no ceiling column, so ceiling data cannot be read.",
+   "evidence": "'9. SEE SHEETS A-501 AND A-502 REFLECTED CEILING PLAN FOR CEILING HEIGHTS AND FINISHES.'",
+   "status": "real",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "D10",
+    "X6"
+   ],
+   "reason": "The note reads as quoted and neither sheet is in the set."
+  },
+  {
+   "id": "J17",
+   "kind": 9,
+   "pages": [
+    5
+   ],
+   "sheets": [
+    "I-601"
+   ],
+   "where": "I-601 NOTES, note 13 at x 0.04 to 0.23, y 0.915.",
+   "statement": "Note 13 sends the reader to sheet I-602 for the finish legend, which is not in the set, so the finish codes on I-601 are undefined here.",
+   "evidence": "'13. SEE SHEET I-602 FOR TYPICAL WALL TILE PATTERNS AND FINISH LEGEND.' Codes used include EC, EF, SC, LVT-1, PT-1, PB-1, RB, PNT-1, WT-1, SS-1, CG, WB, WS.",
+   "status": "real",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "D11",
+    "X7"
+   ],
+   "reason": "The note reads as quoted and no sheet I-602 is in the set."
+  },
+  {
+   "id": "J18",
+   "kind": 9,
+   "pages": [
+    0,
+    1,
+    2,
+    4
+   ],
+   "sheets": [
+    "A-101",
+    "A-102",
+    "A-201",
+    "A-203"
+   ],
+   "where": "Elevation markers: A-101 at (0.453, 0.071) and (0.452, 0.912). A-102 at (0.460, 0.070) and (0.460, 0.911).",
+   "statement": "Each north and south elevation marker on the plans is two tags stacked on one point, and the picture shows only view number 2. The visible references name the partial views of grids 0 to 5, though the markers stand near grid 9, and views 1/A-201 and 1/A-203 have no readable callout. It covers 4 markers.",
+   "evidence": "Text layer: 'A-203' twice and 'A-201' twice at identical positions, with '1', '2' and '-' at one point. The 500 dpi crop shows only '2'.",
+   "status": "likely",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "D29",
+    "X8"
+   ],
+   "reason": "The stacking and the visible 2 are confirmed, but two views placed from one elevation marker could produce it, so it may be a drafting artefact."
+  },
+  {
+   "id": "J19",
+   "kind": 2,
+   "pages": [
+    0,
+    1
+   ],
+   "sheets": [
+    "A-101",
+    "A-102"
+   ],
+   "where": "Title block drawing name at (0.966, 0.809) on both sheets. Drawing label at (0.199, 0.929) on A-101 and (0.218, 0.919) on A-102.",
+   "statement": "The title block name and the label under the drawing differ on both plan sheets by the word COMPOSITION. It covers 2 sheets.",
+   "evidence": "A-101 'FIRST FLOOR PLAN' against 'FIRST FLOOR COMPOSITION PLAN'. A-102 'SECOND FLOOR PLAN' against 'SECOND FLOOR COMPOSITION PLAN'.",
+   "status": "real",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "D12",
+    "T1",
+    "T2"
+   ],
+   "reason": "Each sheet has a single drawing, so title block and label should agree, and they do not."
+  },
+  {
+   "id": "J20",
+   "kind": 2,
+   "pages": [
+    2,
+    4
+   ],
+   "sheets": [
+    "A-201",
+    "A-203"
+   ],
+   "where": "A-201 labels at (0.131, 0.435) and (0.131, 0.899). A-203 labels at x 0.06 to 0.18, y 0.43 and y 0.91.",
+   "statement": "Two different partial views on A-201 carry the same title, while A-203 separates its two parts as A and B.",
+   "evidence": "1/A-201 'SOUTH ELEVATION' (grids 4 to 19) and 2/A-201 'SOUTH ELEVATION' (grids 0 to 5). A-203 uses 'NORTH ELEVATION A' and 'NORTH ELEVATION B'.",
+   "status": "likely",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "D13",
+    "T3"
+   ],
+   "reason": "The view numbers keep the two views distinct, so this is an inconsistency of naming and not a broken reference."
+  },
+  {
+   "id": "J21",
+   "kind": 2,
+   "pages": [
+    5
+   ],
+   "sheets": [
+    "I-601"
+   ],
+   "where": "I-601 title block at (0.966, 0.809). Table titles at (0.216, 0.058) and (0.580, 0.058).",
+   "statement": "The title block name is shorter than the two table titles on the sheet.",
+   "evidence": "'FINISH SCHEDULE' against 'INTERIOR FINISH SCHEDULE FIRST FLOOR' and 'INTERIOR FINISH SCHEDULE SECOND FLOOR'.",
+   "status": "not_a_defect",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "D14",
+    "T4"
+   ],
+   "reason": "A sheet title that covers two tables normally generalises their names, and the wording does not conflict."
+  },
+  {
+   "id": "J22",
+   "kind": 2,
+   "pages": [
+    3,
+    4
+   ],
+   "sheets": [
+    "A-202",
+    "A-203"
+   ],
+   "where": "Level tags: A-202 at (0.89, 0.27) and (0.82, 0.71). A-203 at (0.87, 0.25) and (0.41, 0.75).",
+   "statement": "A level named as a first floor sits above the second floor level. It appears on A-202 and A-203 only, 4 tags, and matches no floor on any plan.",
+   "evidence": "'01 FLOOR UTILITY' '15'-8\"' against 'FIRST FLOOR' '0\"' and 'SECOND FLOOR' '14'-0\"'.",
+   "status": "likely",
+   "found_by": [
+    "B"
+   ],
+   "source_ids": [
+    "T5"
+   ],
+   "reason": "The tag is printed as stated and no plan has such a floor, but it may simply mark a height on the utility wing."
+  },
+  {
+   "id": "J23",
+   "kind": 12,
+   "pages": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "sheets": [
+    "A-101",
+    "A-102",
+    "A-201",
+    "A-202",
+    "A-203",
+    "I-601"
+   ],
+   "where": "Title block Date field at about (0.941, 0.487) on all six sheets.",
+   "statement": "Sheet dates disagree within one submittal: five A-series sheets against I-601.",
+   "evidence": "'AUG 2013' on A-101, A-102, A-201, A-202, A-203. 'OCTOBER 2013' on I-601. All six sheets read '100% SUBMITTAL'.",
+   "status": "real",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "D15",
+    "B1"
+   ],
+   "reason": "The text layer and the crops confirm two dates on sheets issued under one submittal note."
+  },
+  {
+   "id": "J24",
+   "kind": 12,
+   "pages": [
+    5
+   ],
+   "sheets": [
+    "I-601"
+   ],
+   "where": "I-601 title block, plot date at (0.975, 0.453), date at (0.941, 0.487).",
+   "statement": "The only plot date in the set is about ten months older than the date on its own sheet. PLOT DATE is blank on the five A-series sheets.",
+   "evidence": "'PLOT DATE: 12/18/12' against 'Date: OCTOBER 2013'. The value '12/18/12' appears only on I-601.",
+   "status": "real",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "D16",
+    "B1"
+   ],
+   "reason": "The plot date precedes the sheet date by about ten months, so one of the two fields is stale."
+  },
+  {
+   "id": "J25",
+   "kind": 12,
+   "pages": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "sheets": [
+    "A-101",
+    "A-102",
+    "A-201",
+    "A-202",
+    "A-203",
+    "I-601"
+   ],
+   "where": "Title block: 'Enter District' at (0.948, 0.081), 'Checker' at (0.963, 0.565), 'filename' at (0.972, 0.485) on A-101 only.",
+   "statement": "Template placeholders were left unfilled in the title blocks of a 100% submittal. It covers 5 A-series sheets, and the same fields on I-601 are filled. File Name is blank on A-102 to A-203 and I-601, and Solicitation and Contract numbers read '-' on all six sheets.",
+   "evidence": "'Enter District' and 'Reviewed by: Checker' on all five A-series sheets; 'File Name: filename' on A-101. I-601 has 'Fort Worth' and 'W.LAWRENCE' in the same fields.",
+   "status": "real",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "D15",
+    "D17",
+    "B3"
+   ],
+   "reason": "The title block diff across the six sheets confirms each string."
+  },
+  {
+   "id": "J26",
+   "kind": 12,
+   "pages": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "sheets": [
+    "A-101",
+    "A-102",
+    "A-201",
+    "A-202",
+    "A-203",
+    "I-601"
+   ],
+   "where": "Title block Submitted by at about (0.975, 0.53). Project title panel at x 0.94 to 0.96, y 0.73 to 0.88.",
+   "statement": "The same person, office and project are written differently on I-601 and the five A-series sheets. It covers 3 title block fields, 5 sheets against 1.",
+   "evidence": "A-series 'WILLIAM J. LAWRENCE R.A.' / 'CHIEF, ARCHITECTURE SECTION'. I-601 'WILLIAM J. LAWRENCE' / 'CHIEF, ARCHITECTURAL SECTION'. A-series 'BASIC TRAINING BARRACKS /' + 'COMPANY OPERATIONS FACILITY'. I-601 'BASIC TRAINING BARRACKS/COMPANY' + 'OPERATIONS FACILITY'.",
+   "status": "likely",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "D15",
+    "B2"
+   ],
+   "reason": "The strings differ as stated, but they name the same person and office, and the project title differs only in spacing and line break."
+  },
+  {
+   "id": "J27",
+   "kind": 12,
+   "pages": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "sheets": [
+    "A-101",
+    "A-102",
+    "A-201",
+    "A-202",
+    "A-203",
+    "I-601"
+   ],
+   "where": "Title block Designed by and Drawn by at x 0.94 to 0.95, y 0.54 to 0.56.",
+   "statement": "The designer and drafter named on I-601 differ from those on the five A-series sheets.",
+   "evidence": "'A. ELLIS' on the A-series sheets against 'H. KIMBROW' on I-601.",
+   "status": "not_a_defect",
+   "found_by": [
+    "A"
+   ],
+   "source_ids": [
+    "D15"
+   ],
+   "reason": "A different author on the interior sheet is normal for a separate discipline, and it is not a conflict of fact."
+  },
+  {
+   "id": "J28",
+   "kind": 12,
+   "pages": [
+    5
+   ],
+   "sheets": [
+    "I-601"
+   ],
+   "where": "I-601 second floor schedule, row 255, NORTH column at about (0.603, 0.567).",
+   "statement": "A wall finish cell is an incomplete code with no paint number.",
+   "evidence": "Row '255' 'GEN. STO.' 'EF' 'RB' 'PNT' 'PNT-1' 'PNT-1' 'PNT-1'. Every other storage row reads 'PNT-1' on all four walls.",
+   "status": "real",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "D18",
+    "S1"
+   ],
+   "reason": "The cell reads PNT in both text and picture, and a row check of all 102 rows finds no other such cell."
+  },
+  {
+   "id": "J29",
+   "kind": 12,
+   "pages": [
+    5
+   ],
+   "sheets": [
+    "I-601"
+   ],
+   "where": "I-601 second floor schedule, row 201, WEST column at (0.732, 0.117).",
+   "statement": "The west wall of LAUNDRY 201 carries a tile set that differs from its own other three walls and from all seven other laundry rows.",
+   "evidence": "Row 201: 'PNT-2, WT-1,3' on NORTH, EAST, SOUTH and 'PNT-2, WT-1,2,3' on WEST. Rows 110, 113, 144, 150, 207, 230, 237 read 'PNT-2, WT-1,3' on all walls.",
+   "status": "likely",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "D19",
+    "S2"
+   ],
+   "reason": "The cell is unique in the schedule, but one differently tiled wall could be intended."
+  },
+  {
+   "id": "J30",
+   "kind": 10,
+   "pages": [
+    2,
+    0,
+    1,
+    4
+   ],
+   "sheets": [
+    "A-201",
+    "A-101",
+    "A-102",
+    "A-203"
+   ],
+   "where": "A-201 view 1 bubble row at y 0.071, between 11 at x 0.387 and 13 at x 0.425. Bubble 12 on A-101 at (0.534, 0.870), on A-102 at (0.541, 0.869), on A-203 at (0.488, 0.079).",
+   "statement": "Grid line 12 is missing from South Elevation view 1, though it is on both plans and on the North Elevation and falls inside the span of the view. The view also omits 5.2, 5.8, 13.2 and 13.8 while it shows the equally rear-only grids 8.6 and 10.4.",
+   "evidence": "A-201 bubbles: '4', '5', '6', '7', '8', '8.5', '8.6', '9', '10', '10.4', '10.5', '11', '13', '14', '15', '15.2', '16', '16.7', '17', '18', '19'. No '12'. Plans have 32 column bubbles, A-203 has all 32, A-201 has 27.",
+   "status": "real",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "D20",
+    "E1"
+   ],
+   "reason": "The text layer and the crop of the bubble row show 11 followed by 13, and the selection of grids is not consistent."
+  },
+  {
+   "id": "J31",
+   "kind": 12,
+   "pages": [
+    1,
+    0
+   ],
+   "sheets": [
+    "A-102",
+    "A-101"
+   ],
+   "where": "A-102 key plan at x 0.82 to 0.92, y 0.75 to 0.87, label at (0.871, 0.904). A-101 key plan at x 0.81 to 0.92, y 0.76 to 0.89.",
+   "statement": "The key plan titled OUTLINE FLOOR 2 is the same outline as OUTLINE FLOOR 1. It shows wing D and the CTA and omits the two recesses beside PROFILE RECOVERY 204, so it does not describe floor 2.",
+   "evidence": "All 55 outline segments match after a shift of (6.06, -9.0) pt, within 0.1 pt. Labels differ only in 'A1', 'B1', 'C1' to 'A2', 'B2', 'C2'; 'D' stays. A-102 draws wing D and the CTA as roof only. The outline scales to about 31,430 SF against 'FLOOR 2 GROSS = 24,621 SF'.",
+   "status": "real",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "D21",
+    "K1"
+   ],
+   "reason": "The plan on the same sheet contradicts an outline that is titled as floor 2."
+  },
+  {
+   "id": "J32",
+   "kind": 3,
+   "pages": [
+    1,
+    0
+   ],
+   "sheets": [
+    "A-102",
+    "A-101"
+   ],
+   "where": "A-102 area note at (0.771, 0.059), total at (0.820, 0.077). A-101 note at x 0.76 to 0.88, y 0.05 to 0.08.",
+   "statement": "The printed floor 2 gross area is about 2,100 SF below what the drawn outline gives, and no note explains it. The printed totals add correctly from the printed parts, so the total inherits any error. The gap is close to Mechanical Platform 233 (about 1,400 SF by its hatch extent) plus the three stairs (about 700 to 800 SF).",
+   "evidence": "'FLOOR 2 GROSS = 24,621 SF'. Wings 80'-8\" x 64'-8\" twice, block 138'-8\" x 118'-0\", two stair towers about 240 SF each, gives about 27,276 SF, less two recesses of about 270 SF each gives about 26,730 SF. Sums hold: 31,442 + 84 + 7,717 + 24,621 = 63,864 and 31,442 + 42 + 3,858.5 + 24,621 = 59,963.5. The outline method gives floor 1 as about 31,435 SF against 'FLOOR 1 GROSS SF = 31,442 SF'.",
+   "status": "likely",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "D22",
+    "A2"
+   ],
+   "reason": "The gap is measured and the method reproduces floor 1, but a deliberate deduction could explain it and the sheets do not state the method."
+  },
+  {
+   "id": "J33",
+   "kind": 3,
+   "pages": [
+    0
+   ],
+   "sheets": [
+    "A-101"
+   ],
+   "where": "A-101 area note at x 0.76 to 0.88, y 0.06. South entry at about (0.47, 0.78). Key plan bump at about (0.87, 0.88).",
+   "statement": "The covered entry area note may not match the outline drawn.",
+   "evidence": "'COVERED ENTRY      = 84 SF (42 SF @ HALF SCOPE)'. The key plan bump scales to 75 to 102 SF depending on which edge is used. The whole outline scales to about 31,530 SF against 31,442 + 84 = 31,526 SF.",
+   "status": "not_a_defect",
+   "found_by": [
+    "B"
+   ],
+   "source_ids": [
+    "A1"
+   ],
+   "reason": "No dimension defines the covered entry and the outline total agrees with the note within 4 SF, so the conflict cannot be confirmed."
+  },
+  {
+   "id": "J34",
+   "kind": 8,
+   "pages": [
+    0
+   ],
+   "sheets": [
+    "A-101"
+   ],
+   "where": "A-101 overall at (0.471, 0.118) on the CTA. Seven part chain at y about 0.30, x 0.34 to 0.60.",
+   "statement": "The 138'-0\" printed above the seven part chain does not equal the chain sum of 138'-8\".",
+   "evidence": "12'-8\" + 8'-0\" + 43'-4\" + 10'-8\" + 32'-4\" + 8'-0\" + 23'-8\" = 138'-8\" against '138'-0\"'. CTA outline at x 420.99 to 731.37 pt, 137'-11.4\". Chain ends at x 420.45 and 732.36 pt, 138'-7.5\", on extension lines that run down to the main block. The bottom string also sums to 138'-8\".",
+   "status": "not_a_defect",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "D23",
+    "M2"
+   ],
+   "reason": "The two strings sit on different elements, the CTA and the main block, and each matches its own drawn length."
+  },
+  {
+   "id": "J35",
+   "kind": 8,
+   "pages": [
+    4
+   ],
+   "sheets": [
+    "A-203"
+   ],
+   "where": "A-203 North Elevation A, lower string, at (0.712, 0.285), near grid 5.8.",
+   "statement": "One dimension prints an unrounded value, unlike every other dimension in the set, which is in whole inches. The drawn length matches the value.",
+   "evidence": "'3'-6 95/128\"'. Measured 3'-6.7\".",
+   "status": "likely",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "D24",
+    "M1"
+   ],
+   "reason": "The value is printed as stated and it is unique in the set, but it agrees with the drawing, so the fault is one of format."
+  },
+  {
+   "id": "J36",
+   "kind": 8,
+   "pages": [
+    4,
+    2
+   ],
+   "sheets": [
+    "A-203",
+    "A-201"
+   ],
+   "where": "A-203 view 1 at (0.191, 0.285). Compare A-201 view 1 at (0.702, 0.283), A-201 view 2 at (0.173, 0.844), A-203 view 2 at (0.290, 0.777).",
+   "statement": "The end brick joint bay on the north face of the east wing differs from the same bay on the other three wing faces.",
+   "evidence": "'15'-8\"' with an unlabelled 8'-0\" end bay, against '14'-4\"' with a 9'-4\" end bay. Next bays '20'-0\"', '17'-4\"', '19'-8\"' on all four. Each face totals 80'-8\".",
+   "status": "not_a_defect",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "D25",
+    "M3"
+   ],
+   "reason": "Each string totals 80'-8\" and matches its drawn length, so the bay is a joint layout choice and nothing on the sheets contradicts it."
+  },
+  {
+   "id": "J37",
+   "kind": 8,
+   "pages": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ],
+   "sheets": [
+    "A-101",
+    "A-102",
+    "A-201",
+    "A-202",
+    "A-203"
+   ],
+   "where": "Scale notes under each drawing, for example A-101 at x 0.11, y 0.95, and title block PLOT SCALE at (0.979, 0.446).",
+   "statement": "On this 17 x 11 PDF page every drawing measures half its stated scale, and no half-size note or graphic scale is given.",
+   "evidence": "Plans measure 2.25 pt per foot, which is 1/32\" = 1'-0\", against ' 1/16\" = 1'-0\"'. Elevations measure 3.375 pt per foot, which is 3/64\" = 1'-0\", against ' 3/32\" = 1'-0\"'.",
+   "status": "not_a_defect",
+   "found_by": [
+    "A"
+   ],
+   "source_ids": [
+    "D26"
+   ],
+   "reason": "All 73 dimension values on four sheets agree at exactly half the stated scale, which is a half-size plot of a 34 x 22 sheet and so an artefact of the print."
+  },
+  {
+   "id": "J38",
+   "kind": 7,
+   "pages": [
+    0,
+    1
+   ],
+   "sheets": [
+    "A-101",
+    "A-102"
+   ],
+   "where": "A-101 STAIR 1 128 at (0.45, 0.60), door at about (0.457, 0.583). A-102 STAIR 1 220 at (0.456, 0.60).",
+   "statement": "STAIR 1 serves both floors but ends at Corridor 129 and has no exterior door, while the two EXIT STAIR rooms discharge directly outside.",
+   "evidence": "A-101 'STAIR 1' '128', 'UP'; A-102 'STAIR 1' '220', 'DN'. A-102 shows 11 treads per flight, which is 12 + 12 risers, 7\" at 14'-0\"; on A-101 the upper flight is cut by a break line. The first floor door opens to the corridor. Named 'STAIR 1' where the others are 'EXIT STAIR'.",
+   "status": "not_a_defect",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "D27",
+    "Q1"
+   ],
+   "reason": "The stair reaches the first floor and the set never calls it an exit, so nothing on the sheets conflicts."
+  },
+  {
+   "id": "J39",
+   "kind": 7,
+   "pages": [
+    0,
+    1
+   ],
+   "sheets": [
+    "A-101",
+    "A-102"
+   ],
+   "where": "A-101 at about (0.424, 0.493). A-102 at about (0.431, 0.492). Beside the A-407 marker.",
+   "statement": "The steel stair from the mechanical space up to MECHANICAL PLATFORM 233 has no UP or DN label on either floor, unlike the other three stairs.",
+   "evidence": "Treads drawn in the same place on both plans. Only the marker '1' / 'A-407' is beside it. 'UP' and 'DN' appear at the other three stairs only.",
+   "status": "likely",
+   "found_by": [
+    "A"
+   ],
+   "source_ids": [
+    "D28"
+   ],
+   "reason": "The missing label is confirmed, but the callout sends the reader to a detail that may carry this, and that sheet is not in the set."
+  },
+  {
+   "id": "J40",
+   "kind": 11,
+   "pages": [
+    0,
+    1
+   ],
+   "sheets": [
+    "A-101",
+    "A-102"
+   ],
+   "where": "Corridor ends at the heavy dashed line: A-101 at (0.34, 0.53), (0.60, 0.53), (0.34, 0.68), (0.60, 0.68). A-102 at the same points shifted about 0.01.",
+   "statement": "All eight corridor ends run into the sleeping rooms with no wall or door drawn across the opening.",
+   "evidence": "On A-101 the wall under the dashed line stops at y 427.5 and 533.2 pt, and the corridor gaps of about 8 ft north and south of it have no line work or door swing.",
+   "status": "not_a_defect",
+   "found_by": [
+    "B"
+   ],
+   "source_ids": [
+    "Q2"
+   ],
+   "reason": "The openings are drawn as stated, but no sheet shows a door there or requires one, so this is a design reading and not a conflict."
+  },
+  {
+   "id": "J41",
+   "kind": 12,
+   "pages": [
+    2
+   ],
+   "sheets": [
+    "A-201"
+   ],
+   "where": "A-201 view 1, right side, x 0.77 to 0.83, y 0.29 to 0.31.",
+   "statement": "The STAIR MID LANDING level tag is printed twice, about 11 pt apart, and runs through the CURTAIN WALL SYSTEM note, which makes both hard to read.",
+   "evidence": "Reads as 'LANLANDING' and 'CURTAIN W/7'-0\"7'-0\"TEM'. Text layer has 'LANDING' at x 966.5 and 977.4 pt and '7'-0\"' at x 981.7 and 992.7 pt.",
+   "status": "real",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "D34",
+    "L1"
+   ],
+   "reason": "The crop shows the overprint, and the tag and the note are both damaged by it."
+  },
+  {
+   "id": "J42",
+   "kind": 12,
+   "pages": [
+    3
+   ],
+   "sheets": [
+    "A-202"
+   ],
+   "where": "A-202 East Elevation level tags at about (0.905, 0.359).",
+   "statement": "The FIRST FLOOR level value is covered by the TOF label, so the value cannot be read on this view.",
+   "evidence": "'0\"' at (0.905, 0.353) lies under 'TOF' at (0.899, 0.356). On the West Elevation the same tag reads clearly.",
+   "status": "real",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "D34",
+    "L2"
+   ],
+   "reason": "The crop shows only the top of the value above the TOF text."
+  },
+  {
+   "id": "J43",
+   "kind": 12,
+   "pages": [
+    0,
+    1,
+    3
+   ],
+   "sheets": [
+    "A-101",
+    "A-102",
+    "A-202"
+   ],
+   "where": "A-101 at (0.43 to 0.46, 0.65), (0.49 to 0.51, 0.65), (0.47, 0.71), (0.48, 0.75). A-102 at (0.36, 0.59) and (0.35 to 0.60, 0.433). A-202 at (0.69, 0.11) and (0.32, 0.55).",
+   "statement": "Plan labels, tags and grid bubbles collide in 8 places on three sheets: 4 on A-101, 2 on A-102, 2 on A-202. On A-102 one of the two places is the six north wall window tags lying under the heavy dashed line.",
+   "evidence": "A-101: 'D.I. TOILET' runs into 'ELEC.'; 'COMM.' runs into 'D.I. TOILET'; the A-406 marker covers 'RECEPTION/CQ' and '106'; 'VEST.' touches '1ST SGT.'. A-102: the 2/A-302 marker touches 'CLASSROOM'. A-202: bubbles 'K' and 'K.2' overlap and read 'KK.2' and 'K.2K'.",
+   "status": "likely",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "D35",
+    "L3"
+   ],
+   "reason": "Every collision is visible, but each string can still be read, so these are cosmetic."
+  },
+  {
+   "id": "J44",
+   "kind": 12,
+   "pages": [
+    2,
+    3,
+    4
+   ],
+   "sheets": [
+    "A-201",
+    "A-202",
+    "A-203"
+   ],
+   "where": "Level tags: A-201 at (0.788, 0.177) and (0.42, 0.65). A-202 at (0.89, 0.20) and (0.83, 0.63). A-203 at (0.87, 0.18) and (0.42, 0.68).",
+   "statement": "EAVE is misspelled on all six level tags.",
+   "evidence": "'EVE HEIGHT' '32'-0\"'.",
+   "status": "real",
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "source_ids": [
+    "D36",
+    "L4"
+   ],
+   "reason": "All six tags read EVE in the text layer and the picture."
+  },
+  {
+   "id": "J45",
+   "kind": 12,
+   "pages": [
+    2,
+    3,
+    4
+   ],
+   "sheets": [
+    "A-201",
+    "A-202",
+    "A-203"
+   ],
+   "where": "Level marks, for example A-201 at (0.788, 0.177) and (0.796, 0.209).",
+   "statement": "The level named ROOF is 4'-0\" below the eave on all three elevation sheets, and the metal panel wall continues above it, so the name does not describe what it marks.",
+   "evidence": "'EVE HEIGHT' '32'-0\"' against 'ROOF' '28'-0\"'. Measured on A-201 and A-202, both levels sit at their printed heights above FIRST FLOOR.",
+   "status": "not_a_defect",
+   "found_by": [
+    "A"
+   ],
+   "source_ids": [
+    "D36"
+   ],
+   "reason": "The heights are drawn as printed and agree on all three sheets, and no sheet gives a conflicting roof height, so this is a naming habit."
+  }
+ ],
+ "coverage": [
+  {
+   "page": 0,
+   "sheet": "A-101",
+   "what": "First floor composition plan at 1/16\" = 1'-0\", OUTLINE FLOOR 1 key plan, three floor area lines, title block.",
+   "compared": "60 room tags against 59 schedule rows on I-601 (number and name). 52 grid bubbles against A-102 and all elevations, by measured position. 27 printed dimensions against measured length, with 1 vertical chain summed to its overall and 2 horizontal chains summed. 18 section, elevation and detail callout strings against sheets present and against the matching marks on A-201, A-202, A-203. 3 stairs against A-102. 49 window openings against A-201 and A-203. 15 exterior door locations against the elevations (14 seen, ELEC 158 door is behind the screen wall). 3 area lines by arithmetic and against dimensions.",
+   "note": "No door tags, no window tags, no corridor or stair width printed. All 27 dimensions agree with drawn length within 0.1 ft at half scale. Vertical chain 26'-8\" + 64'-8\" + 26'-8\" + 27'-4\" + 16'-8\" = 162'-0\" agrees. Rebuilding floor 1 area from dimensions gives about 31,443 SF against the printed 31,442 SF. Heavy dashed lines match the A1/B1/C1/D division on the key plan and carry no label. All text was readable, though some labels overlap."
+  },
+  {
+   "page": 1,
+   "sheet": "A-102",
+   "what": "Second floor composition plan at 1/16\" = 1'-0\", OUTLINE FLOOR 2 key plan, floor and total area lines, title block.",
+   "compared": "43 room tags against 43 second floor schedule rows. 52 grid bubbles against A-101, offset removed. 50 window tags (28 A, 18 B, 4 C) against 50 drawn openings and against A-201 and A-203. 3 stairs against A-101, tread by tread from the vector lines. Pixel overlay on A-101 for walls, doors and columns. 17 callout strings. 2 area lines by arithmetic.",
+   "note": "The sheet has no dimensions. 31,442 + 24,621 + 84 + 7,717 = 63,864 agrees. 31,442 + 24,621 + 42 + 3,858.5 = 59,963.5 agrees. Key plan segments were compared against A-101 numerically. North wall window tags are partly covered by the heavy dashed line, and the text layer was used to read them."
+  },
+  {
+   "page": 2,
+   "sheet": "A-201",
+   "what": "Two south elevations at 3/32\" = 1'-0\", drawing 1 grids 4 to 19, drawing 2 grids 0 to 5.",
+   "compared": "29 grid bubbles against plan positions. 12 printed dimensions against measured length. 11 level marks against measured height. 5 section and detail callouts. 61 windows and 1 main door against A-101 and A-102. Section positions and arrow directions against the plans.",
+   "note": "All 12 dimensions and all level marks agree with drawn size. Every grid and section mark present falls within about 1 px at 300 dpi of its plan position. Tick pair at fractions 0.504 to 0.525 across (9'-4\" long) has no text, and this is not reported as a defect. No STAIR MID LANDING mark on drawing 2 although it shows the west stair tower."
+  },
+  {
+   "page": 3,
+   "sheet": "A-202",
+   "what": "East and west elevations at 3/32\" = 1'-0\".",
+   "compared": "40 grid bubbles against plan positions. 13 printed dimensions against measured length. 13 level marks against measured height. 2 section callouts. 8 doors against A-101. Stair tower glazing against A-101 and A-102. D wing step and CTA columns against the plans. West dimensions 16'-8\" + 4'-8\" + 22'-8\" (blank) = 44'-0\" against 16'-8\" + 27'-4\" on A-101.",
+   "note": "All dimensions and level marks agree with drawn size. No STAIR MID LANDING mark on the west elevation. The first floor value on the east elevation is covered by TOF text."
+  },
+  {
+   "page": 4,
+   "sheet": "A-203",
+   "what": "North elevations A (grids 5 to 19) and B (grids 0 to 5.2) at 3/32\" = 1'-0\".",
+   "compared": "34 grid bubbles against plan positions. 21 printed dimensions against measured length. 14 level marks against measured height. 3 section callouts. 38 windows against A-101 and A-102, including a close view of the band above the CTA roof. 5 first floor doors and 1 second floor door. 6 CTA column bases against grids 5.2, 5.8, 8.6, 10.4, 13.2, 13.8. Screen wall against the yard on A-101.",
+   "note": "Upper chain sum 15'-1\" + 17'-8\" + 20'-0\" + 14'-0\" + 8'-0\" + 22'-0\" + 17'-0\" + 11'-8\" + 13'-3\" = 138'-8\" agrees with the A-101 chain. All 21 dimensions agree with drawn length. Second floor windows on this face are visible only at their heads above the CTA roof."
+  },
+  {
+   "page": 5,
+   "sheet": "I-601",
+   "what": "Interior finish schedules for first and second floor, 13 general notes, title block.",
+   "compared": "102 schedule rows (59 + 43), 8 cells each, parsed from the text layer and spot-checked on the picture. Rows against plan tags in both directions. Each row against other rows of the same room type. 13 notes, 3 sheet references. Title block against the five A-series sheets.",
+   "note": "First floor rows run 101 to 158 plus 116A with no gap. Second floor rows run 201 to 239, then 252 to 255. Finish codes are not defined in this set, because note 13 points to I-602. Floor and base codes are consistent within each room type."
+  }
+ ],
+ "counts": {
+  "items": 45,
+  "real": 20,
+  "likely": 15,
+  "not_a_defect": 10,
+  "found_by_A": 34,
+  "found_by_B": 33,
+  "found_by_both": 32,
+  "lincoln_petersen_total": 35.1
+ }
+}
