@@ -382,6 +382,16 @@ def test_a_second_review_keeps_its_parents_decisions(client, review):
     assert key in [item["key"] for item in body["letter"]["items"]]
 
 
+def test_a_drop_does_not_carry_to_a_finding_that_changed(client, review):
+    key = next(f["key"] for f in stored(review)["findings"] if f["check"] == 9)
+    client.post(f"/api/reviews/{RID}/decisions", json={"key": key, "decision": "drop"})
+    changed = json.loads(json.dumps(VERTICALS))
+    changed["verticals"][0]["floors"]["1"]["state"] = "check"
+    child = second_review(review, FACTS | {"verticals": changed})
+    assert key not in stored(child)["decisions"]
+    assert key in [item["key"] for item in stored(child)["letter"]["items"]]
+
+
 def test_a_rerun_of_the_evaluate_stage_keeps_its_ids(review):
     before = ids(review)
     write_json(review / "stage_declared.json", TAGGED)

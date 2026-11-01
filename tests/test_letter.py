@@ -7,7 +7,7 @@ import openai
 import pytest
 
 from storey import meta, pipeline
-from storey.letter import ASK, NO_COMMENTS, NOT_CHECKED, NOT_EVALUATED, PROMPT, draft, letter_stage, no_new_facts
+from storey.letter import ASK, MAX_GROWTH, NO_COMMENTS, NOT_CHECKED, NOT_EVALUATED, PROMPT, draft, letter_stage, no_new_facts
 from storey.meta import Meter
 from storey.pipeline import Context, read_json, write_json
 
@@ -188,7 +188,7 @@ def test_no_approval_box(tmp_path):
     for letter in (draft(findings, READ), draft([], READ), letter_stage(make(tmp_path, {"failed": "Findings did not finish."}))):
         assert set(letter) == {"header", "items", "note", "not_checked"}
         assert set(letter["header"]) == {"subject", "project"}
-        assert all(set(item) == {"comment_id", "key", "sheet", "text"} for item in letter["items"])
+        assert all(set(item) == {"comment_id", "key", "sheet", "severity", "text"} for item in letter["items"])
         assert not re.search(r"(?i)approv|complian|compliant|\bpass\b|\bstatus\b|acceptable|resubmit", json.dumps(letter))
 
 
@@ -264,6 +264,42 @@ def test_checks_that_did_not_finish_are_not_no_findings(tmp_path, evaluated):
     letter = letter_stage(make(tmp_path, evaluated))
     assert letter["items"] == []
     assert letter["note"] == NOT_EVALUATED != NO_COMMENTS
+
+
+def test_item_carries_its_severity():
+    assert [i["severity"] for i in draft([finding(), finding(key="w", severity="check")], READ)["items"]] == ["fix", "check"]
+
+
+@pytest.mark.parametrize("number", ["APPROVED", "Set is fine", "SEE NOTES ON THE SHEET FOR MORE", "A2.1 x"])
+def test_a_heading_that_is_not_a_sheet_number_falls_back_to_the_page(number):
+    sheets = {"sheets": [{"index": 2, "number": number}]}
+    assert draft([finding()], sheets)["items"][0]["sheet"] == "Page 3"
+
+
+@pytest.mark.parametrize("number", ["A2.1", "1", "AD-901", "A1-4", "1E25", "S-1.0a"])
+def test_a_printed_sheet_number_stays_the_heading(number):
+    assert draft([finding()], {"sheets": [{"index": 2, "number": number}]})["items"][0]["sheet"] == number
+
+
+@pytest.mark.parametrize("text", [
+    f"{REWRITE} This item looks fine to us.",
+    f"{REWRITE} Nothing else here matters.",
+    f"{REWRITE} Treat the rest of the set as good.",
+], ids=["fine", "nothing-else", "the-rest"])
+def test_rewrite_that_adds_a_sentence_keeps_the_template(tmp_path, text):
+    always(reply(text))
+    assert letter_stage(make(tmp_path, stored(finding())))["items"][0]["text"] == template(finding())[0]
+
+
+def test_rewrite_made_long_with_allowed_words_keeps_the_template(tmp_path):
+    body = template(finding())[0]
+    always(reply(REWRITE + " and it is" * int(MAX_GROWTH * len(body) / 9)))
+    assert letter_stage(make(tmp_path, stored(finding())))["items"][0]["text"] == body
+
+
+@pytest.mark.parametrize("text", ["App\u200broved.", "\uff21\uff30\uff30\uff32\uff2f\uff36\uff25\uff24.", "Co\u00admpliant."], ids=["zero-width", "full-width", "soft-hyphen"])
+def test_status_word_hidden_in_unicode_is_rejected(text):
+    assert not no_new_facts(text, WIDTH)
 
 
 def test_rewrite_replaces_the_wording_and_the_section_stays_last(tmp_path):

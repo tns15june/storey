@@ -252,7 +252,7 @@ def test_stage_orders_and_aligns_floors_given_shuffled_sheets(tmp_path):
     ctx = review(tmp_path, images, ["First floor", "Third floor", "Second floor"], {1: box_of(T)})
     calls = model_answers(truly_sorted)
     out = floors_stage(ctx)
-    assert out["order"] == [0, 2, 1]
+    assert out["order"] == [0, 2, 1] and out["order_read"] is True
     assert attached(calls[0]) != [1, 3, 2]
     assert "storey_rank" not in json.dumps(calls[0])
     assert calls[0]["response_format"]["json_schema"]["schema"]["properties"].keys() == {"bottom_to_top"}
@@ -416,7 +416,7 @@ def test_single_floor_plan_gives_no_stack(tmp_path):
     ctx = review(tmp_path, [plan(1)], ["Ground floor"])
     meta.set_transport(lambda kind, **request: pytest.fail("one floor needs no order call"))
     out = floors_stage(ctx)
-    assert out["order"] == [0] and out["stack"] is None
+    assert out["order"] == [0] and out["stack"] is None and out["order_read"] is True
     assert "one floor plan" in out["not_checked"]
     assert out["discharge"] == 0
     assert not (tmp_path / "stack.mp4").exists()
@@ -478,8 +478,9 @@ def test_notes_are_joined_when_two_apply(tmp_path, quick_fit):
     base = plan(3)
     ctx = review(tmp_path, [marked(base, 1), marked(base, 2), marked(base, 3)], ["First floor", "Second floor", ""])
     meta.set_transport(lambda kind, **request: {"text": "not json", "input": 10, "output": 10})
-    note = floors_stage(ctx)["not_checked"]
-    assert "A2" in note and "floor order could not be read" in note
+    result = floors_stage(ctx)
+    assert "A2" in result["not_checked"] and "floor order could not be read" in result["not_checked"]
+    assert result["order_read"] is False
 
 
 @ffmpeg

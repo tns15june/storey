@@ -105,3 +105,17 @@ The `realsets` agent scripted SAM.gov's internal endpoints and fetched 14 files 
 - 23:55. Task 5 review. The lab's 12 Check, 3 Missing on the 15 held-out plants comes from `decide` alone. Through the span step that ships, a replay with no model call gives 12 Check, 1 Missing, 2 Not on this floor, 0 Found: `bme_k__top` and `schenley__top` fall outside the span, which is the stated top-of-stair limit. The shipped states are the figure to publish. A failed crop on a cell under two runs now reads Check, because one failed crop on `bme_k` moved a real main stair from Check to Not on this floor. The replay of 979 cells and 230 rows does not change, because all 686 established, aligned, non-blank lab stair cells have a crop answer.
 - 23:55. Crop repeat, clean stairs only. On 6 clean `bme_k` cells, chosen because the lab's and the port's first answers differed, both crops were asked 3 more times, 12 crops in all. 6 of the 12 changed answer, so "the same 5 clean stairs every time" above does not hold for these crops. All 12 are clean sheets with the stair off the crop's centre, so this shows how far the crop's answer varies on real stairs and says nothing about erased ones. The evidence for erased stairs is the audit's repeat on planted cells, `L3_crop_repeat_hard`: all 12 non-Huffman cells said no on 36 of 36, and the 3 plants that only the crop catches said no on 9 of 9. Huffman said yes on stipple on 9 of 9, so on that sheet only ink catches an erasure.
 - 23:55. Row drift. Between two fresh `bme_k` runs, row `pos` moved by up to 146 sheet pixels on a 6000 px sheet, which is 49 px on the 2000 px copy, and row ids changed. The second run had a fourth floor, because the first misread one floor name, so this pair may overstate the drift between runs of one set of floors.
+
+## First end-to-end runs, 1 Nov
+
+Both ran upload to letter through the real HTTP API on a cold cache, under a 4 USD cap per review.
+
+| Set | USD | Minutes | Findings |
+|---|---|---|---|
+| `mml_capitol` | 0.42 | 2.26 | 1 Fix, 5 Check, 2 Cannot tell |
+| `habs_stelizabeths_center` | 0.46 | 2.40 | 3 Fix, 14 Cannot tell |
+
+- The one Fix on `mml_capitol` was a false alarm: "Stair C is missing on GROUND FLOOR". The interior stair serves Main and Upper, and exterior stairs carry that unit to Ground. Check 10 is now Check at every state, and the item reads "Stair C stops above GROUND FLOOR". Check 9 keeps Fix, because a gap has the stair on both sides of it.
+- Two defects came up that the build log did not list: the index row for P6.1 copies the row for M0.1 (HVAC Cover Sheet against PLUMBING SCHEDULES), and the plan labels Bedroom 2 as 201 while the finish schedule gives it 205.
+- On `habs_stelizabeths_center` no stair finding appears, and 17 Found cells match truth with none on an absent cell. A scan gave one line per floor for travel distance and corridor width, so floors with one reason now share one item.
+- Security review of the commits: a sheet number now has to look like one before it heads a letter item, a rewrite may add only connecting words and at most half its length again, the mask and the rewrite gate share one word list and see through zero-width and full-width characters, the floor order is a flag on the floors result instead of a phrase matched in a note, schedule text is capped, and a dropped comment returns if its finding changes between cycles.

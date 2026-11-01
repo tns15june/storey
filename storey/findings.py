@@ -12,13 +12,14 @@ from dataclasses import dataclass, field
 
 from .declared import CODE_TITLE, LIFE_SAFETY, NOT_USED, SCHEDULE_TITLES, YEAR, floor_words, norm, num, room_same, sheet_key, some, title_same
 from .floors import NOT_MAIN, _plan_sheets
+from .letter import STATUS, plain
 from .rules import JURISDICTIONS, rule, stricter_when_unknown
 from .verticals import SHAFTS
 
 log = logging.getLogger(__name__)
 
 # 12 is a list for the examiner, not a finding. 15 is the second review's, which sets a state per comment.
-SEVERITY = {1: "fix", 2: "fix", 3: "check", 4: "check", 5: "fix", 6: "check", 7: "fix", 8: "unknown", 9: "fix", 10: "fix", 11: "check", 12: "open", 13: "check", 14: "check", 16: "check"}
+SEVERITY = {1: "fix", 2: "fix", 3: "check", 4: "check", 5: "fix", 6: "check", 7: "fix", 8: "unknown", 9: "fix", 10: "check", 11: "check", 12: "open", 13: "check", 14: "check", 16: "check"}
 DISCIPLINE = "A"
 STAGES = ("read", "floors", "verticals", "declared", "vector")
 RANK = {"fix": 0, "check": 1, "unknown": 2}
@@ -31,7 +32,6 @@ WALL_IN = 12             # printed corridor widths run wall centre to wall centr
 NO_SWING = {"BIFOLD", "POCKET"}   # not the lab's dash too: a dash is a cased opening, and the vector stage keeps the dashed swings drawn as options, which came back on Capitol 6 and Baxter 6 and 11
 STAIR_HALF = 200         # sheet px round a place with no mask, about a stair on a 6000 px sheet
 TAG_HALF = 60
-ORDER_NOT_READ = "floor order could not be read"   # shortcut: matches the wording of the floors stage's note, read a flag on its result once floors.py has one
 
 IBC_ONLY = ("occupancy", "construction", "occupant_load")   # the residential code asks for none of these, and only checks 11, 13 and 14 read them
 CODE_FIELDS = {"edition": "code edition", "occupancy": "occupancy", "construction": "construction type", "sprinklers": "sprinkler statement", "stories": "number of stories", "area": "area", "occupant_load": "occupant load"}
@@ -48,7 +48,6 @@ BEDROOM = re.compile(r"\bBED\s?(ROOM)?\b|\bBDRM\b", re.I)
 NOT_A_STOREY = re.compile(r"foundation|roof|attic|crawl", re.I)
 BELOW_GRADE = re.compile(r"basement|cellar", re.I)
 PLACED = re.compile(r"(\w+)@(-?\d+),(-?\d+)(?:#\d+)?")
-STATUS = re.compile(r"(?i)\bpass(?:es|ed|ing)?\b|\w*approv\w*|\w*compl(?:y|ies|ied|iant|iance)\b")
 MASK = "[word removed]"
 _mark = sheet_key        # marks normalise as sheet numbers do, so `1 a`, `1A` and `1-A` are one mark
 
@@ -216,10 +215,10 @@ class Review:
                               "sheet": sheet, "box": box, "title": title, "measured": measured, "required": required, "rule": section, "evidence": evidence, "vertical": vertical})
 
     def stair(self, check, severity, row, i, cell, measured, required, section=""):
-        word = "not confirmed" if cell.get("state") == "check" else "missing"
-        if ORDER_NOT_READ in (self.floors.get("not_checked") or ""):   # a Fix needs direct evidence, and here which floors adjoin rests on a reply that failed
+        words = "is not confirmed on" if cell.get("state") == "check" else "stops above" if check == 10 else "is missing on"
+        if not self.floors.get("order_read"):   # a Fix needs direct evidence, and here which floors adjoin rests on a reply that failed
             severity, measured = "check", f"{measured} The floors are in sheet order, because their order could not be read."
-        self.add(check, f"Stair {row['id']} is {word} on {self.floor(i)}", sheet=i, box=_cell_box(cell), severity=severity, measured=measured, required=required, section=section,
+        self.add(check, f"Stair {row['id']} {words} {self.floor(i)}", sheet=i, box=_cell_box(cell), severity=severity, measured=measured, required=required, section=section,
                  evidence=_evidence(cell), vertical=row["id"], thing="stair", place=_place(row, cell))
 
     def item(self, title, sheet, row, cell, evidence):
@@ -560,8 +559,9 @@ def _stair_discharge(r):
         cell = cells[d]
         state = cell.get("state")
         if found and found[-1] > d and state in ("missing", "end", "check"):
-            top = r.floor(r.order[found[-1]])
-            r.stair(10, "fix" if state != "check" and _aligned(r, r.discharge, cell) else "check", row, r.discharge, cell, f"Found up to {top}. On {r.floor(r.discharge)}, the level of exit discharge, it reads {LEGEND[state]}.", REACHES, section)
+            bottom, top = r.floor(r.order[found[0]]), r.floor(r.order[found[-1]])
+            seen = f"Found on {top}" if bottom == top else f"Found from {bottom} to {top}"
+            r.stair(10, "check", row, r.discharge, cell, f"{seen}. On {r.floor(r.discharge)}, the level of exit discharge, it reads {LEGEND[state]}.", REACHES, section)
 
 
 def _single_exit(r, story):
@@ -635,14 +635,23 @@ def _floors_measured(r):
     return [(i, sheets[str(i)]) for i in r.order if str(i) in sheets]
 
 
+def _unmeasured(r, check, what, floors, required):
+    """One item per reason, because a scan gives the same reason on every floor. `floors` is (sheet, reason) pairs."""
+    reasons = defaultdict(list)
+    for i, why in floors:
+        reasons[why].append(i)
+    for why, sheets in reasons.items():
+        one, names = len(sheets) == 1, ", ".join(r.floor(i) for i in sheets)
+        r.add(check, f"{what} on {names if one else f'{len(sheets)} floors'} could not be measured", sheet=sheets[0] if one else None, severity="unknown", measured=why if one else f"{why} Floors: {names}.",
+              required=required, evidence=VECTOR, thing=f"{what} {why}")
+
+
 def _travel(r):
     floors = _floors_measured(r)
     limit = _strictest([r.sprinkler_row("ibc.1017.2", occupancy=g) for g in r.groups], min) if any(entry.get("routes") for _, entry in floors) else None   # only a route compared uses a sprinkler value
+    _unmeasured(r, 13, "Travel distance", [(i, entry.get("skipped") or "No route was traced.") for i, entry in floors if not entry.get("routes")], "A vector plan with route ends")
     for i, entry in floors:
-        routes = entry.get("routes") or []
-        if not routes:
-            r.add(13, f"Travel distance on {r.floor(i)} could not be measured", sheet=i, severity="unknown", measured=entry.get("skipped") or "No route was traced.", required="A vector plan with route ends", evidence=VECTOR, thing="distance")
-        for route in routes:
+        for route in entry.get("routes") or ():
             length = route["length_ft"]
             xs, ys = zip(*route["path"])
             where = {"sheet": i, "box": [min(xs), min(ys), max(xs), max(ys)], "measured": f"at least {length:g} ft along the drawn route", "evidence": ROUTE_EVIDENCE, "thing": "route"}
@@ -657,13 +666,13 @@ def _travel(r):
 
 def _corridors(r):
     minimum = _strictest([_lookup("ibc.1020.3", r.jurisdiction, occupancy=g, occupant_load=r.load) for g in r.groups], max)
-    for i, entry in _floors_measured(r):
-        halls = entry.get("corridors")
-        if entry.get("scale_in_per_pt") is None or not halls:
-            why = "No Hall or Corridor label was read on this floor." if entry.get("scale_in_per_pt") else entry.get("skipped") or "No scale was checked."
-            r.add(14, f"Corridor width on {r.floor(i)} could not be measured", sheet=i, severity="unknown", measured=why, required="A vector plan with a checked scale and a Hall or Corridor label", evidence=VECTOR, thing="width")
+    floors = _floors_measured(r)
+    _unmeasured(r, 14, "Corridor width", [(i, ("No Hall or Corridor label was read on this floor." if entry.get("scale_in_per_pt") else entry.get("skipped") or "No scale was checked."))
+                                          for i, entry in floors if entry.get("scale_in_per_pt") is None or not entry.get("corridors")], "A vector plan with a checked scale and a Hall or Corridor label")
+    for i, entry in floors:
+        if entry.get("scale_in_per_pt") is None:
             continue
-        for hall in halls:
+        for hall in entry.get("corridors") or ():
             clear, printed, point = hall.get("clear_in"), hall.get("printed_in"), hall.get("point")
             title = f"Corridor on {r.floor(i)}"
             where = {"sheet": i, "box": _around(point, STAIR_HALF), "thing": "corridor", "place": _cell(point), "evidence": f"{VECTOR} Printed width {printed:g} in, wall centre to wall centre." if printed else VECTOR}
@@ -784,7 +793,8 @@ def _unique(items):
 def _masked(value):
     """A value with status words taken out. Drawing text reaches the output in many fields, a planted room label can say the set is approved, and the letter prints what it is given."""
     if isinstance(value, str):
-        return STATUS.sub(MASK, value)
+        text = STATUS.sub(MASK, value)
+        return MASK if STATUS.search(plain(text)) else text   # the whole value goes, because normalising it in place would turn ft\u00b2 into ft2
     if isinstance(value, list):
         return [_masked(v) for v in value]
     if isinstance(value, dict):

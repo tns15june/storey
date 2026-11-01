@@ -118,6 +118,16 @@ def _lost(stored, evaluated):
     return [f"The {name} stage did not finish: {stored(name)['failed']}" for name in names if "failed" in stored(name)]
 
 
+def _carried(earlier, findings):
+    """An earlier cycle's decisions, less any on a finding that now reads differently. A key names a place, and a drop must not silence a new value measured there."""
+    before, now = ({f["key"]: f for f in rows} for rows in (earlier.get("findings", ()), findings))
+
+    def same(key):
+        return key in before and all(now[key].get(k) == before[key].get(k) for k in ("title", "measured", "required"))
+
+    return {key: decision for key, decision in earlier.get("decisions", {}).items() if key not in now or same(key)}
+
+
 def assemble(dir: Path, jurisdiction: str = JURISDICTION, sprinklers: str | None = None, discharge: int | None = None) -> dict:
     """Writes review.json from the stored stages and returns it. Choices that differ from the stored ones run the checks again, and any choices but the first run's use a letter rebuilt from its template, so no model is called.
     stage_letter.json stays as the stage wrote it, so the model's wording returns with the first run's choices. An evaluate stage that did not finish has no stored choices, and then this reports the failure rather than run it again."""
@@ -146,7 +156,7 @@ def assemble(dir: Path, jurisdiction: str = JURISDICTION, sprinklers: str | None
     level = floors.get("discharge") if discharge is None else discharge
     parent = upload.get("parent")
     earlier = read_json(dir.parent / parent / "review.json") if parent else {}
-    decisions = earlier.get("decisions", {}) | read_json(dir / "decisions.json")   # review.json, so a decision from any earlier cycle arrives
+    decisions = _carried(earlier, evaluated.get("findings", ())) | read_json(dir / "decisions.json")   # review.json, so a decision from any earlier cycle arrives
     kept = [item for item in letter.get("items", ()) if decisions.get(item["key"]) != "drop"]
     lost = [name for name in (*FACT_STAGES, "evaluate") if not (stage := stored(name)) or "failed" in stage]
     left_out = {s["index"] for s in _left_out(Review(stored("read"), floors, {}, {}, {}, jurisdiction, None, None))}   # findings' own test, so a row and its finding agree

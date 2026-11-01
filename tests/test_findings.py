@@ -72,7 +72,7 @@ def base():
             "stories": code_field("3 STORIES"), "area": code_field("30,000 SF"), "occupant_load": code_field("120")}
     return {
         "read": {"sheets": sheets},
-        "floors": {"order": list(ORDER), "reference": 2, "transforms": {}, "inliers": {}, "unaligned": [], "stack": "stack.mp4", "frame_size": [960, 640], "discharge": 2, "not_checked": None},
+        "floors": {"order": list(ORDER), "order_read": True, "reference": 2, "transforms": {}, "inliers": {}, "unaligned": [], "stack": "stack.mp4", "frame_size": [960, 640], "discharge": 2, "not_checked": None},
         "verticals": {"verticals": [stair("A", "found", "found", "found"), stair("B", "found", "found", "found", pos=(4000.0, 800.0))], "not_checked": [SHAFTS]},
         "declared": {
             "code": code,
@@ -148,7 +148,7 @@ def test_the_base_set_raises_nothing():
 
 
 def test_severity_table_matches_the_spec():
-    assert SEVERITY == {1: "fix", 2: "fix", 3: "check", 4: "check", 5: "fix", 6: "check", 7: "fix", 8: "unknown", 9: "fix", 10: "fix", 11: "check", 12: "open", 13: "check", 14: "check", 16: "check"}
+    assert SEVERITY == {1: "fix", 2: "fix", 3: "check", 4: "check", 5: "fix", 6: "check", 7: "fix", 8: "unknown", 9: "fix", 10: "check", 11: "check", 12: "open", 13: "check", 14: "check", 16: "check"}
 
 
 def test_finding_has_every_field():
@@ -840,8 +840,15 @@ def test_unaligned_discharge_floor_gives_no_fix():
 
 
 def test_stair_stopping_above_discharge_raises_check_10():
+    # mml_capitol as built: the interior stair serves Main and Upper, and exterior stairs carry that unit to Ground, so a stair that stops here is a question and not a contradiction
     f = only(with_stairs(base(), stair("A", "end", "found", "found")), 10)
-    assert f["severity"] == "fix" and f["sheet"] == 2 and f["vertical"] == "A" and "1023.3" in f["rule"]
+    assert f["severity"] == "check" and f["sheet"] == 2 and f["vertical"] == "A" and "1023.3" in f["rule"]
+    assert f["title"] == "Stair A stops above FIRST FLOOR" and f["measured"].startswith("Found from SECOND FLOOR to THIRD FLOOR.")
+
+
+def test_stair_found_on_one_floor_above_discharge_names_that_floor():
+    f = only(with_stairs(base(), stair("A", "end", "found", "end")), 10)
+    assert f["measured"].startswith("Found on SECOND FLOOR.")
 
 
 @pytest.mark.parametrize("state, word", [("end", "Not on this floor"), ("missing", "Missing"), ("check", "Check")])
@@ -850,11 +857,43 @@ def test_discharge_item_uses_the_words_on_the_screen(state, word):
 
 
 def test_missing_on_discharge_with_found_above_raises_check_10():
-    assert only(with_stairs(base(), stair("A", "missing", "found", "found")), 10)["severity"] == "fix"
+    assert only(with_stairs(base(), stair("A", "missing", "found", "found")), 10)["severity"] == "check"
 
 
 def test_check_cell_on_discharge_with_found_above_is_check():
     assert only(with_stairs(base(), stair("A", "check", "found", "found")), 10)["severity"] == "check"
+
+
+@pytest.mark.parametrize("text, kept", [
+    ("MEETS CODE", "[word removed] CODE"),
+    ("NO FURTHER REVIEW", "[word removed] REVIEW"),
+    ("App\u200broved", "[word removed]"),
+    ("\uff21\uff30\uff30\uff32\uff2f\uff36\uff25\uff24", "[word removed]"),
+    ("MEETING ROOM", "MEETING ROOM"),
+    ("BUILDING PERMIT NOTES", "BUILDING PERMIT NOTES"),
+    ("ISSUED FOR REVIEW", "ISSUED FOR REVIEW"),
+    ("1,728 ft\u00b2", "1,728 ft\u00b2"),
+    ("3'-6\u00bd\"", "3'-6\u00bd\""),
+], ids=["meets", "no-further", "zero-width", "full-width", "meeting", "permit", "issued", "squared", "half"])
+def test_mask_takes_status_words_out_and_leaves_drawing_values(text, kept):
+    assert findings._masked(text) == kept
+
+
+def test_floors_with_one_reason_share_one_item():
+    s = base()
+    for i in ORDER:
+        s["vector"]["sheets"][str(i)] = blank("Scanned sheet.")
+    for check, what in ((13, "Travel distance"), (14, "Corridor width")):
+        f = only(s, check)
+        assert f["sheet"] is None and f["severity"] == "unknown" and f["title"] == f"{what} on 3 floors could not be measured"
+        assert f["measured"] == "Scanned sheet. Floors: FIRST FLOOR, SECOND FLOOR, THIRD FLOOR."
+
+
+def test_floors_with_two_reasons_keep_two_items():
+    s = base()
+    s["vector"]["sheets"] |= {"2": blank("Scanned sheet."), "3": blank("No scale was checked."), "4": blank("Scanned sheet.")}
+    assert sorted(f["title"] for f in raised(s, 13)) == ["Travel distance on 2 floors could not be measured", "Travel distance on SECOND FLOOR could not be measured"]
+    assert len({f["key"] for f in raised(s, 13)}) == 2
 
 
 def test_stair_below_discharge_only_raises_nothing():
@@ -863,13 +902,10 @@ def test_stair_below_discharge_only_raises_nothing():
     assert raised(s, 10) == []
 
 
-ORDER_LOST = "The floor order could not be read, so floors are in sheet order. Check the order before relying on stair continuity."
-
-
 def test_gap_with_the_floor_order_not_read_is_check():
     s = base()
     order = storeys(s, ["BASEMENT", "FOURTH FLOOR", "FIRST FLOOR", "SECOND FLOOR", "THIRD FLOOR"])   # habs in sheet order, with a stair that really stops at the third floor
-    s["floors"] |= {"discharge": order[2], "not_checked": f"No floor name was read on A2.9, so stairs were not followed there. {ORDER_LOST}"}
+    s["floors"] |= {"discharge": order[2], "order_read": False}
     with_stairs(s, stair("A", "found", "missing", "found", "found", "found", order=order))
     f = only(s, 9)
     assert f["severity"] == "check" and "sheet order" in f["measured"]
@@ -877,27 +913,28 @@ def test_gap_with_the_floor_order_not_read_is_check():
 
 def test_stair_above_discharge_with_the_floor_order_not_read_is_check():
     s = with_stairs(base(), stair("A", "end", "found", "found"))
-    s["floors"]["not_checked"] = ORDER_LOST
+    s["floors"]["order_read"] = False
     f = only(s, 10)
     assert f["severity"] == "check" and "sheet order" in f["measured"]
 
 
 def test_a_read_floor_order_keeps_the_fix_and_its_wording():
     s = with_stairs(base(), stair("A", "found", "missing", "found"))
-    s["floors"]["not_checked"] = "No floor name was read on A2.9, so stairs were not followed there."
+    s["floors"]["not_checked"] = "Sheet A2 floor order could not be read was printed here, so stairs were not followed there."   # sheet numbers in this note come from the drawing
     f = only(s, 9)
     assert f["severity"] == "fix" and "sheet order" not in f["measured"]
 
 
-def test_findings_reads_the_note_the_floors_stage_writes():
-    with open(floors.__file__) as handle:
-        assert findings.ORDER_NOT_READ in handle.read()
+def test_a_floors_result_with_no_order_flag_counts_as_not_read():
+    s = with_stairs(base(), stair("A", "found", "missing", "found"))
+    del s["floors"]["order_read"]
+    assert only(s, 9)["severity"] == "check"
 
 
 def test_gap_on_the_discharge_floor_raises_both_checks():
     s = with_stairs(base(), stair("A", "found", "missing", "found"))
     s["floors"]["discharge"] = 3
-    assert only(s, 9)["severity"] == "fix" and only(s, 10)["severity"] == "fix"
+    assert only(s, 9)["severity"] == "fix" and only(s, 10)["severity"] == "check"
 
 
 def test_examiner_selector_moves_the_discharge_floor():

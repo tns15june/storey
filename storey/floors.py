@@ -270,7 +270,7 @@ def floors_stage(ctx) -> dict:
     notes = [f"No floor name was read on {', '.join(unnamed)}, so stairs were not followed there."] if unnamed else []
     if repeats:
         notes.append(f"{', '.join(repeats)} read the same floor name as another sheet, so stairs were not followed there.")
-    result = {"order": ids, "reference": ids[0] if ids else None, "transforms": {}, "inliers": {}, "unaligned": [], "stack": None, "frame_size": None,
+    result = {"order": ids, "order_read": True, "reference": ids[0] if ids else None, "transforms": {}, "inliers": {}, "unaligned": [], "stack": None, "frame_size": None,
               "discharge": discharge_floor({s["index"]: s["level"] for s in floors}), "not_checked": None}
     if len(ids) < 2:
         if "sheets" not in read:
@@ -289,7 +289,8 @@ def floors_stage(ctx) -> dict:
         return cv2.imread(str(paths[i]))   # one at a time, because a set can hold many 6000 px sheets
 
     order = _joint_order(ctx, ids, sheet)
-    if order is None:
+    order_read = order is not None
+    if not order_read:
         order = ids
         notes.append("The floor order could not be read, so floors are in sheet order. Check the order before relying on stair continuity.")
     total = 2 * (len(order) - 1)
@@ -350,5 +351,5 @@ def floors_stage(ctx) -> dict:
         else:
             frames.append(np.full((h, w, 3), 255, np.uint8))   # a blank page drew no mask in the audit's control, and another building's sheet did
     write_stack(frames, ctx.dir / "stack.mp4")
-    return result | {"order": order, "reference": reference, "transforms": {i: H.tolist() for i, H in transforms.items()}, "inliers": inliers,
+    return result | {"order": order, "order_read": order_read, "reference": reference, "transforms": {i: H.tolist() for i, H in transforms.items()}, "inliers": inliers,
                      "unaligned": [i for i in order if i not in transforms], "stack": "stack.mp4", "frame_size": [w, h], "not_checked": " ".join(notes) or None}
