@@ -68,20 +68,21 @@ STOP_WORDS = frozenset("a an the is are was were be of for in on at to by with a
 NEGATION = re.compile(r"\b(?:no|not|never|none|nor|neither|without)\b|n['\u2019]t\b")
 # Words a rewrite may add beyond STOP_WORDS. Each comes from a kept rewrite of a real comment, and anything else costs that comment its rewording, never the comment. Words that state a result, such as within and match, stay out. Against stays in, because it sets two values side by side and says neither is enough.
 LINK_WORDS = frozenset("need needs needed show shows list lists continue where while against measures include differing".split())
+# Controls, zero-width and format characters, fillers and unusual spaces. Real drawing text held these on 1 line of the sets checked, so failing closed on them costs nothing.
+HIDING = re.compile("[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x9f\xad\u034f\u115f\u1160\u17b4\u17b5\u180b-\u180e\u2000-\u200f\u2028-\u202f\u205f-\u206f\u2800\u3000\u3164\ufe00-\ufe0f\ufeff\uffa0\U000e0000-\U000e0fff]")
 MAX_GROWTH = 1.5   # kept rewrites ran 0.93 to 1.36 times the template on 43 real comments
 SHEET_NUMBER = re.compile(r"(?=.*\d)[A-Za-z0-9][A-Za-z0-9./-]{0,15}")   # as printed. Anything else in this field is drawing text
 
 
-def plain(text: str, gap: str = " ") -> str:
-    """Text as a reader sees it, for searching only: a status word can hide behind invisible characters, full-width letters or accents. `gap` replaces every separator but a plain space."""
-    # shortcut: a Cyrillic letter that looks Latin still passes, add a confusables table if a drawing shows one. A rewrite cannot use it, because _closed counts it as an added word.
-    spaced = "".join(gap if c.isspace() and c != " " else c for c in text)   # before NFKD, which turns a thin space into a plain one
-    return "".join(c for c in unicodedata.normalize("NFKD", spaced) if (unicodedata.category(c)[0] in "LNPS" or c == " ") and c not in "\u115f\u1160\u3164\uffa0\u2800")
+def plain(text: str) -> str:
+    """Text as a reader sees it, for searching only: a status word can hide behind full-width letters or accents."""
+    return "".join(c for c in unicodedata.normalize("NFKD", " ".join(text.split())) if unicodedata.category(c)[0] in "LNPS" or c == " ")
 
 
 def has_status(text: str, words: re.Pattern = STATUS) -> bool:
-    """Both readings of an unusual separator, because it can sit between two words or split one."""
-    return any(words.search(plain(text, gap)) for gap in (" ", ""))
+    """True for a status word, and for any text with a character it could hide behind."""
+    # shortcut: a Cyrillic letter that looks Latin still passes, add a confusables table if a drawing shows one. A rewrite cannot use it, because _closed counts it as an added word.
+    return bool(HIDING.search(text) or words.search(plain(text)))
 
 
 def _codes(text):
