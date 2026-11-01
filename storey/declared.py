@@ -65,11 +65,16 @@ MAX_WIDTH = 20           # characters in a printed width, and int() refuses a lo
 
 WIDTH = re.compile(r"^([\d,]*\.?\d+)\s*(MM|M|FT|FEET|'|IN|INCH|INCHES|\")?\.?$")
 WIDTH_UNITS = {"MM": 1, "M": 1000, "FT": 304.8, "FEET": 304.8, "'": 304.8, "IN": 25.4, "INCH": 25.4, "INCHES": 25.4, '"': 25.4}
+WIDTH_WORDS = re.compile(r"\b(?:CLEAR|CLR|WIDTH|WIDE)\b\.?:?")   # Spark copies a marker's 69" CLEAR WIDTH whole
+NUMBER = re.compile(r"\d[\d,]*(?:\.\d+)?")
 SHEET_ID = r"[A-Z]{1,3}\d{0,3}[-.]?\d{1,3}(?:[.-]\d{1,3})?[A-Z]?"
 SHEET_RE = re.compile(rf"^{SHEET_ID}$")
 STOP = {"AND", "THE", "OF", "FOR", "A", "ONLY", "REFERENCE", "SHEET"}
-FLOOR_WORDS = {"GROUND": "GROUND", "MAIN": "MAIN", "FIRST": "1", "1ST": "1", "SECOND": "2", "2ND": "2", "THIRD": "3", "3RD": "3", "3D": "3",
-               "FOURTH": "4", "4TH": "4", "UPPER": "UPPER", "LOWER": "LOWER", "BASEMENT": "BASEMENT", "ATTIC": "ATTIC", "PENTHOUSE": "PENTHOUSE"}
+# shortcut: spelled storeys stop at TWELFTH, so a THIRTEENTH FLOOR PLAN names no floor, add words if a set spells a higher one.
+ORDINALS = "FIRST SECOND THIRD FOURTH FIFTH SIXTH SEVENTH EIGHTH NINTH TENTH ELEVENTH TWELFTH".split()
+FLOOR_WORDS = {"GROUND": "GROUND", "MAIN": "MAIN", "3D": "3", "UPPER": "UPPER", "LOWER": "LOWER", "BASEMENT": "BASEMENT", "ATTIC": "ATTIC", "PENTHOUSE": "PENTHOUSE"} | \
+              {word: str(n) for n, word in enumerate(ORDINALS, 1)}
+FLOOR_NUMBER = re.compile(r"\b(\d{1,3})(?:ST|ND|RD|TH)\b|\bLEVEL (\d{1,3})(?!\d)")   # 5TH, LEVEL 5 and LEVEL 05. Three digits at most, as int() refuses a long enough run
 PLAN_WORD = re.compile(r"\b(PLAN|LEVEL|FLOOR)\b", re.I)
 EDITION = re.compile(r"\b((?:19|20)\d\d)\s+(?:[A-Z][A-Za-z]+\s+){0,3}(?:CBC|CRC|IBC|IRC|UBC|Code)\b|\b(?:CBC|IBC|IRC|Code)[, ]+(?:(?:19|20)\d\d)\b")
 YEAR = re.compile(r"(19|20)\d\d")
@@ -175,7 +180,8 @@ def tokens(s):
 
 
 def floor_words(s):
-    return {FLOOR_WORDS[t] for t in norm(s).split() if t in FLOOR_WORDS} | set(re.findall(r"LEVEL (\d)", norm(s)))
+    s = norm(s)
+    return {FLOOR_WORDS[t] for t in s.split() if t in FLOOR_WORDS} | {str(int(a or b)) for a, b in FLOOR_NUMBER.findall(s)}
 
 
 def title_same(a, b):
@@ -207,7 +213,7 @@ def parse_number(text):
 
 
 def num(s):
-    m = re.search(r"\d[\d,]*(?:\.\d+)?", str(s))
+    m = NUMBER.search(str(s))
     return parse_number(m[0].replace(",", "")) if m else None
 
 
@@ -218,8 +224,9 @@ def agree(a, b):
 
 
 def width_mm(text):
-    """A printed exit width in millimetres, or None for any form not read here. The clinic prints a bare 915, so a bare number past a door's size in inches is millimetres."""
-    t = text.strip().upper().translate(QUOTES)
+    """A printed exit width in millimetres, or None for any form not read here. The clinic prints a bare 915, so a bare number past a door's size in inches is millimetres.
+    Words such as CLEAR WIDTH round the figure are dropped first."""
+    t = " ".join(WIDTH_WORDS.sub(" ", text.upper().translate(QUOTES)).split())
     if len(t) > MAX_WIDTH:
         return None
     inches, m = parse_ftin(t), WIDTH.match(t)
@@ -357,8 +364,17 @@ def bounds(lines):
     return [min(x["x0"] for x in lines), min(x["y0"] for x in lines), max(x["x1"] for x in lines), max(x["y1"] for x in lines)]
 
 
+def _wraps(a, b):
+    """b is the line under or over a in one paragraph: both run across the sheet, at one size, at most half a line apart and overlapping. Half a line was set after seeing the
+    real strips: Capitol's wrapped title lines sit 3.2 pt apart at 12.6 pt, and its job number line, at that size, sits 18.8 pt above the title."""
+    # shortcut: a title turned on its side keeps only the lines the set does not repeat, because Abbot's turned project name sits beside a turned firm name, follow turned lines if a set wraps such a title.
+    return a["dir"] == b["dir"] == [1, 0] and abs(a["size"] - b["size"]) < 0.5 and abs(max(a["y0"], b["y0"]) - min(a["y1"], b["y1"])) < a["size"] / 2 and \
+        min(a["x1"], b["x1"]) > max(a["x0"], b["x0"])
+
+
 def title_blocks(pages):
-    """Sheet number and title from each page's right strip. A number blank here sends the sheet to Spark. Lines repeated across the set are boilerplate."""
+    """Sheet number and title from each page's right strip. A number blank here sends the sheet to Spark. Lines repeated across the set are boilerplate, except a line a title wraps
+    onto, as SAFETY PLAN under each floor's FIRST FLOOR LIFE."""
     strips = {i: [x for x in p["lines"] if x["x0"] >= STRIP * p["w"]] for i, p in pages.items()}
     count = collections.Counter(t for strip in strips.values() for t in {x["t"] for x in strip})
     n = len(strips)
@@ -367,12 +383,19 @@ def title_blocks(pages):
     for i, strip in strips.items():
         ids = [x for x in strip if SHEET_RE.match(x["t"].replace(" ", ""))]
         number = max(ids, key=lambda x: x["size"], default=None)
-        rest = [x for x in strip if x is not number and count[x["t"]] < limit]
         size = number["size"] if number else max((x["size"] for x in strip), default=0)
-        rest = [x for x in rest if x["size"] >= 0.3 * size and not SHEET_RE.match(x["t"].replace(" ", ""))]
+        rest = [x for x in strip if x is not number and x["size"] >= 0.3 * size and not SHEET_RE.match(x["t"].replace(" ", ""))]
         rest = [x for x in rest if not re.fullmatch(r"[A-Z]{2,3}|\d\d[/.]\d\d[/.]\d\d(\d\d)?|\d{4}\d*/\d+", x["t"])]   # drawn-by initials and dates
-        turned = sum(abs(x["dir"][1]) for x in rest) > sum(abs(x["dir"][0]) for x in rest)
+        own = [x for x in rest if count[x["t"]] < limit]
+        turned = sum(abs(x["dir"][1]) for x in own) > sum(abs(x["dir"][0]) for x in own)
         rest.sort(key=(lambda x: (round(x["x0"] / 4), x["y0"])) if turned else (lambda x: (round(x["y0"] / 4), x["x0"])))
+        keep = [count[x["t"]] < limit for x in rest]
+        for order in (range(len(rest)), range(len(rest) - 1, -1, -1)):   # down the strip for a title's later lines, then up it for a first line the set repeats
+            last = None
+            for k in order:
+                keep[k] = keep[k] or (last is not None and _wraps(last, rest[k]))
+                last = rest[k] if keep[k] else last
+        rest = [x for x, k in zip(rest, keep) if k]
         held = rest + ([number] if number else [])
         out[i] = {"number": number["t"].replace(" ", "") if number else "", "title": " ".join(x["t"] for x in rest)[:MAX_TEXT], "box": bounds(held) if held else None}
     return out
@@ -412,9 +435,10 @@ def schedules(lines):
                 continue
             near = [x for x in across if t["y0"] < x["y0"] < t["y0"] + 95 and t["x0"] - 40 < x["x0"] < t["x0"] + 720 and x is not t]
             head = next((r for r in rows_of(near) if r[0]["t"].upper() in FIRST_COLUMN and len(r) >= 3), None)
-            if head is None or (kind, round(head[0]["y0"])) in seen:
+            # two headings can name one table, and tables side by side share a height, so a table is known by its header's first cell
+            if head is None or (key := (kind, round(head[0]["x0"]), round(head[0]["y0"]))) in seen:
                 continue
-            seen.add((kind, round(head[0]["y0"])))
+            seen.add(key)
             head = [c for i, c in enumerate(head) if i == 0 or c["x0"] - head[i - 1]["x1"] < 150]   # a stray callout on the header row is not a column
             cols = [(c["t"].upper(), (c["x0"] + c["x1"]) / 2) for c in head]
             xmin, xmax = head[0]["x0"] - 30, head[-1]["x1"] + 130
@@ -443,9 +467,11 @@ def in_boxes(x, boxes):
     return any(b[0] - 5 <= x["x0"] <= b[2] + 5 and b[1] - 5 <= x["y0"] <= b[3] + 5 for b in boxes)
 
 
-def schedule_headings(lines):
-    """Kinds of schedule named by a short heading line, parsed or not. A note that only mentions a schedule runs longer."""
-    return sorted({kind for kind, pattern in SCHEDULE_KINDS.items() for x in lines if x["size"] >= HEADING_SIZE and (m := pattern.search(x["t"])) and len(x["t"]) - len(m[0]) <= 15})
+def schedule_headings(lines, index):
+    """Kinds of schedule named by a short heading line, parsed or not. A note that only mentions a schedule runs longer, and a row of the sheet index, inside an `index` box, is
+    no heading."""
+    return sorted({kind for kind, pattern in SCHEDULE_KINDS.items() for x in lines
+                   if x["size"] >= HEADING_SIZE and (m := pattern.search(x["t"])) and len(x["t"]) - len(m[0]) <= 15 and not in_boxes(x, index)})
 
 
 def plan_rooms(lines, exclude, sheets=()):
@@ -462,7 +488,8 @@ def plan_rooms(lines, exclude, sheets=()):
 
 def _band(lines, head):
     """Lines under a table heading, down to the next heading of its size."""
-    # shortcut: the width comes from the one text-layer occupant table in the lab, a table wider than this reads no rows and lands in cannot_tell, widen it when a set shows one.
+    # shortcut: the width comes from the one text-layer occupant table in the lab, so a table wider than this reads no rows and lands in cannot_tell, or is taken for labels and
+    # dropped when no row holds two numbers inside this width and some row holds one, widen it when a set shows one.
     column = [x for x in lines if x["dir"] == [1, 0] and head["x0"] - 60 <= x["x0"] < head["x0"] + 390 and x["y0"] > head["y0"]]
     stop = min((x["y0"] for x in column if x["size"] >= 0.9 * head["size"]), default=math.inf)
     return [x for x in column if x["y0"] < stop]
@@ -493,7 +520,9 @@ def _box_of(rows):
 
 
 def text_tables(lines):
-    """Occupant, exit and area tables as kind, rows and box. A heading whose rows no pattern reads comes back with empty rows, so the stage can say so."""
+    """Occupant, exit and area tables as kind, rows and box. A heading is a label, and gives no table, when a value stands beside it, as in OCCUPANT LOAD: 90, or when the rows
+    under it hold values, one number at most a row, and no pattern reads them. Text with no number under a heading does not make it a label, because a table drawn as lines leaves
+    only its heading and the sheet's other text on the text layer. A table whose rows no pattern reads comes back with empty rows, so the stage can say so."""
     out, rows = [], []
     for x in lines:
         if LEVEL_ROW.match(x["t"]):
@@ -507,14 +536,19 @@ def text_tables(lines):
     for head in (x for x in lines if x["dir"] == [1, 0] and x["size"] >= 15 and len(x["t"]) < 60):   # column heads on BCOE stand on end and say Occupant Load too
         kind = next((k for pattern, k in TABLE_HEADS if pattern.search(head["t"])), None)
         if kind:
-            rows, before = [], ""
+            rows, before, numbers = [], "", 0
             for r in rows_of(_band(lines, head)):
                 text = " ".join(c["t"] for c in r)
                 row = _occupant_row(text, bounds(r)) if kind == "occupant" else _exit_row(text, before, bounds(r))
                 if row:
                     rows.append(row)
+                numbers = max(numbers, len(NUMBER.findall(text)))
                 before = text
-            out.append({"kind": kind, "rows": rows, "box": _box_of(rows) if rows else bounds([head])})
+            labelled = any(abs(o["y0"] - head["y0"]) < 3 and o["x0"] > head["x1"] and NUMBER.search(o["t"]) for o in lines)
+            # shortcut: a table drawn as lines whose heading has text holding one number down its column, and none holding two, is taken for a label and goes unreported on a sheet
+            # with a full text layer, look for the table's rules under such a heading if a set shows one.
+            if rows or numbers > 1 or not (numbers or labelled):
+                out.append({"kind": kind, "rows": rows, "box": _box_of(rows) if rows else bounds([head])})
     return out
 
 
@@ -527,9 +561,9 @@ def text_reads(pages):
         lines = p["lines"]
         out[i] = blocks[i] | {"labels": [], "index": [], "schedules": [], "headings": [], "tables": [], "rooms": [], "tags": p["tags"], "text": " ".join(x["t"] for x in lines), "chars": sum(len(x["t"]) for x in lines)}
         try:
-            found = schedules(lines)[:MAX_SCHEDULES]
-            out[i] |= {"labels": [x["t"] for x in drawing_labels(lines, p["w"])], "index": cover_index(lines, numbers), "schedules": found, "headings": schedule_headings(lines), "tables": text_tables(lines),
-                       "rooms": plan_rooms(lines, [t["box"] for t in found], numbers)}
+            found, index = schedules(lines)[:MAX_SCHEDULES], cover_index(lines, numbers)
+            out[i] |= {"labels": [x["t"] for x in drawing_labels(lines, p["w"])], "index": index, "schedules": found, "headings": schedule_headings(lines, [r["box"] for r in index]),
+                       "tables": text_tables(lines), "rooms": plan_rooms(lines, [t["box"] for t in found], numbers)}
         except Exception:   # one odd line must not cost the set its text layer
             out[i]["unread"] = True
     return out

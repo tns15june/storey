@@ -12,8 +12,8 @@ import pymupdf
 import pytest
 
 from storey import declared, meta
-from storey.declared import (agree, code_fields, cover_index, declared_stage, drawing_labels, exit_sheet, page_lines, plan_rooms, row_strips, schedules, select, shape_tags,
-                             table_boxes, text_reads, text_tables, tiles, title_blocks, width_mm)
+from storey.declared import (agree, code_fields, cover_index, declared_stage, drawing_labels, exit_sheet, floor_words, page_lines, plan_rooms, row_strips, schedules, select,
+                             shape_tags, table_boxes, text_reads, text_tables, tiles, title_blocks, width_mm)
 from storey.declared import room_same
 from storey.meta import Meter
 from storey.pipeline import Context, write_json
@@ -194,6 +194,29 @@ def test_title_block_drops_lines_repeated_across_the_set():
     assert got[3]["title"] == "SHEET D"
 
 
+@pytest.mark.parametrize("first, second, want", [("{} FLOOR LIFE", "SAFETY PLAN", "{} FLOOR LIFE SAFETY PLAN"), ("FLOOR PLAN -", "{} FLOOR", "FLOOR PLAN - {} FLOOR")],
+                         ids=["second-line", "first-line"])
+def test_title_wrapped_onto_a_line_the_set_repeats_keeps_that_line(first, second, want):
+    floors = ("FIRST", "SECOND", "THIRD", "FOURTH", "FIFTH")
+    pages = {n: page(line(first.format(f), 2400, 1500), line(second.format(f), 2400, 1515.6), line(f"G1.{n + 1}", 2420, 1620, 31.5), line("Smith Architects", 2400, 100))
+             for n, f in enumerate(floors)}
+    pages |= {n: page(*block(f"A{n}.0", f"SHEET {n}"), line("Smith Architects", 2400, 100)) for n in range(5, 14)}
+    got = title_blocks(pages)
+    assert [got[n]["title"] for n in range(6)] == [want.format(f) for f in floors] + ["SHEET 5"]
+
+
+@pytest.mark.parametrize("extra", [None, line("PROJECT NO.", 2401, 1539.6, 14), line("SCALE", 2500, 1540), line("THE CAPITOL", 2410, 1467, along=False) | {"x1": 2422.6, "y1": 1550}],
+                         ids=["as-printed", "other-size-just-above", "beside-not-over", "turned-just-above"])
+def test_title_takes_a_repeated_line_only_from_its_own_paragraph(extra):
+    """Capitol's strip as measured: the job number, on every sheet at the title's size, sits 18.8 pt above the title, and MAIN FLOOR wraps 3.2 pt onto PLAN, which three sheets print.
+    A repeated line of another size, beside the title or turned on its side stays out too, though it ends within half a line of the title."""
+    def strip(n, floor):
+        own = [line(f"{floor} FLOOR", 2400.4, 1554.6) | {"y1": 1566.4}, line("PLAN", 2400.4, 1569.6)] if floor else [line(f"SHEET {n}", 2400.4, 1554.6)]
+        return page(line("2023xx", 2401, 1524) | {"y1": 1535.8}, *own, line(f"A{n}.1", 2420.6, 1625.6, 37.7), *[x for x in [extra] if x])
+    got = title_blocks({n: strip(n, floor) for n, floor in enumerate(["MAIN", "UPPER", "LOWER", *[None] * 7])})
+    assert [got[n]["title"] for n in range(4)] == ["MAIN FLOOR PLAN", "UPPER FLOOR PLAN", "LOWER FLOOR PLAN", "SHEET 3"]
+
+
 def test_title_block_with_no_number_leaves_it_blank():
     assert title_blocks({0: page(line("GENERAL NOTES", 2400, 1500))})[0]["number"] == ""
 
@@ -206,6 +229,13 @@ def test_title_block_box_is_in_points():
 def test_drawing_labels_skip_the_title_block_and_small_text():
     lines = [line("Ground Floor Plan", 800, 1200, 18.9), line("Main Floor Plan", 2400, 1500, 18.9), line("see first floor plan", 100, 100, 9.6)]
     assert [x["t"] for x in drawing_labels(lines, W)] == ["Ground Floor Plan"]
+
+
+@pytest.mark.parametrize("text, want", [("FIFTH FLOOR PLAN", {"5"}), ("5TH FLOOR PLAN", {"5"}), ("PLAN - LEVEL 5", {"5"}), ("TWELFTH FLOOR PLAN", {"12"}), ("LEVEL 12 PLAN", {"12"}),
+                                        ("21ST FLOOR PLAN", {"21"}), ("LEVEL 05 PLAN", {"5"})])
+def test_floor_words_name_every_storey(text, want):
+    assert floor_words(text) == want
+    assert [x["t"] for x in drawing_labels([line(text, 800, 1200, 18.9)], W)] == [text]
 
 
 def test_index_rows_read_a_column_of_known_sheets():
@@ -255,6 +285,15 @@ def test_room_compare_stays_under_the_text_cap(monkeypatch):
 
 def test_schedule_with_no_header_row_is_not_read():
     assert schedules([line("DOOR SCHEDULE", 100, 200, 18.9), line("See sheet A6.0", 100, 240, 9.6)]) == []
+
+
+def test_schedules_side_by_side_at_one_height_are_each_read():
+    level = [x for n, mark in enumerate(("101", "201", "301")) for x in table(f"FLOOR {n + 1} DOOR SCHEDULE", ["MARK", "SIZE", "SWING"], [[mark, "36", "LEFT"]], x=70 + 760 * n)]
+    assert [s["rows"][0]["MARK"] for s in schedules(level)] == ["101", "201", "301"]
+
+
+def test_schedule_two_headings_name_is_read_once():
+    assert len(schedules([*DOORS, line("SEE DOOR SCHEDULE", 100, 215, 9.6)])) == 1
 
 
 def test_shape_tags_read_short_words_inside_small_shapes(tmp_path):
@@ -338,9 +377,21 @@ def test_exit_table_reads_rows_and_the_worked_example():
     assert (rows[2]["exit"], rows[2]["occupants"], rows[2]["required_in"], rows[2]["example"]) == ("EXIT 1", 100, 20.0, True)
 
 
-def test_table_heading_with_no_rows_is_returned_empty_for_cannot_tell():
-    got = text_tables([line("OCCUPANCY CALCULATIONS", 2027, 83, 25.2), line("See sheet A2", 2000, 200, 9.5)])
+@pytest.mark.parametrize("under", [[], [line(c, 2000 + 80 * k, 314, 9.5, width=40) for k, c in enumerate(["101", "OFFICE", "109 SQ FT", "150", "1"])]],   # no pattern reads SQ FT
+                         ids=["table-drawn-as-lines", "row-no-pattern-reads"])
+def test_table_heading_with_no_rows_is_returned_empty_for_cannot_tell(under):
+    got = text_tables([line("OCCUPANCY CALCULATIONS", 2027, 83, 25.2), *under])
     assert [(t["kind"], t["rows"]) for t in got] == [("occupant", [])]
+
+
+@pytest.mark.parametrize("lines", [
+    [line("OCCUPANT LOAD:", 70, 440, 16), line("90", 290, 440, 16)],
+    [line("OCCUPANT LOAD THIS FLOOR", 1590, 96, 16), line("GROSS FLOOR AREA", 1590, 126, 11), line("3,401 SF", 1830, 126, 11), line("OCCUPANT LOAD", 1590, 148, 11),
+     line("18 PEOPLE", 1830, 148, 11)],
+    [line("OCCUPANCY CALCULATIONS", 2027, 83, 25.2), line("See sheet A2", 2000, 200, 9.5)],
+], ids=["label-and-value", "labels-and-values", "note"])
+def test_heading_with_no_table_under_it_is_no_table(lines):
+    assert text_tables(lines) == []
 
 
 def test_a_column_head_standing_on_end_is_not_a_table_heading():
@@ -891,6 +942,12 @@ def test_marker_with_no_number_to_read_is_dropped(width):
     assert len(row["markers"]) == 1 and row["markers"][0]["capacity"] == 180
 
 
+def test_two_reads_that_give_one_width_with_and_without_its_words_pair():
+    a = [tile((*at(CLIPS[0], 0.25, 0.25), '46" CLEAR WIDTH', 153)), EMPTY, EMPTY, EMPTY]
+    b = [tile((*at(CLIPS[0], 0.25, 0.25), '46"', 153)), EMPTY, EMPTY, EMPTY]
+    assert [(m["width_mm"], m["capacity"]) for m in exit_sheet(4, (6000, 4000), CLIPS, [a, b])[0]["markers"]] == [(pytest.approx(1168.4), 153)]
+
+
 def test_marker_with_a_capacity_stays_when_its_width_cannot_be_read():
     reply = [tile((*at(CLIPS[0], 0.25, 0.25), "2 x 915", 180)), EMPTY, EMPTY, EMPTY]
     row, _ = exit_sheet(4, (6000, 4000), CLIPS, [reply, reply])
@@ -902,6 +959,8 @@ def test_marker_with_a_capacity_stays_when_its_width_cannot_be_read():
     ("3'", 914.4), ("3\u2019", 914.4), ("6 FT", 1828.8), ("6 feet", 1828.8), ("0.915 M", 915), ("1.83 m", 1830),
     ("915mm (36\")", None), ("2 x 915", None), ("", None), ("WIDE", None), ("N/A", None), ("-", None), ("1.2.3", None), ("0'-0\"", None), ("0.915", None), ("2", None), ("915 M", None), ("9" * 40, None),
     ("9" * 400 + "'-0\"", None), ("9" * 5000 + "'-0\"", None),
+    ('69" CLEAR WIDTH', 1752.6), ('46" CLR.', 1168.4), ('CLEAR WIDTH: 36"', 914.4), ("3'-0\" CLEAR", 914.4), ("36 INCHES CLEAR WIDTH", 914.4), ("915 MM CLEAR", 915),
+    ("CLEAR WIDTH", None), ("2 x 915 CLEAR", None), ("CLEARANCE 36", None),
 ])
 def test_width_reads_to_mm(printed, want):
     assert width_mm(printed) == pytest.approx(want) if want else width_mm(printed) is None
@@ -1285,11 +1344,14 @@ def test_occupant_crop_both_reads_agree_on_makes_no_row(tmp_path):
     assert not any(row["what"] == "Occupant table" for row in declared_stage(ctx)["cannot_tell"])
 
 
-def test_table_heading_with_no_rows_parsed_is_cannot_tell(tmp_path):
+@pytest.mark.parametrize("cells", [(), ("101", "OFFICE", "109 SQ FT", "150", "1")], ids=["table-drawn-as-lines", "row-no-pattern-reads"])
+def test_table_heading_with_no_rows_parsed_is_cannot_tell(tmp_path, cells):
     def draw(p, i):
         p.insert_text((2400, 1560), "GENERAL NOTES", fontsize=12.6)
         p.insert_text((2420, 1620), "A012", fontsize=31.5)
         p.insert_text((2027, 83), "OCCUPANCY CALCULATIONS", fontsize=25.2)
+        for k, cell in enumerate(cells):
+            p.insert_text((2000 + 80 * k, 314), cell, fontsize=9.5)
     ctx = pdf_review(tmp_path, draw, [read_row(0, "A012", "GENERAL NOTES", "other")])
     meta.set_transport(Model({}))
     assert any(row["sheet"] == 0 and "occupant" in row["what"].lower() for row in declared_stage(ctx)["cannot_tell"])
@@ -1920,6 +1982,15 @@ def test_a_note_that_mentions_a_schedule_is_not_a_heading():
 def test_a_legend_line_at_body_size_is_not_a_heading():
     pages = {1: page(*block("A012", "EXITING PLAN"), line("NEW DOOR - SEE DOOR SCHEDULE", 100, 200, 9.6))}
     assert picks([read_row(1, "A012", "EXITING PLAN", "floor_plan")], pages)["schedules"] == []
+
+
+@pytest.mark.parametrize("cells", [1, 2], ids=["one-line", "number-and-title"])
+def test_a_row_of_the_sheet_index_is_not_a_heading(cells):
+    sheets = [("G0.1", "COVER SHEET"), ("A1.1", "FIRST FLOOR PLAN"), ("A6.1", "DOOR SCHEDULE"), ("A6.3", "ROOM FINISH SCHEDULE")]
+    index = [x for n, (number, title) in enumerate(sheets)
+             for x in ([line(f"{number}  {title}", 640, 300 + 24 * n, 12)] if cells == 1 else [line(number, 640, 300 + 24 * n, 12, width=40), line(title, 720, 300 + 24 * n, 12)])]
+    pages = {0: page(*block(*sheets[0]), *index), **{n: page(*block(*s)) for n, s in enumerate(sheets[1:], 1)}}
+    assert [s for s in picks([read_row(i) for i in range(4)], pages)["schedules"] if s[0] == 0] == []   # the cover is not sent for a strip read
 
 
 def test_schedule_class_with_only_a_title_block_on_the_text_layer_cannot_be_placed():
