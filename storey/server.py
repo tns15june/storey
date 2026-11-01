@@ -7,10 +7,12 @@ import shutil
 import subprocess
 import sys
 import threading
+import time
 import traceback
 import uuid
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from typing import Literal
 from urllib.parse import urlsplit
 
 from fastapi import FastAPI, HTTPException, Request, Response, UploadFile
@@ -19,12 +21,16 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from . import pipeline
+from .assemble import assemble
+from .findings import _masked
 from .ingest import MAX_SHEETS
+from .rules import JURISDICTIONS
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA = Path(os.environ.get("STOREY_DATA", ROOT / "data/reviews"))
 MAX_UPLOAD = 400 * 1024 * 1024
 MAX_WAITING = 8       # each review spends API credit, so a burst of uploads must be turned away, not queued
+MAX_NAME = 80         # characters of the client's file name kept as a label. It is never a path
 SIGNATURES = {".pdf": b"%PDF", ".png": b"\x89PNG", ".jpg": b"\xff\xd8", ".jpeg": b"\xff\xd8"}
 INGEST_SECONDS = 900
 INGEST_COMMAND = [sys.executable, "-m", "storey.ingest"]
@@ -35,6 +41,7 @@ CSP = ("default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googl
 app = FastAPI(title="Storey")
 workers = ThreadPoolExecutor(max_workers=2)
 waiting = threading.BoundedSemaphore(MAX_WAITING)
+edits = threading.Lock()   # a selector change and a Keep click rewrite the same files, and two at once must not lose either
 
 
 def access_key():
@@ -104,13 +111,22 @@ def open_session(body: Session, request: Request, response: Response):
     return {"ok": True}
 
 
-def _dir(review_id):
+def _is_id(name):
     # Ids are server-made hex, so anything else is a bad link or a traversal attempt.
-    if len(review_id) != 32 or set(review_id) - set("0123456789abcdef"):
-        raise HTTPException(404, "No such review")
+    return len(name) == 32 and not set(name) - set("0123456789abcdef")
+
+
+def _dir(review_id):
     path = DATA / review_id
-    if not path.is_dir():
+    if not _is_id(review_id) or not path.is_dir():
         raise HTTPException(404, "No such review")
+    return path
+
+
+def _finished(review_id):
+    path = _dir(review_id)
+    if pipeline.read_json(path / "status.json").get("state") != "done":
+        raise HTTPException(409, "This review has not finished")
     return path
 
 
@@ -132,7 +148,9 @@ def _ingest(path, uploads):
 def _run(path, uploads):
     try:
         _status(path, state="running", step="Reading the drawings")
+        started = time.monotonic()
         _status(path, sheets=_ingest(path, uploads))
+        pipeline.write_json(path / "cost.json", {"ingest": {"usd": 0, "seconds": round(time.monotonic() - started, 1)}})
     except subprocess.TimeoutExpired:
         _status(path, state="failed", step="Stopped", message="This upload took too long to read")
     except ValueError as e:
@@ -166,8 +184,7 @@ async def _save(upload, dest):
     return size
 
 
-@app.post("/api/reviews")
-async def create_review(files: list[UploadFile]):
+async def _accept(files, parent=None):
     if not files:
         raise HTTPException(400, "Choose a PDF or page images to upload")
     if len(files) > MAX_SHEETS:
@@ -187,6 +204,8 @@ async def create_review(files: list[UploadFile]):
             if total > MAX_UPLOAD:
                 raise HTTPException(413, "The upload is over 400 MB")
             saved.append(p)
+        name = Path(files[0].filename or "").stem[:MAX_NAME] if len(files) == 1 else f"{len(files)} page images"
+        pipeline.write_json(path / "stage_upload.json", {"name": _masked(name), "parent": parent})   # a file can be called Approved, and the list of reviews shows this name
         _status(path, state="queued", step="Waiting", stages=pipeline.stage_rows(pipeline.STAGES), usd=0)
     except BaseException:
         waiting.release()
@@ -196,18 +215,71 @@ async def create_review(files: list[UploadFile]):
     return {"id": path.name}
 
 
+@app.post("/api/reviews")
+async def create_review(files: list[UploadFile]):
+    return await _accept(files)
+
+
+@app.get("/api/reviews")
+def past_reviews():
+    rows = []
+    for path in DATA.iterdir() if DATA.is_dir() else ():
+        st = pipeline.read_json(path / "status.json") if _is_id(path.name) else None
+        if st:
+            upload = pipeline.read_json(path / "stage_upload.json")
+            rows.append({"id": path.name, "name": upload.get("name", ""), "parent": upload.get("parent"), "state": st.get("state"), "sheets": st.get("sheets"), "usd": st.get("usd", 0), "updated": (path / "status.json").stat().st_mtime})
+    return sorted(rows, key=lambda row: row["updated"], reverse=True)
+
+
 @app.get("/api/reviews/{review_id}")
 def review_status(review_id: str):
     return json.loads((_dir(review_id) / "status.json").read_text())
 
 
-@app.get("/api/reviews/{review_id}/files/{name}")
+@app.get("/api/reviews/{review_id}/files/{name:path}")
 def review_file(review_id: str, name: str):
     base = _dir(review_id).resolve()
     target = (base / name).resolve()
-    if target.parent != base or not target.is_file():
+    if target.parent not in (base, base / "verticals") or not target.is_file():   # upload/ holds the file as it arrived, and no screen needs it
         raise HTTPException(404, "No such file")
     return FileResponse(target)
+
+
+class Evaluate(BaseModel):
+    jurisdiction: Literal[*JURISDICTIONS] = "houston"
+    sprinklers: Literal["yes", "no"] | None = None
+    discharge: int | None = None
+
+
+@app.post("/api/reviews/{review_id}/evaluate")
+def reevaluate(review_id: str, body: Evaluate):
+    path = _finished(review_id)
+    if body.discharge is not None and body.discharge not in pipeline.read_json(path / "stage_floors.json").get("order", ()):
+        raise HTTPException(422, "That sheet is not in the floor order")
+    with edits:
+        return assemble(path, body.jurisdiction, body.sprinklers, body.discharge)
+
+
+class Decision(BaseModel):
+    key: str
+    decision: Literal["keep", "drop"] | None
+
+
+@app.post("/api/reviews/{review_id}/decisions")
+def decide(review_id: str, body: Decision):
+    path = _finished(review_id)
+    with edits:
+        evaluated = pipeline.read_json(path / "stage_evaluate.json")
+        if body.key not in {f["key"] for f in evaluated.get("findings", ())}:
+            raise HTTPException(404, "No such finding")
+        pipeline.write_json(path / "decisions.json", pipeline.read_json(path / "decisions.json") | {body.key: body.decision})
+        return assemble(path, **evaluated["choices"])
+
+
+@app.post("/api/reviews/{review_id}/recheck")
+async def recheck(review_id: str, files: list[UploadFile]):
+    _finished(review_id)
+    return await _accept(files, review_id)
 
 
 app.mount("/", StaticFiles(directory=ROOT / "app/web", html=True), name="web")

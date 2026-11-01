@@ -1,13 +1,21 @@
 """Runs a review's stages in order. Each stage leaves one JSON file in the review's folder, so a rerun picks up where the last run stopped."""
 import json
 import logging
+import time
 import traceback
 import uuid
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from .assemble import assemble_stage, evaluate_stage
+from .declared import declared_stage
+from .floors import floors_stage
+from .letter import letter_stage
 from .meta import BudgetReached, Meter
+from .read import read_stage
+from .vector import vector_stage
+from .verticals import verticals_stage
 
 log = logging.getLogger(__name__)
 
@@ -46,8 +54,16 @@ class Context:
         write_json(self.dir / "status.json", self.status)
 
 
-# Empty until the stage modules land. Order: read, floors, verticals, declared, vector, evaluate, letter, assemble.
-STAGES: list[tuple[str, str, Callable[[Context], dict]]] = []
+STAGES: list[tuple[str, str, Callable[[Context], dict]]] = [
+    ("read", "Read the sheets", read_stage),
+    ("floors", "Line up the floors", floors_stage),
+    ("verticals", "Follow the stairs", verticals_stage),
+    ("declared", "Read what the set declares", declared_stage),
+    ("vector", "Measure the vector sheets", vector_stage),
+    ("evaluate", "Run the checks", evaluate_stage),
+    ("letter", "Draft the comment letter", letter_stage),
+    ("assemble", "Put the review together", assemble_stage),
+]
 
 
 def stage_rows(stages: list) -> list[dict]:
@@ -63,6 +79,7 @@ def run(dir: Path, *, fresh: bool = False, stages: list | None = None) -> None:
     ctx = Context(dir, Meter(ledger=dir.parent / "ledger.jsonl"), sheets, fresh, status)   # one ledger for all review folders, so the daily cap sees them all
     # shortcut: spend after a dead process's last status write is not carried over, tag ledger rows by review if a resumed run must count it.
     ctx.meter._spent = status.get("usd", 0.0)   # the cap is per review, so a rerun goes on counting
+    costs = read_json(dir / "cost.json")   # a file, because status rows start over on a rerun and a skipped stage must keep its cost
     stale = fresh
     for row, (name, label, fn) in zip(status["stages"], stages):
         path = dir / f"stage_{name}.json"
@@ -73,6 +90,7 @@ def run(dir: Path, *, fresh: bool = False, stages: list | None = None) -> None:
         stale = stale or failed   # later stages ran without this stage's result, so they must run again with it
         row["state"] = "running"
         ctx.progress(label)
+        started, spent = time.monotonic(), ctx.meter.spent
         try:
             write_json(path, fn(ctx))
             row["state"] = "done"
@@ -81,5 +99,7 @@ def run(dir: Path, *, fresh: bool = False, stages: list | None = None) -> None:
             write_json(path, {"failed": str(e) if isinstance(e, BudgetReached) else f"{label} did not finish."})
             row["state"] = "failed"
             log.error("Stage %s failed with %s\n%s", name, type(e).__name__, "".join(traceback.format_tb(e.__traceback__)))
+        costs[name] = {"usd": round(ctx.meter.spent - spent, 4), "seconds": round(time.monotonic() - started, 1)}
+        write_json(dir / "cost.json", costs)
     status["state"] = "done"
     ctx.progress("Done")

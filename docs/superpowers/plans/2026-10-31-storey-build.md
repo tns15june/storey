@@ -361,13 +361,14 @@ Reading only. Comparison lives in Task 9. The method is `recommended_method` of 
 
 **Files:**
 - Create: `storey/recheck.py`, `storey/testtool.py`
+- Modify: `storey/server.py` (the `POST /api/reviews/{id}/remove` route from Task 11's Interfaces), `storey/pipeline.py` (the comparison stage in `STAGES`), `storey/assemble.py` (`findings[].state`, which it sets to None today)
 - Test: `tests/test_recheck.py`, `tests/test_testtool.py`
 
 **Interfaces:**
 - Consumes: `register`, `spark`, `assign_ids`, Task 5, `lab/defects/plant.py` and the soft plant rule in `lab/audit2`.
 - Produces:
   - `recheck_stage(ctx) -> dict` returning `{"comments": [{"comment_id": str, "state": str, "old_crop": str, "new_crop": str, "why": str}], "changes": [{"sheet": int, "box": [..], "note": str}], "clouds": [{"sheet": int, "box": [..], "delta": str|None}], "unmatched_sheets": [str]}`
-  - `remove_stair(dir: Path, vertical: str, sheet: int) -> Path`, returns a new review folder with the edited sheet, reusing finished stages except verticals, evaluate and letter
+  - `remove_stair(dir: Path, vertical: str, sheet: int) -> Path`, returns a new review folder with the edited sheet, reusing finished stages except verticals, evaluate and letter. It must delete the copied `sheet_<n>.jpg`, `crop_*.jpg`, `review.json` and `stage_assemble.json` in the new folder: `_image` and `_crop` reuse any JPEG already there, so the screen would show the unedited sheet and old crops beside the new finding, and `pipeline.run` skips a stage whose file exists, so no new `review.json` would be written.
 
 - [ ] **Step 1: Write the failing tests:** `test_changed_location_looks_resolved`, `test_unchanged_location_stays_open`, `test_unmatched_sheet_is_listed_and_not_resolved`, `test_change_outside_comments_is_new_change`, `test_empty_cloud_list_is_not_no_change`, `test_comment_ids_persist`, `test_remove_stair_leaves_original_untouched`, `test_removal_produces_a_gap_finding` (stubbed Spark).
 - [ ] **Step 2: Run.** Expected: import error.

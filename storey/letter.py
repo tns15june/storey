@@ -19,7 +19,7 @@ ASK_OTHER = "Correct this item"
 ASK = {
     1: "Provide the missing sheet",
     2: "Make the sheet index and the sheets in the set agree",
-    3: "Make the title block and the label under the drawing agree",
+    3: "Make the title block, the label under the drawing and the sheet index agree",
     4: "Complete the code summary and make its fields agree",
     5: "Make the code summary agree with the floor plans and the adopted code",
     6: "Correct the table arithmetic",

@@ -58,6 +58,7 @@ DWELLING = ("This set shows a one- or two-family dwelling, which uses the Intern
 ENDS_LIMIT = "A stair that ends on its top floor looks the same as one erased from that floor."
 CONTINUOUS = "A stair stays continuous between the floors it serves."
 REACHES = "A stair that serves upper floors reaches the level of exit discharge."
+LEGEND = {"missing": "Missing", "end": "Not on this floor", "check": "Check"}   # the screen's words, because a state name means nothing in a letter
 ONE_NAME = "One name for each room"
 VECTOR = "Vector geometry."
 ROUTE_EVIDENCE = "Vector route, shown as a minimum, because routes run 16 to 19% under architects' figures."
@@ -560,7 +561,7 @@ def _stair_discharge(r):
         state = cell.get("state")
         if found and found[-1] > d and state in ("missing", "end", "check"):
             top = r.floor(r.order[found[-1]])
-            r.stair(10, "fix" if state != "check" and _aligned(r, r.discharge, cell) else "check", row, r.discharge, cell, f"Found up to {top}. On {r.floor(r.discharge)}, the level of exit discharge, it reads {state}.", REACHES, section)
+            r.stair(10, "fix" if state != "check" and _aligned(r, r.discharge, cell) else "check", row, r.discharge, cell, f"Found up to {top}. On {r.floor(r.discharge)}, the level of exit discharge, it reads {LEGEND[state]}.", REACHES, section)
 
 
 def _single_exit(r, story):

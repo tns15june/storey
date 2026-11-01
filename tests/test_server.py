@@ -1,5 +1,7 @@
 import time
 
+import cv2
+import numpy as np
 import pymupdf
 import pytest
 from fastapi.testclient import TestClient
@@ -11,8 +13,10 @@ ID_URL = "/api/reviews/" + "0" * 32
 
 @pytest.fixture
 def client(tmp_path, monkeypatch):
-    from storey import server
+    from storey import meta, pipeline, server
     monkeypatch.setattr(server, "DATA", tmp_path)
+    monkeypatch.setattr(pipeline, "STAGES", [])   # these tests are about the server, and the stages would call the model
+    monkeypatch.setattr(meta, "_client", lambda: pytest.fail("a test reached the real client"))
     monkeypatch.setenv("STOREY_ACCESS_KEY", "test-key")
     return TestClient(server.app, base_url="http://127.0.0.1", headers=KEY)
 
@@ -38,6 +42,17 @@ def test_upload_then_fetch_a_sheet(client):
     rid = r.json()["id"]
     assert _wait(client, rid)["sheets"] == 1
     assert client.get(f"/api/reviews/{rid}/files/sheet_000.png").status_code == 200
+
+
+def _jpg():
+    return cv2.imencode(".jpg", np.full((40, 60, 3), 255, np.uint8))[1].tobytes()
+
+
+def test_upload_takes_several_images_as_one_set(client):
+    r = client.post("/api/reviews", files=[("files", (f"{i:02d}.jpg", _jpg(), "image/jpeg")) for i in range(5)])
+    assert r.status_code == 200
+    st = _wait(client, r.json()["id"])
+    assert (st["state"], st["sheets"]) == ("done", 5)
 
 
 def test_rejects_a_file_that_is_not_what_it_claims(client):
@@ -134,6 +149,36 @@ def test_session_cookie_works_in_place_of_the_header(tmp_path, monkeypatch):
     assert browser.post("/api/session", json={"key": "wrong"}).status_code == 401
     assert browser.post("/api/session", json={"key": "s3cret"}).status_code == 200
     assert browser.get(ID_URL).status_code == 404
+
+
+NEW_ROUTES = [("post", "/evaluate", {"json": {}}), ("post", "/decisions", {"json": {"key": "x", "decision": "keep"}}),
+              ("post", "/recheck", {"files": [("files", ("set.pdf", b"%PDF-1.7", "application/pdf"))]})]
+
+
+@pytest.mark.parametrize("method, route, body", NEW_ROUTES)
+def test_key_required_on_new_routes(tmp_path, monkeypatch, method, route, body):
+    from storey import server
+    monkeypatch.setattr(server, "DATA", tmp_path)
+    monkeypatch.setenv("STOREY_ACCESS_KEY", "test-key")
+    assert getattr(TestClient(server.app, base_url="http://127.0.0.1"), method)(ID_URL + route, **body).status_code == 401
+
+
+def test_key_required_on_the_list_of_reviews(tmp_path, monkeypatch):
+    from storey import server
+    monkeypatch.setattr(server, "DATA", tmp_path)
+    monkeypatch.setenv("STOREY_ACCESS_KEY", "test-key")
+    assert TestClient(server.app, base_url="http://127.0.0.1").get("/api/reviews").status_code == 401
+
+
+@pytest.mark.parametrize("method, route, body", NEW_ROUTES)
+@pytest.mark.parametrize("headers", [{"origin": "https://evil.example"}, {"sec-fetch-site": "cross-site"}])
+def test_cross_site_post_refused_on_new_routes(client, method, route, body, headers):
+    assert getattr(client, method)(ID_URL + route, headers=headers, **body).status_code == 403
+
+
+@pytest.mark.parametrize("method, route, body", NEW_ROUTES)
+def test_new_routes_refuse_a_bad_id(client, method, route, body):
+    assert getattr(client, method)("/api/reviews/not-an-id" + route, **body).status_code == 404
 
 
 def test_the_review_screen_itself_needs_no_key():

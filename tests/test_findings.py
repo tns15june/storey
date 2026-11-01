@@ -844,6 +844,11 @@ def test_stair_stopping_above_discharge_raises_check_10():
     assert f["severity"] == "fix" and f["sheet"] == 2 and f["vertical"] == "A" and "1023.3" in f["rule"]
 
 
+@pytest.mark.parametrize("state, word", [("end", "Not on this floor"), ("missing", "Missing"), ("check", "Check")])
+def test_discharge_item_uses_the_words_on_the_screen(state, word):
+    assert only(with_stairs(base(), stair("A", state, "found", "found")), 10)["measured"].endswith(f"it reads {word}.")
+
+
 def test_missing_on_discharge_with_found_above_raises_check_10():
     assert only(with_stairs(base(), stair("A", "missing", "found", "found")), 10)["severity"] == "fix"
 

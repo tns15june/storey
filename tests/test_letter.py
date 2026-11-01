@@ -154,6 +154,11 @@ def test_each_check_opens_with_an_instruction_and_passes_its_own_gate():
         assert no_new_facts(text, f)
 
 
+def test_check_3_covers_each_place_a_sheet_is_named():
+    """A live comment about an index row told the designer to change the label under the drawing."""
+    assert all(place in ASK[3] for place in ("title block", "label under the drawing", "sheet index"))
+
+
 def test_check_with_no_wording_still_gets_a_comment():
     assert template(finding(check=99))[0].startswith("Correct this item.")
 
