@@ -80,9 +80,9 @@ def plain(text: str) -> str:
 
 
 def has_status(text: str, words: re.Pattern = STATUS) -> bool:
-    """True for a status word, and for any text with a character it could hide behind."""
+    """True for a status word, and for any text with a character it could hide behind. Ordinary line breaks and no-break spaces are read both as a space and as nothing."""
     # shortcut: a Cyrillic letter that looks Latin still passes, add a confusables table if a drawing shows one. A rewrite cannot use it, because _closed counts it as an added word.
-    return bool(HIDING.search(text) or words.search(plain(text)))
+    return bool(HIDING.search(text) or any(words.search(plain(t)) for t in (text, re.sub(r"[^\S ]", "", text))))
 
 
 def _codes(text):
