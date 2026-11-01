@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Storey</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app page">
+  <header class="titleblock">
+    <a class="cell brand" href="start.html">Storey</a>
+    <div class="cell project"><span class="label">For</span><span class="value">Plan examiners</span></div>
+    <div class="cell status"><span class="label">Status</span><span class="value">Draft for examiner. Not an approval.</span></div>
+    <div class="actions"><a class="ghost" href="eval.html">How well it works</a></div>
+  </header>
+  <main class="sheetmain">
+    <section class="intro">
+      <h1>Start a review</h1>
+      <p>Upload a permit set. Storey lists the sheets, follows each stair across the floors, drafts a correction list and a comment letter, and says what it did not check. An examiner makes every decision.</p>
+    </section>
+    <p class="notice" id="locked" role="alert" hidden></p>
+    <div class="columns">
+      <div class="stack">
+        <section class="card live-only">
+          <h2>New review</h2>
+          <form id="upload">
+            <label class="drop"><input type="file" name="files" accept=".pdf,.png,.jpg,.jpeg" multiple aria-label="Permit set files"><span class="chosen">Drop a PDF or page images here, or choose files</span></label>
+            <button class="primary" disabled>Start review</button>
+            <p class="error" role="alert"></p>
+          </form>
+        </section>
+        <section class="card">
+          <h2>Sample reviews</h2>
+          <ul class="reviewlist" id="samples"></ul>
+        </section>
+      </div>
+      <section class="card live-only">
+        <h2>Past reviews</h2>
+        <ul class="reviewlist" id="past"></ul>
+      </section>
+    </div>
+  </main>
+</div>
+<script src="common.js"></script>
+<script src="start.js"></script>
+</body>
+</html>

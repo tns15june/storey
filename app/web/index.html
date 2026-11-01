@@ -7,20 +7,43 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
 <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body data-view="progress">
 <div class="app">
   <header class="titleblock">
-    <div class="cell brand">Storey</div>
-    <div class="cell"><span class="label">Project</span><span class="value" id="project"></span></div>
-    <div class="cell"><span class="label">Location</span><span class="value" id="address"></span></div>
-    <div class="cell"><span class="label">Review</span><span class="value" id="cycle"></span></div>
-    <div class="cell"><span class="label">Code</span><span class="value" id="code"></span></div>
+    <a class="cell brand" href="start.html">Storey</a>
+    <div class="cell project"><span class="label">Project</span><span class="value" id="project"></span></div>
+    <div class="cell" id="address-cell" hidden><span class="label">Location</span><span class="value" id="address"></span></div>
+    <div class="cell review-only"><span class="label">Review</span><span class="value" id="cycle"></span></div>
+    <div class="cell review-only"><span class="label">Code</span><span class="value" id="code"></span></div>
+    <div class="cell review-only"><label class="label" for="jurisdiction">Jurisdiction</label>
+      <select id="jurisdiction"><option value="houston">Houston</option><option value="philadelphia">Philadelphia</option><option value="seattle">Seattle</option></select></div>
+    <div class="cell review-only live-only"><label class="label" for="sprinklers">Sprinklers</label>
+      <select id="sprinklers"><option value="">As declared</option><option value="yes">Sprinklered</option><option value="no">Not sprinklered</option></select></div>
+    <div class="cell review-only live-only"><label class="label" for="discharge">Discharge level</label><select id="discharge"></select></div>
     <div class="cell status"><span class="label">Status</span><span class="value">Draft for examiner. Not an approval.</span></div>
-    <div class="actions"><button class="primary" id="open-letter">Comment letter</button></div>
+    <div class="actions review-only">
+      <button class="ghost live-only" id="open-second">Second review</button>
+      <button class="primary" id="open-letter">Comment letter</button>
+    </div>
   </header>
+
+  <main class="progress" id="progress">
+    <section class="progress-main">
+      <h1 id="progress-step">Opening the review</h1>
+      <p class="note" id="progress-facts"></p>
+      <p class="notice" id="progress-message" role="alert" hidden></p>
+      <table class="schedule" hidden><caption class="pane-title">Stages</caption><tbody id="stages"></tbody></table>
+      <p><a href="start.html">Back to the start page</a></p>
+    </section>
+    <section class="progress-sheets" aria-label="Sheets read so far" hidden>
+      <h2 class="pane-title">Sheets</h2>
+      <div class="thumbs" id="thumbs"></div>
+    </section>
+  </main>
+
   <div class="panes">
     <nav class="floors" id="floors" aria-label="Floors, top to bottom">
-      <h2 class="pane-title floors-title">Floors</h2>
+      <h2 class="pane-title floors-title" id="floors-title">Floors</h2>
     </nav>
     <main class="viewer" id="viewer">
       <div class="tools">
@@ -31,37 +54,84 @@
         <button id="zoom-out" aria-label="Zoom out">−</button>
         <button id="fit">Fit</button>
       </div>
-      <div class="stage" id="stage">
-        <img id="sheet" alt="Floor plan sheet" draggable="false">
-        <svg id="overlay" aria-hidden="true"></svg>
-      </div>
+      <div class="stage" id="stage"></div>
       <div class="floorname" id="floorname"></div>
     </main>
     <aside class="review" aria-label="Review">
+      <p class="notice plain" id="note" hidden></p>
+      <p class="notice" id="failed" hidden></p>
+      <p class="notice" id="notice" role="alert" hidden></p>
       <section>
         <h2 class="pane-title">Stairs by floor</h2>
-        <table class="matrix" id="matrix"></table>
-        <div class="legend">
-          <span><i style="background:var(--accent)"></i>Found</span>
-          <span><i style="background:var(--unknown-soft)"></i>None</span>
-          <span><i style="background:var(--fix-soft);outline:2px dashed var(--fix);outline-offset:-2px"></i>Gap</span>
+        <div class="scroll-x"><table class="matrix" id="matrix" aria-label="Stairs by floor, top floor first"></table></div>
+        <p class="note" id="matrix-empty" hidden></p>
+        <div class="legend" id="legend">
+          <span><i class="found"></i>Found</span>
+          <span><i class="missing"></i>Missing</span>
+          <span><i class="check"></i>Check</span>
+          <span><i class="not_followed"></i>Not followed</span>
+          <span><i class="end"></i>Not on this floor</span>
         </div>
+        <div class="celldetail" id="cell" hidden></div>
       </section>
       <section>
-        <h2 class="pane-title">Findings</h2>
-        <div class="stack" id="findings" style="display:grid;gap:10px"></div>
+        <div class="tabs" role="tablist" aria-label="Review lists">
+          <button role="tab" id="tab-findings" aria-controls="panel-findings">Findings <span class="n"></span></button>
+          <button role="tab" id="tab-set" aria-controls="panel-set">Set <span class="n"></span></button>
+          <button role="tab" id="tab-open" aria-controls="panel-open">Open items <span class="n"></span></button>
+          <button role="tab" id="tab-not" aria-controls="panel-not">Not checked <span class="n"></span></button>
+        </div>
+        <div role="tabpanel" id="panel-findings" aria-labelledby="tab-findings" class="stack"></div>
+        <div role="tabpanel" id="panel-set" aria-labelledby="tab-set" class="stack" hidden></div>
+        <div role="tabpanel" id="panel-open" aria-labelledby="tab-open" class="stack" hidden></div>
+        <div role="tabpanel" id="panel-not" aria-labelledby="tab-not" class="stack" hidden>
+          <ul class="lines" id="not-checked"></ul>
+          <h3 class="pane-title">Limits of this review</h3>
+          <ul class="lines">
+            <li>A stair that ends on its top floor looks the same as one erased from that floor. It is listed under Open items.</li>
+            <li>A stair no run lists cannot be followed.</li>
+            <li>Found means a stair is drawn at this place on this floor, and nothing more about that stair.</li>
+            <li>The miss rate on real defects is not known. Every miss figure comes from defects planted or labelled by one labeller.</li>
+            <li>Door swing against occupant load is left out, because no code joins a door to a room's load.</li>
+          </ul>
+        </div>
       </section>
-      <p class="note" id="note"></p>
     </aside>
   </div>
-  <div class="letter" id="letter" role="dialog" aria-modal="true" aria-labelledby="letter-title" hidden>
+
+  <dialog class="letter" id="letter" aria-labelledby="letter-title">
     <div class="paper">
-      <h2 id="letter-title">Comment letter</h2>
-      <div id="letter-body" style="display:grid;gap:10px"></div>
-      <div class="row"><button class="ghost" id="close-letter">Close</button></div>
+      <div class="paper-head">
+        <h2 id="letter-title">Comment letter</h2>
+        <button class="ghost" id="print-letter">Print or save as PDF</button>
+        <button class="ghost" id="close-letter">Close</button>
+      </div>
+      <p class="draftline">Draft for examiner. Not an approval.</p>
+      <div class="stack" id="letter-body"></div>
+      <p class="note">A person reviews and signs this letter.</p>
+      <p class="note noprint">Edits stay in this browser. Print the letter to keep them.</p>
     </div>
-  </div>
+  </dialog>
+
+  <dialog class="letter wide" id="second" aria-labelledby="second-title">
+    <div class="paper">
+      <div class="paper-head">
+        <h2 id="second-title">Second review</h2>
+        <button class="ghost" id="close-second">Close</button>
+      </div>
+      <p class="draftline">Draft for examiner. Not an approval.</p>
+      <div class="stack" id="second-body"></div>
+      <form class="resubmit" id="resubmit">
+        <h3 class="pane-title">Upload a resubmittal</h3>
+        <p class="note">It is reviewed as a new set, then each comment from this review is checked at its place on the drawing.</p>
+        <label class="drop"><input type="file" name="files" accept=".pdf,.png,.jpg,.jpeg" multiple aria-label="Resubmittal files"><span class="chosen">Drop a PDF or page images here, or choose files</span></label>
+        <button class="primary" disabled>Start second review</button>
+        <p class="error" role="alert"></p>
+      </form>
+    </div>
+  </dialog>
 </div>
+<script src="common.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
