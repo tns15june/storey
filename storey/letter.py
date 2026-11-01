@@ -74,7 +74,8 @@ SHEET_NUMBER = re.compile(r"(?=.*\d)[A-Za-z0-9][A-Za-z0-9./-]{0,15}")   # as pri
 def plain(text: str) -> str:
     """Text as a reader sees it, for searching only: a status word can hide behind invisible characters, full-width letters or accents."""
     # shortcut: a Cyrillic letter that looks Latin still passes, add a confusables table if a drawing shows one. A rewrite cannot use it, because _closed counts it as an added word.
-    return "".join(c for c in unicodedata.normalize("NFKD", text) if (unicodedata.category(c)[0] in "LNPS" or c.isspace()) and c not in "\u115f\u1160\u3164\uffa0\u2800")
+    joined = "".join(c for c in text if unicodedata.category(c) != "Zs" or c == " ")   # before NFKD, which turns a thin space into a plain one that splits the word
+    return "".join(c for c in unicodedata.normalize("NFKD", joined) if (unicodedata.category(c)[0] in "LNPS" or c in " \t\n\r") and c not in "\u115f\u1160\u3164\uffa0\u2800")
 
 
 def _codes(text):
