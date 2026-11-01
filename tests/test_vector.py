@@ -67,6 +67,7 @@ def draw_plan(page, doors=(420, 500, 560, 610, 655, 700), dx=0, dy=0, shut=(), d
 
 GOOD = (("33'-4\"", 400, 600), ("16'-8\"", 200, 620), ("8'-4\"", 100, 640))
 BAD = (*GOOD, ("10'-2\"", 120, 660))   # drawn 120 in long and labelled 122 in
+MANY = (*((f"{feet}'-0\"", feet * 12, 560 + 20 * k) for k, feet in enumerate(range(4, 24, 2))), ("10'-2\"", 120, 760))   # ten that agree and the one of BAD that does not
 STRING = (("10'-6\"", 177, 372, 680), ("4'-0\"", 357, 435, 680), ("14'-0\"", 177, 435, 700))
 
 
@@ -94,7 +95,84 @@ def write_fixture():
     half.show_pdf_page(pymupdf.Rect(HALF_X, HALF_Y, HALF_X + WIDTH / 2, HALF_Y + HEIGHT / 2), pymupdf.open("pdf", doc.tobytes()), 4)
     draw_plan(doc.new_page(width=WIDTH, height=HEIGHT), doors=(420,), dims=GOOD, layer=dim)          # 14 a dimension string 6 in over its overall
     draw_string(doc[14], dim)
+    draw_plan(doc.new_page(width=WIDTH, height=HEIGHT), doors=(420,), dims=MANY, layer=dim)          # 15 one dimension wrong among eleven
+    draw_hollow(doc.new_page(width=WIDTH, height=HEIGHT))                                            # 16 two rooms inside hollow walls 0.41 m thick
+    draw_thick_top(doc.new_page(width=WIDTH, height=HEIGHT))                                         # 17 a hall along x under a wall 0.34 m thick
+    draw_hall(doc.new_page(width=WIDTH, height=HEIGHT), lean=0.6)                                    # 18 page 6 with the hall's walls 0.6 pt off square
+    draw_wide_hall(doc.new_page(width=WIDTH, height=HEIGHT), bottom=445, stair=True)                 # 19 a hall 97 in wide with a stair 46 in wide standing in it
+    draw_wide_hall(doc.new_page(width=WIDTH, height=HEIGHT), bottom=420)                             # 20 the same hall with no stair and its lower wall 25 in higher than printed
+    draw_thick_top(doc.new_page(width=WIDTH, height=HEIGHT), bottom=20)                              # 21 page 17 with its lower wall 0.34 m thick too
+    draw_thick_opening(doc.new_page(width=WIDTH, height=HEIGHT))                                     # 22 an opening with no door arc in a wall 0.71 m thick, level with the hall label
+    draw_wide_hall(doc.new_page(width=WIDTH, height=HEIGHT), bottom=445, stair=True, landing=True)   # 23 page 19 with a landing that stands further into the hall than its flight
+    draw_thick_top(doc.new_page(width=WIDTH, height=HEIGHT), bottom=20, lean=-2, label=475)          # 24 page 21 with its walls 2 pt off square, so the upper wall's face steps a pixel under the label
     return doc.tobytes(garbage=4, deflate=True, no_new_id=True)
+
+
+STAIR_IN_HALL = (300, 300, 500, 369)   # points: a flight against the hall's upper wall, as on 710's upper floors
+LANDING = (500, 300, 560, 390)         # the landing at its end, as on 2828's upper floors, where it stands further into the hall
+
+
+def draw_wide_hall(page, bottom, stair=False, landing=False):
+    """A hall along x from y 300 to `bottom`, printed 8'-1" at x 560 from the upper wall's centre, with its label at x 388."""
+    shape = page.new_shape()
+    for rect in ((180, 180, 780, 540), (189, 189, 771, 531)):
+        shape.draw_rect(rect)
+        shape.finish(color=(0, 0, 0), width=1.26)
+    for y in (291, 300, bottom, bottom + 9):
+        shape.draw_line((189, y), (771, y))
+        shape.finish(color=(0, 0, 0), width=1.26)
+    if stair:
+        x0, y0, x1, y1 = STAIR_IN_HALL
+        shape.draw_rect(STAIR_IN_HALL)
+        for x in range(x0 + 18, x1, 18):
+            shape.draw_line((x, y0), (x, y1))   # treads, which a ray across the hall runs along
+        if landing:
+            shape.draw_rect(LANDING)
+        shape.finish(color=(0, 0, 0), width=0.6)
+    shape.draw_line((560, 292.5), (560, 444))   # 97 in between ticks at 295.5 and 441, plus the 3 pt overrun at each end
+    shape.finish(color=(0, 0, 0), width=0.12)
+    shape.commit()
+    page.insert_text((556, 380), "8'-1\"", fontsize=8, rotate=90)
+    page.insert_text((380, 410 if stair else 365), "Hall", fontsize=8)
+
+
+def draw_thick_top(page, bottom=7, lean=0, label=440):
+    """A hall 67 pt wide along x, under a double-line wall 20 pt thick and over one `bottom` pt thick, both running the building's length.
+    `lean` moves the right end of each wall line along y, and `label` is where the hall label starts along x."""
+    shape = page.new_shape()
+    for rect in ((180, 180, 780, 540), (189, 189, 771, 531)):
+        shape.draw_rect(rect)
+        shape.finish(color=(0, 0, 0), width=1.26)
+    for y in (280, 300, 367, 367 + bottom):
+        shape.draw_line((189, y), (771, y + lean))
+        shape.finish(color=(0, 0, 0), width=1.26)
+    shape.commit()
+    page.insert_text((label, 340), "Hall", fontsize=8)
+
+
+def draw_thick_opening(page):
+    """A hall 67 pt wide along y, its right wall two 9 pt walls round a 24 pt chase, 42 pt in all, with an opening 50 pt wide and no door arc, capped by jambs, level with the label."""
+    shape = page.new_shape()
+    for rect in ((180, 180, 780, 540), (189, 189, 771, 531)):
+        shape.draw_rect(rect)
+        shape.finish(color=(0, 0, 0), width=1.26)
+    lines = [(291, 189, 291, 531), (300, 189, 300, 531), (367, 340, 409, 340), (367, 390, 409, 390)]
+    lines += [(x, top, x, bottom) for x in (367, 376, 400, 409) for top, bottom in ((189, 340), (390, 531))]
+    for x0, y0, x1, y1 in lines:
+        shape.draw_line((x0, y0), (x1, y1))
+        shape.finish(color=(0, 0, 0), width=1.26)
+    shape.commit()
+    page.insert_text((322, 368), "Hall", fontsize=8)
+
+
+def draw_hollow(page):
+    """Two rooms and a door, every wall two lines 24 pt apart with nothing between them, as building 3370 is drawn with its hatch taken out."""
+    shape = page.new_shape()
+    for rect in ((180, 180, 780, 540), (204, 204, 756, 516), (468, 204, 492, 300), (468, 354, 492, 516)):
+        shape.draw_rect(rect)
+        shape.finish(color=(0, 0, 0), width=1.26)
+    draw_door(shape, (492, 300), (492, 354), (546, 300))
+    shape.commit()
 
 
 def draw_string(page, layer):
@@ -107,13 +185,14 @@ def draw_string(page, layer):
     shape.commit()
 
 
-def draw_hall(page, right=((189, 531),), oc=0):
-    """A corridor between two double-line walls, 67 pt between faces and 74 pt between centres. `right` lists the runs of its right wall, so a break in them is an opening."""
+def draw_hall(page, right=((189, 531),), oc=0, lean=0):
+    """A corridor between two double-line walls, 67 pt between faces and 74 pt between centres. `right` lists the runs of its right wall, so a break in them is an opening.
+    `lean` moves the bottom end of each of the corridor's wall lines along x, as the walls of a plan turned to square sit on the generated sets."""
     shape = page.new_shape()
     walls = [(180, 180, 780, 540), (189, 189, 771, 531), (300, 189, 300, 531), (307, 189, 307, 531)]
     for x0, y0, x1, y1 in walls + [(x, top, x, bottom) for top, bottom in right for x in (374, 381)]:
         if x0 == x1:
-            shape.draw_line((x0, y0), (x1, y1))
+            shape.draw_line((x0, y0), (x1 + lean, y1))
         else:
             shape.draw_rect((x0, y0, x1, y1))
         shape.finish(color=(0, 0, 0), width=1.26, oc=oc)
@@ -249,6 +328,32 @@ def test_scale_chain_rejects_bad_scale(review):
     assert out["scale_in_per_pt"] is None
     assert "10'-2\"" in out["skipped"]
     assert out["doors"] == [] and out["routes"] == [] and out["corridors"] == []
+
+
+def test_one_dimension_in_ten_that_disagrees_keeps_the_scale_and_is_named(review):
+    # Abbot X5.1: a value moved off its line onto a leader pairs with the leader, and 46 of 48 strings agree
+    out = vector.vector_stage(review([sheet(15)], [row(15)]))["sheets"][15]
+    assert out["scale_in_per_pt"] == pytest.approx(2 / 3) and "disagrees" not in out["skipped"] and out["doors"]
+    assert out["scale_checked"] == 12 and out["scale_outliers"] == ["10'-2\": drawn 120.0 in, printed 122.0 in"]
+
+
+def test_wrong_scale_note_on_a_sheet_of_many_strings_is_rejected(review):
+    out = vector.vector_stage(review([sheet(15)], [row(15, scale=EIGHTH)]))["sheets"][15]
+    assert out["scale_in_per_pt"] is None and "disagrees" in out["skipped"] and out["scale_outliers"] == []
+
+
+def test_a_scale_one_percent_off_is_dropped_though_only_its_longest_string_misses():
+    # a note read 1% wide keeps every short string within an inch and moves only the longest one past it, which one string in ten could excuse: Capitol A2.0 and A2.2, 3370 A1.1 to A1.4
+    dims = [dim(f"{n // 12}'-{n % 12}\"", 0, n * PT_PER_IN + 6, at=20 * k) for k, n in enumerate(range(36, 151, 6))] + [dim("33'-4\"", 0, 400 * PT_PER_IN + 6, at=999)]
+    assert vector.check_scale(dims, 2 / 3, True) == (21, None)
+    assert "33'-4\"" in vector.check_scale(dims, 2 / 3 * 1.01, True)[1]
+
+
+def test_past_the_string_cap_no_string_is_excused(monkeypatch):
+    dims = [dim(f"{f}'-0\"", 0, f * 12 * PT_PER_IN + 6, at=20 * k) for k, f in enumerate(range(4, 24, 2))] + [dim("10'-2\"", 0, 120 * PT_PER_IN + 6, at=999)]
+    assert vector.check_scale(dims, 2 / 3, True) == (11, None)
+    monkeypatch.setattr(vector, "STRING_MAX_DIMS", 2)
+    assert "10'-2\"" in vector.check_scale(dims, 2 / 3, True)[1]
 
 
 def test_wrong_scale_note_is_rejected(review):
@@ -504,6 +609,15 @@ def test_marker_on_the_discharge_level_keeps_its_own_place(review):
     assert route["path"][-1] == pytest.approx([730 * PX_PER_PT, 470 * PX_PER_PT], abs=8)
 
 
+def test_hollow_walls_with_no_hatch_still_trace(review):
+    # the inside of each double-line wall is free space, which read as rooms nobody reaches: reach fell to 50% on every floor of 3370 with its hatch taken out
+    ctx = review([sheet(16)], [row(16)], floors={"order": [16], "discharge": 16}, verticals={"verticals": []}, declared=exits(16, (740 * PX_PER_PT, 400 * PX_PER_PT, 915.0, 180)))
+    route = vector.vector_stage(ctx)["sheets"][16]["routes"][0]
+    assert 300 * PX_PER_PT < crossing_at(route["path"], 480 * PX_PER_PT) < 354 * PX_PER_PT   # through the door
+    feet = (np.hypot(468 - 204, 516 - 354) + np.hypot(740 - 492, 400 - 354)) * 2 / 3 / 12   # far corner of the left room, round the lower jamb, to the exit
+    assert route["length_ft"] == pytest.approx(feet, rel=0.1)
+
+
 def test_one_traced_room_is_not_a_building(review):
     # page 7 has outer walls only, which is what a wrong pen can leave: reach would be 100% and the route short
     ctx = review([sheet(7)], [row(7)], floors={"order": [7], "discharge": 7}, verticals={"verticals": []}, declared=exits(7, (740 * PX_PER_PT, 400 * PX_PER_PT, 915.0, 180)))
@@ -640,6 +754,56 @@ def test_corridor_clear_width(review):
     assert hall["point"] == pytest.approx([340 * PX_PER_PT, 357 * PX_PER_PT], abs=30)
 
 
+@pytest.mark.parametrize("page", [17, 24], ids=["square", "off square"])
+def test_a_thick_wall_gives_the_hall_no_false_door(review, page):
+    # an even kernel shifts OpenCV's opening and closing by a pixel, so where the face of a wall 0.3 m or thicker steps a pixel, as a wall drawn off square does on page 24
+    # and on 3370's fifth floor, the door bridging ran 2 px past it into the hall and the label's ray met a door
+    hall = vector.vector_stage(review([sheet(page)], [row(page)]))["sheets"][page]["corridors"][0]
+    assert hall["clear_in"] == pytest.approx(67 * 2 / 3, abs=0.5)
+
+
+def test_an_opening_with_no_arc_in_a_thick_wall_is_still_a_door(review):
+    # a door's bridge is as long across as its wall is thick, so dropping every bridge over 0.6 m across dropped this one, the ray ran through it and the hall's 228 in length read as its width
+    hall = vector.vector_stage(review([sheet(22)], [row(22)]))["sheets"][22]["corridors"][0]
+    assert hall["clear_in"] is None
+
+
+def test_a_hall_between_two_thick_walls_is_not_a_door(review):
+    # each wall's thickness is a run the door bridging keeps, so it bridged the 1.13 m between them and the hall read as one door: CORRIDOR 501 on 3370's fifth floor
+    hall = vector.vector_stage(review([sheet(21)], [row(21)]))["sheets"][21]["corridors"][0]
+    assert hall["clear_in"] == pytest.approx(67 * 2 / 3, abs=0.5)
+
+
+def test_walls_a_little_off_square_still_bound_the_hall(review):
+    # a wall line 0.6 pt off vertical over its length was left out, so the ray ran on to the next wall: 75% of the wall length on 6267's first floor
+    hall = vector.vector_stage(review([sheet(18)], [row(18)]))["sheets"][18]["corridors"][0]
+    assert hall["clear_in"] == pytest.approx(67 * 2 / 3, abs=0.5)
+
+
+def test_a_stair_standing_in_the_hall_leaves_the_width_beside_it(review):
+    # 710's upper floors read 97 in from wall to wall where a 46 in flight takes part of the hall, the wrong-pass direction
+    box = tuple(v * PX_PER_PT for v in STAIR_IN_HALL)
+    ctx = review([sheet(19)], [row(19)], verticals={"verticals": [stair(19, point=((box[0] + box[2]) / 2, (box[1] + box[3]) / 2), box=box)]})
+    hall = vector.vector_stage(ctx)["sheets"][19]["corridors"][0]
+    assert hall["clear_in"] == pytest.approx((445 - 369) * 2 / 3, abs=0.5)
+    assert hall["printed_in"] is None   # a width printed wall to wall says nothing of the way past a stair
+
+
+def test_a_landing_wider_than_its_flight_sets_the_width_past_the_stair(review):
+    # 2828's upper floors: one ray through the middle of the stair met the flight, and the landing at its end leaves less of the hall
+    box = tuple(v * PX_PER_PT for v in (*STAIR_IN_HALL[:2], *LANDING[2:]))
+    ctx = review([sheet(23)], [row(23)], verticals={"verticals": [stair(23, point=((box[0] + box[2]) / 2, (box[1] + box[3]) / 2), box=box)]})
+    hall = vector.vector_stage(ctx)["sheets"][23]["corridors"][0]
+    assert hall["clear_in"] == pytest.approx((445 - LANDING[3]) * 2 / 3, abs=0.5)
+
+
+def test_a_printed_width_over_80_in_is_compared(review):
+    # a hall printed 8'-1" whose lower wall stands 25 in higher could never read as narrower than printed. The Check stair here has no lines drawn, so it narrows nothing
+    ctx = review([sheet(20)], [row(20)], verticals={"verticals": [stair(20, state="check", point=(800, 720))]})
+    hall = vector.vector_stage(ctx)["sheets"][20]["corridors"][0]
+    assert hall["clear_in"] == pytest.approx(80, abs=0.5) and hall["printed_in"] == 97
+
+
 def test_door_across_a_hall_label_gives_no_reading(review):
     # the ray through the label runs on through the door to a far wall, and that span is longer than the hall, so the hall's length must not stand in for its width
     hall = vector.vector_stage(review([sheet(9)], [row(9)]))["sheets"][9]["corridors"][0]
@@ -661,6 +825,45 @@ def test_door_along_the_hall_leaves_its_width_alone():
     door = {"c": np.array([113.0, 450.0]), "shut": np.array([154.0, 450.0])}
     walls = np.vstack([HALL_WALLS, [[100, 450, 113, 450], [154, 450, 167, 450]]])
     assert vector.corridors(hall_plan(door), walls, []) == [{"point": [133, 200], "clear_in": 44.7, "printed_in": None}]
+
+
+def test_a_stair_past_the_wall_narrows_the_hall_by_what_it_puts_in_it():
+    # 2828: the landing of a stair open to the hall stands 13 pt past the face of the wall that the label's ray stops at
+    plan = hall_plan()
+    plan.segs = np.array([[110, 300, 110, 400, 0.6, 0, vector.LINE, 1]], float)
+    plan.stairs = [{"point": np.array([75.0, 350.0]), "box": np.array([40.0, 300.0, 110.0, 400.0])}]
+    assert vector.corridors(plan, HALL_WALLS, [])[0]["clear_in"] == round(57 * 2 / 3, 1)
+    plan.stairs = [{"point": np.array([133.0, 550.0]), "box": None}]   # 710's first floor: the stair's ray has a wall on one side only
+    assert vector.corridors(plan, np.vstack([HALL_WALLS[:1], [[167, 0, 167, 500]], HALL_WALLS[2:]]), [])[0]["clear_in"] is None
+
+
+def test_a_door_beside_a_stair_leaves_the_rays_past_it_to_measure():
+    # 3128's lower floors: a door in the hall's wall at the stair, where the ray runs on into the room beyond
+    plan = hall_plan()
+    plan.segs = np.array([[110, 300, 110, 400, 0.6, 0, vector.LINE, 1]], float)
+    plan.stairs = [{"point": np.array([75.0, 350.0]), "box": np.array([40.0, 300.0, 110.0, 400.0])}]
+    walls = np.vstack([HALL_WALLS[[0, 2, 3]], [[167, 0, 167, 340], [167, 380, 167, 600], [250, 0, 250, 600]]])
+    assert vector.corridors(plan, walls, [])[0]["clear_in"] == round(57 * 2 / 3, 1)
+    plan.stairs = [{"point": np.array([75.0, 360.0]), "box": np.array([40.0, 345.0, 110.0, 375.0])}]   # every ray across this stair meets the door
+    assert vector.corridors(plan, walls, [])[0]["clear_in"] is None
+
+
+def test_a_slot_too_narrow_for_a_hall_stays_bridged():
+    # two walls 0.5 m thick and 0.4 m apart: the bridge reaches across further than the gap it closes, as a hall's does, but no hall is that narrow
+    w = np.zeros((200, 200), bool)
+    w[20:180, 40:60] = w[20:180, 76:96] = True
+    assert vector.close_doors(w)[100, 60:76].all()
+
+
+def test_a_tiny_segment_crosses_a_ray_where_it_is_drawn():
+    # a segment under 0.5 pt long across the ray counts at any angle, and its line carried on to the ray met it 746 pt from where it is drawn on 710
+    assert vector.crossings(np.array([[10.0, 0.0, 10.3, 0.001]]), 0.4, True).tolist() == [10.3]
+
+
+def test_a_wall_that_crosses_the_ray_outside_the_plan_box_does_not_bound_the_hall():
+    # a long wall line under 5 degrees off square touches the box but meets the label's ray outside it, and a hostile page can put that anywhere
+    walls = np.vstack([HALL_WALLS[[0, 2, 3]], [[280, -600, 380, 600]]])
+    assert vector.corridors(hall_plan(), walls, []) == [NO_READING]
 
 
 def test_hall_with_walls_on_one_axis_only_gives_no_reading():

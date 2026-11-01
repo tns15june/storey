@@ -35,6 +35,7 @@ DIM_MARGIN_PT = 200      # plan_box leaves dimension strings out, and on the Cap
 MIN_DIMS = 3             # a fitted overrun would absorb the whole error of one or two strings
 MAX_OVERRUN_PT = 12      # Capitol and Baxter lines run 6 pt past their ticks. Past this, a wrong scale is being fitted away
 SCALE_STOP_IN = 1.0
+SCALE_OUTLIERS = 0.1     # share of strings that may disagree, and only if slope_holds(). Set after seeing data: on 42 sheets of the real and generated sets with a dimension layer, a note read half to double scale, or 5% off, left 35% to 100% disagreeing, and the right note at most 2 of 48, on Abbot X5.1, where values moved onto leaders pair with the leader. On 56 such sheets the widest scale error kept is 0.5% with slope_holds(), as when no string is excused, and 1.2% without it
 DOOR_RANGE_IN = 20, 67   # the 0.5 to 1.7 m radius band behind the door recall figures in the build log
 QUARTER_MAX_DEG = 95     # Capitol quarter arcs measure 87 to 94 degrees, and the over-bulged ones from 97
 PEN_SHARE = 0.05         # the cut-wall pen held 12 to 46% of paired length on 11 sheets, and heavier pens such as sheet borders held none
@@ -42,6 +43,7 @@ PX_PER_M = 40.0          # raster resolution of the clinic route runs
 U = 0.9 * PX_PER_M       # one door width in pixels, the unit of every morphology size below
 MAX_RASTER = 60_000_000  # a small page at a very large printed scale would otherwise ask for gigabytes
 SNAP_M = 6.0             # the clinic's stair well boxes sit up to 4.3 m from walkable floor. Farther than this, a marker is not on this plan
+HOLLOW_M = 0.6           # space narrower than this is no room: hollow() fills it inside walls, and close_doors keeps a gap this narrow bridged. Set after seeing data: inside 3370's double-line walls with the hatch taken out the widest circle is 0.30 to 0.50 m, junctions included, and the narrowest enclosed room seen, an ADU closet, takes 0.65 m
 MIN_WALLED = 0.8
 MIN_ROOMS = 2            # a wrong pen can leave one room that everything reaches
 MIN_REACH = 0.8
@@ -64,6 +66,7 @@ PAPER_SCALE = re.compile(r"(?:(\d+)\s+)?(\d+)(?:/(\d+))?\s*\"\s*=\s*(\d+)\s*'(?:
 RATIO_SCALE = re.compile(r"(?<![\d/])(\d+)\s*:\s*(\d+)")
 WALL_LAYER = re.compile(r"(?i)^(?!.*(door|patt|hatch|htch)).*wall")
 HALL = re.compile(r"(?i)^(hall|hallway|corridor|corr\.?)$")
+OFF_SQUARE = math.tan(math.radians(5))   # the generated sets turn a plan square to its walls and leave lines up to 2.7 degrees off. At 5 degrees a width across the ray reads 0.4% wide
 
 
 def inches_per_pt(note: str) -> float | None:
@@ -160,16 +163,34 @@ def dimensions(lines, segs, layers, box):
     return rows
 
 
-def check_scale(dims, ipp, strict):
-    """(strings checked, reason to reject the scale or None). Dimension lines overrun their ticks by a fixed length, so that is fitted first.
-    Only a dimension layer shows that a line is a dimension line, so `strict` stops on one string. Without it the pairing is a guess, and only the median string can speak for the scale."""
-    if len(dims) < MIN_DIMS:
-        return 0, None
+def misses(dims, ipp):
+    """(the fitted overrun in inches, each string with the inches its drawn length misses its value by, largest miss first). Dimension lines overrun their ticks by a fixed length."""
     drawn = [(d["end"] - d["start"]) * ipp for d in dims]
     fit = statistics.median(a - d["inches"] for a, d in zip(drawn, dims))
-    worst = max(range(len(dims)), key=lambda i: abs(drawn[i] - fit - dims[i]["inches"]))
-    if abs(fit) > MAX_OVERRUN_PT * ipp or (strict and abs(drawn[worst] - fit - dims[worst]["inches"]) > SCALE_STOP_IN):
-        return len(dims), f"The printed scale disagrees with dimension {dims[worst]['text']}: drawn {drawn[worst] - fit:.1f} in, printed {dims[worst]['inches']:.1f} in."
+    return fit, sorted(((d, a - fit - d["inches"]) for a, d in zip(drawn, dims)), key=lambda m: -abs(m[1]))
+
+
+def slope_holds(dims, ipp):
+    """True if the median slope of drawn against printed length, over every pair of strings, misses 1 by under SCALE_STOP_IN over the longest string.
+    A scale error tilts every pair, and a drafting error or a wrong pairing moves one string, which the median does not follow."""
+    if len(dims) > STRING_MAX_DIMS:
+        return False   # past the cap no string is excused, because every pair is compared
+    p = np.array([d["inches"] for d in dims])
+    a = np.array([d["end"] - d["start"] for d in dims]) * ipp
+    i, j = np.triu_indices(len(dims), 1)
+    k = p[i] != p[j]
+    return bool(k.any()) and abs(np.median((a[j] - a[i])[k] / (p[j] - p[i])[k]) - 1) * p.max() <= SCALE_STOP_IN
+
+
+def check_scale(dims, ipp, strict):
+    """(strings checked, reason to reject the scale or None). Only a dimension layer shows that a line is a dimension line, so `strict` stops on a string that misses,
+    unless at most one string in ten misses and slope_holds() is True. Without the layer the pairing is a guess, and only the median string can speak for the scale."""
+    if len(dims) < MIN_DIMS:
+        return 0, None
+    fit, miss = misses(dims, ipp)
+    (worst, by), off = miss[0], sum(abs(m) > SCALE_STOP_IN for _, m in miss)
+    if abs(fit) > MAX_OVERRUN_PT * ipp or (strict and off and not (off <= SCALE_OUTLIERS * len(dims) and slope_holds(dims, ipp))):
+        return len(dims), f"The printed scale disagrees with dimension {worst['text']}: drawn {worst['inches'] + by:.1f} in, printed {worst['inches']:.1f} in."
     return len(dims), None
 
 
@@ -399,16 +420,19 @@ def wall_lines(plan):
 
 
 def crossings(walls, at, along_x):
-    """Sorted positions where wall lines cross a ray. `at` is the ray's fixed coordinate."""
+    """Sorted positions where wall lines square to a ray, or nearly, cross it, each on its own segment. `at` is the ray's fixed coordinate. A wall left out lets the ray run on to a farther one."""
     a = walls if along_x else walls[:, [1, 0, 3, 2]]
-    s = a[(np.abs(a[:, 0] - a[:, 2]) < 0.5) & (np.minimum(a[:, 1], a[:, 3]) - 0.5 <= at) & (at <= np.maximum(a[:, 1], a[:, 3]) + 0.5)]
-    return np.unique(np.round(s[:, 0], 1))
+    dx, dy = a[:, 2] - a[:, 0], a[:, 3] - a[:, 1]
+    s = (np.abs(dx) < np.maximum(0.5, OFF_SQUARE * np.abs(dy))) & (np.minimum(a[:, 1], a[:, 3]) - 0.5 <= at) & (at <= np.maximum(a[:, 1], a[:, 3]) + 0.5)
+    t = np.clip(np.divide(at - a[s, 1], dy[s], out=np.zeros(int(s.sum())), where=dy[s] != 0), 0, 1)   # the 0.5 pt slack would carry a short segment's line far past it
+    return np.unique(np.round(a[s, 0] + dx[s] * t, 1))
 
 
 def corridors(plan, walls, dims):
     """Clear width at each printed hall label, with the printed dimension that spans it. Printed widths on these sets run from wall centre to wall centre.
     A reading needs walls on both axes, since one bounded axis can be the hall's length. The width is the shorter axis, with a door gap counted as a bound, and that axis must cross no door:
-    a ray through an opening runs on to a far wall, and the long span would pass as a wide hall. A label with no reading keeps its row with clear_in None, so the check says Cannot tell.
+    a ray through an opening runs on to a far wall, and the long span would pass as a wide hall. A stair standing in the hall leaves the width beside it, see beside_stairs.
+    A label with no reading keeps its row with clear_in None, so the check says Cannot tell.
     shortcut: an opening too wide for close_doors, with no door arc, still reads as a long span, compare with a printed width if a set shows one.
     shortcut: needs a Hall or Corridor label in a text layer, so a sheet with no text layer gets none, read labels with Spark if the clinic's corridors must be checked."""
     labels = []
@@ -425,19 +449,57 @@ def corridors(plan, walls, dims):
         return out
     s, solid, closed, _ = raster
     gaps = closed & ~solid
+    drawn = plan.segs[(plan.segs[:, 6] != CURVE) & (plan.segs[:, 7] == 1)][:, :4]
     for row, (cx, cy) in zip(out, labels):
         spans = [ray_span(plan, walls, gaps, s, along_x, u, v) for along_x, u, v in ((True, cx, cy), (False, cy, cx))]
         if all(spans):
-            free, clear, along_x, middle, v = min(spans)
-            if free == clear:
-                near = [d for d in dims if d["along_x"] == along_x and d["start"] - 6 <= middle <= d["end"] + 6 and 30 <= d["inches"] <= 80 and abs(d["at"] - v) < 220]
-                row.update(clear_in=round(float(clear * plan.ipp), 1), printed_in=min(near, key=lambda d: abs(d["at"] - v))["inches"] if near else None)
+            width, length = sorted(spans)
+            free, clear, along_x, middle, v = width[:5]
+            clear_pt = beside_stairs(plan, walls, gaps, s, drawn, width, length[5:], cx if along_x else cy) if free == clear else None
+            if clear_pt is not None:
+                near = [d for d in dims if d["along_x"] == along_x and d["start"] - 6 <= middle <= d["end"] + 6 and 30 <= d["inches"] and abs(d["at"] - v) < 220] if clear_pt == clear else []   # a print runs wall to wall
+                row.update(clear_in=round(float(clear_pt * plan.ipp), 1), printed_in=min(near, key=lambda d: abs(d["at"] - v))["inches"] if near else None)
     return out
 
 
+def beside_stairs(plan, walls, gaps, s, drawn, width, along, u):
+    """The width at the label, or the narrowest way past a stair standing in the hall: on rays across the hall a raster pixel apart over the stair's stretch of it, from each wall to the first
+    drawn line on the way to it. The stair's box or point only says where to look, because a box from a mask can stop short of the stair. A ray that crosses nothing drawn there finds no stair,
+    and one not walled on both sides gives None, as does a stair with no ray between walls. `along` is the hall's stretch on the label's other ray, between doors or walls. Found and Check stairs both count.
+    shortcut: a ray through a door in the hall's wall is passed over, so a stair part standing only in front of a door goes unseen, measure to the door's jambs if a set shows one.
+    shortcut: rays stop at the stair's box, so a rail drawn past it goes unseen, as on 2828, where the read's box leaves out a rail that narrows the hall to 50.7 in against 51.5 read, widen the box if a real set shows one."""
+    _, clear, along_x, middle, _ = width[:5]
+    lo, hi = middle - clear / 2, middle + clear / 2
+    narrowest = clear
+    for stair in plan.stairs:
+        box = stair["point"][[0, 1, 0, 1]] if stair["box"] is None else stair["box"]
+        (a0, a1), (b0, b1) = (box[[0, 2]], box[[1, 3]]) if along_x else (box[[1, 3]], box[[0, 2]])   # across the hall, along it
+        if a1 < lo or a0 > hi or b1 < along[0] or b0 > along[1]:
+            continue
+        first, last = max(b0, along[0]), min(b1, along[1])
+        walled = 0
+        for at in np.linspace(first, last, int((last - first) * s) + 2):
+            there = ray_span(plan, walls, gaps, s, along_x, u, at)
+            if there is None:
+                return None
+            if there[0] != there[1]:
+                continue
+            walled += 1
+            lo2, hi2, c = there[5], there[6], (a0 + a1) / 2
+            p = crossings(drawn, at, along_x)
+            p = p[(p > lo2 + 0.5) & (p < hi2 - 0.5)]
+            near, far = p[p < c], p[p > c]
+            narrowest = min(narrowest, max(near.min() - lo2 if len(near) else 0.0, hi2 - far.max() if len(far) else 0.0) if len(p) else hi2 - lo2)
+        if not walled:
+            return None
+    return narrowest
+
+
 def ray_span(plan, walls, gaps, s, along_x, u, v):
-    """For the ray through u at fixed coordinate v: (span to the nearest door gap or wall each side, span between the nearest walls, along_x, the walls' middle, v), or None if walls do not bound it on both sides."""
+    """For the ray through u at fixed coordinate v: (span to the nearest door gap or wall each side, span between the nearest walls, along_x, the walls' middle, v, and where the first span starts and ends),
+    or None if walls do not bound it on both sides."""
     xs = crossings(walls, v, along_x)
+    xs = xs[(xs >= plan.box[0 if along_x else 1]) & (xs <= plan.box[2 if along_x else 3])]   # on a hostile page a crossing past the box can lie anywhere, and the samples below follow it
     before, after = xs[xs < u], xs[xs > u]
     if not len(before) or not len(after):
         return None
@@ -445,20 +507,24 @@ def ray_span(plan, walls, gaps, s, along_x, u, v):
     t = np.linspace(lo, hi, int((hi - lo) * s) + 2)
     x, y = np.round(to_raster(plan, np.c_[t, np.full(len(t), v)] if along_x else np.c_[np.full(len(t), v), t], s)).astype(int).T
     doors = t[gaps[np.clip(y, 0, gaps.shape[0] - 1), np.clip(x, 0, gaps.shape[1] - 1)]]
-    return doors[doors > u].min(initial=hi) - doors[doors < u].max(initial=lo), hi - lo, along_x, (lo + hi) / 2, v
+    start, end = doors[doors < u].max(initial=lo), doors[doors > u].min(initial=hi)
+    return end - start, hi - lo, along_x, (lo + hi) / 2, v, start, end
+
+
+def odd(k):
+    return max(1, int(k)) | 1   # an even kernel shifts OpenCV's opening and closing a pixel, and the door bridging then reached 2 px past one face of every wall 0.3 m thick or more
 
 
 def square(k):
-    n = max(1, int(k))
-    return np.ones((n, n), np.uint8)
+    return np.ones((odd(k), odd(k)), np.uint8)
 
 
 def wide(k):
-    return np.ones((1, max(1, int(k))), np.uint8)
+    return np.ones((1, odd(k)), np.uint8)
 
 
 def tall(k):
-    return np.ones((max(1, int(k)), 1), np.uint8)
+    return np.ones((odd(k), 1), np.uint8)
 
 
 def draw(segs, shape):
@@ -470,11 +536,16 @@ def draw(segs, shape):
 
 
 def close_doors(w, max_gap=1.35):
-    """Bridges collinear wall ends across door-sized gaps. Long runs only, so corridors between parallel walls stay open."""
+    """Bridges collinear wall ends across door-sized gaps. Long runs only, so corridors between parallel walls stay open. A wall 0.3 m thick or more is a long run across
+    itself as well, and two of them a hall apart get bridged along their whole shared length. A door's bridge reaches across only as far as its wall is thick, which is less than
+    the opening is wide, so a bridge that reaches across further than the gap it closes is a hall and is dropped. A gap narrower than HOLLOW_M is no hall."""
     w8 = w.astype(np.uint8)
-    h = cv2.morphologyEx(w8, cv2.MORPH_OPEN, wide(0.35 * U))
-    v = cv2.morphologyEx(w8, cv2.MORPH_OPEN, tall(0.35 * U))
-    return (w8 | cv2.morphologyEx(h, cv2.MORPH_CLOSE, wide(max_gap * U)) | cv2.morphologyEx(v, cv2.MORPH_CLOSE, tall(max_gap * U))) > 0
+    out = w8.copy()
+    for line, gap, across in ((wide, cv2.CC_STAT_WIDTH, cv2.CC_STAT_HEIGHT), (tall, cv2.CC_STAT_HEIGHT, cv2.CC_STAT_WIDTH)):
+        added = cv2.morphologyEx(cv2.morphologyEx(w8, cv2.MORPH_OPEN, line(0.35 * U)), cv2.MORPH_CLOSE, line(max_gap * U)) * (1 - w8)
+        _, lab, stats, _ = cv2.connectedComponentsWithStats(added, connectivity=4)
+        out |= added * ((stats[:, across] <= stats[:, gap]) | (stats[:, gap] < HOLLOW_M * PX_PER_M))[lab]
+    return out > 0
 
 
 def to_raster(plan, points, s):
@@ -488,9 +559,19 @@ def wall_raster(plan, walls):
     if shape[0] * shape[1] > MAX_RASTER:
         return None
     solid = cv2.morphologyEx(draw(to_raster(plan, walls.reshape(-1, 2), s).reshape(-1, 4), shape), cv2.MORPH_CLOSE, square(0.28 * PX_PER_M)) > 0
+    solid |= hollow(solid)
     doors = [(to_raster(plan, a["c"], s), to_raster(plan, a["shut"], s)) for a in plan.arcs]
     bars = draw(np.array([[*h, *e] for h, e in doors]).reshape(-1, 4), shape)
     return s, solid, close_doors(solid | (cv2.dilate(bars, square(3)) > 0)), doors
+
+
+def hollow(solid):
+    """The inside of walls drawn as two lines with no hatch: each enclosed free region too narrow anywhere for a circle of HOLLOW_M. As free space it reads as a room nobody reaches."""
+    free = (~solid).astype(np.uint8)
+    n, lab = cv2.connectedComponents(free, connectivity=4)
+    narrow = 2 * ndi.maximum(cv2.distanceTransform(free, cv2.DIST_L2, 3), lab, np.arange(n)) < HOLLOW_M * PX_PER_M
+    narrow[np.unique(np.r_[lab[0], lab[-1], lab[:, 0], lab[:, -1]])] = False   # free space at the raster's edge is outside the walls
+    return narrow[lab]
 
 
 def footprint(closed, gap=9.0):
@@ -586,13 +667,14 @@ class Plan:
     entry: dict
     ipp: float | None = None
     arcs: list = field(default_factory=list)
+    stairs: list = field(default_factory=list)   # stairs_on rows, for the width beside a stair standing in a hall
 
     def px(self, point):
         return [round(float(point[0]) * self.px_per_pt), round(float(point[1]) * self.px_per_pt)]
 
 
 def blank(reason=None):
-    return {"scale_in_per_pt": None, "scale_checked": 0, "doors": [], "routes": [], "corridors": [], "strings": [], "skipped": reason}
+    return {"scale_in_per_pt": None, "scale_checked": 0, "scale_outliers": [], "doors": [], "routes": [], "corridors": [], "strings": [], "skipped": reason}
 
 
 def plan_boxes(row, width, height, px_per_pt):
@@ -621,11 +703,14 @@ def measure(plan, row):
     if plan.ipp is None:
         entry["skipped"] = "No drawing scale was read for this sheet."
         return
-    entry["scale_checked"], problem = check_scale(dims, plan.ipp, any("dim" in name.lower() for name in plan.layers))
+    strict = any("dim" in name.lower() for name in plan.layers)
+    entry["scale_checked"], problem = check_scale(dims, plan.ipp, strict)
     if problem:
         entry["skipped"], plan.ipp = problem, None
         return
     entry["scale_in_per_pt"] = plan.ipp
+    if strict and entry["scale_checked"]:   # the few strings a standing scale misses, named for the examiner
+        entry["scale_outliers"] = [f"{d['text']}: drawn {d['inches'] + m:.1f} in, printed {d['inches']:.1f} in" for d, m in misses(dims, plan.ipp)[1] if abs(m) > SCALE_STOP_IN]
     plan.segs = clip(plan.segs, plan.box)
     plan.arcs = door_arcs(plan.segs[plan.segs[:, 6] != OUTLINE][:, :4], plan.ipp)
     entry["doors"] = [{"point": plan.px((a["c"] + a["shut"]) / 2), "width_in": round(door_width(a) * plan.ipp, 1), "hinge": plan.px(a["c"])} for a in plan.arcs]
@@ -669,12 +754,12 @@ def marker_ends(i, plans, rows, exits):
     return ends, problem
 
 
-def stairs_on(i, plan, verticals):
-    """Each stair found on sheet i, in points. A check cell may be a stair that is gone, and a route must not end on it."""
+def stairs_on(i, plan, verticals, states=("found",)):
+    """Each stair on sheet i in one of `states`, in points. A check cell may be a stair that is gone, and a route must not end on it."""
     out = []
     for v in verticals:
         cell = v.get("floors", {}).get(str(i)) or {}
-        if cell.get("state") == "found" and (cell.get("box") or cell.get("point")):
+        if cell.get("state") in states and (cell.get("box") or cell.get("point")):
             box = np.array(cell["box"], float) / plan.px_per_pt if cell.get("box") else None
             point = np.array(cell["point"], float) / plan.px_per_pt if cell.get("point") else box[:2] / 2 + box[2:] / 2
             out.append({"name": f"Stair {v['id']}", "source": "matrix", "point": point, "box": box})
@@ -803,6 +888,7 @@ def measure_all(job, folder):
         for i in job["plans"]:
             try:
                 plan = open_plan(doc[i], sheets[i], rows[i])
+                plan.stairs = stairs_on(i, plan, verticals, ("found", "check"))   # a stair the matrix could not confirm may still stand in a hall
                 measure(plan, rows[i])
                 save(folder, i, plan.entry)
             except Exception:   # one bad page must not cost the rest, and that includes a value json refuses

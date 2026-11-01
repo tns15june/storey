@@ -612,14 +612,24 @@ def _stair_discharge(r):
 
 
 def _single_exit(r, story):
-    """The rows that let this story use one exit, or None. A group nobody read unlocks nothing."""
+    """The rows that let this story use one exit, or None. A group or a load nobody read unlocks nothing."""
     rows = []
     for group in r.groups:
         row = r.sprinkler_row("ibc.1006.3.4.t1", story=story) if group == "R-2" else _lookup("ibc.1006.3.4.t2", r.jurisdiction, occupancy=group, story=story)
-        if row is None or row["value"] == "NP" or (group != "R-2" and r.load > row["value"]):
+        if row is None or row["value"] == "NP" or (group != "R-2" and (r.load is None or r.load > row["value"])):
             return None
         rows.append(row)
     return rows or None
+
+
+def _short_floors(r, rows, table):
+    """(sheet, found cells, cells to confirm, the rows that let it use one exit or None) for each storey above discharge with fewer found stairs than its load needs."""
+    above = r.order[r.order.index(r.discharge) + 1:]
+    for story, i in enumerate((i for i in above if not NOT_A_STOREY.search(r.floor(i))), 2):
+        cells = [row["floors"].get(str(i)) or {} for row in rows]
+        found, unsure = [c for c in cells if c.get("state") == "found"], [c for c in cells if c.get("state") == "check"]
+        if len(found) < table["value"]:
+            yield i, found, unsure, _single_exit(r, story) if found else None
 
 
 def _exits_per_floor(r):
@@ -634,13 +644,7 @@ def _exits_per_floor(r):
         r.add(11, "Exits per floor were not compared", severity="unknown", measured=why, required="Stairs against the exits the load requires", evidence="Stair matrix.", thing="exits")
         return
     conditional = []
-    above = r.order[r.order.index(r.discharge) + 1:]
-    for story, i in enumerate((i for i in above if not NOT_A_STOREY.search(r.floor(i))), 2):
-        cells = [row["floors"].get(str(i)) or {} for row in rows]
-        found, unsure = [c for c in cells if c.get("state") == "found"], [c for c in cells if c.get("state") == "check"]
-        if len(found) >= table["value"]:
-            continue
-        allowed = _single_exit(r, story) if found else None
+    for i, found, unsure, allowed in _short_floors(r, rows, table):
         if allowed is None:
             r.add(11, f"Too few stairs on {r.floor(i)}", sheet=i, severity="check", measured=f"{len(found)} found and {len(unsure)} to confirm.", required=f"{table['value']} exits for a load of {r.load}", section=_section(table), evidence=_crops([*found, *unsure]), thing="exits")
         elif any(row.get("confirm") for row in allowed):
@@ -693,22 +697,48 @@ def _unmeasured(r, check, what, floors, required):
               required=required, evidence=VECTOR, thing=f"{what} {why}")
 
 
+def _one_exit_rows(r):
+    """{sheet: the single exit row with the shortest travel limit, its value made that limit} for each floor that may use one exit: the level of exit discharge
+    wherever the rows allow it, because its exits are doors, which are never counted, and each floor above that check 11 finds using its one found stair because the rows allow it."""
+    if r.discharge is None:
+        return {}
+    rows = [row for row, *_ in _established(r)]
+    table = _lookup("ibc.1006.3.3", r.jurisdiction, occupant_load=r.load) if rows else None
+    floors = [(r.discharge, _single_exit(r, 1))]
+    if table:
+        floors += [(i, allowed) for i, _, _, allowed in _short_floors(r, rows, table)]
+    out = {}
+    for i, allowed in floors:
+        travel = [row for row in allowed or () if isinstance(row["value"], dict)]   # only Table 1006.3.4(1) rows carry a travel limit
+        if travel:
+            row = min(travel, key=lambda row: row["value"]["max_exit_access_travel"])
+            out[i] = row | {"value": row["value"]["max_exit_access_travel"]}
+    return out
+
+
 def _travel(r):
     floors = _floors_measured(r)
-    limit = _strictest([r.sprinkler_row("ibc.1017.2", occupancy=g) for g in r.groups], min) if any(entry.get("routes") for _, entry in floors) else None   # only a route compared uses a sprinkler value
+    routed = any(entry.get("routes") for _, entry in floors)   # only a route compared uses a sprinkler value
+    limit = _strictest([r.sprinkler_row("ibc.1017.2", occupancy=g) for g in r.groups], min) if routed else None
+    one_exit = _one_exit_rows(r) if limit and limit["value"] != "NP" else {}
     _unmeasured(r, 13, "Travel distance", [(i, entry.get("skipped") or "No route was traced.") for i, entry in floors if not entry.get("routes")], "A vector plan with route ends")
     for i, entry in floors:
+        single = one_exit[i] if i in one_exit and one_exit[i]["value"] < limit["value"] else None   # the stricter limit wins
+        here = limit if single is None or i == r.discharge else single
         for route in entry.get("routes") or ():
             length = route["length_ft"]
             xs, ys = zip(*route["path"])
             where = {"sheet": i, "box": [min(xs), min(ys), max(xs), max(ys)], "measured": f"at least {length:g} ft along the drawn route", "evidence": ROUTE_EVIDENCE, "thing": "route"}
             title = f"Travel distance from {route.get('from_room')} to {route.get('to_exit')}"
-            if limit is None:
+            if here is None:
                 r.add(13, title, severity="unknown", required="A declared occupancy, which sets the limit", **where)
-            elif limit["value"] == "NP":
-                r.add(13, title, required=_required("Exit access travel is not permitted at this occupancy and sprinkler status.", limit), section=_section(limit), **where)
-            elif length >= ROUTE_MARGIN * limit["value"]:
-                r.add(13, title, required=_required(f"{limit['value']} ft limit", limit), section=_section(limit), **where)
+            elif here["value"] == "NP":
+                r.add(13, title, required=_required("Exit access travel is not permitted at this occupancy and sprinkler status.", here), section=_section(here), **where)
+            elif length >= ROUTE_MARGIN * here["value"]:
+                r.add(13, title, required=_required(f"{here['value']} ft limit", here), section=_section(here), **where)
+            elif single and length >= ROUTE_MARGIN * single["value"]:   # the level of exit discharge
+                r.add(13, title, severity="unknown", required=_required(f"{single['value']} ft limit if this story has one exit. Its exits are doors, which are not counted.", single),
+                      section=_section(single), **(where | {"thing": "one exit route"}))
 
 
 def _corridors(r):

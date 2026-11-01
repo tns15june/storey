@@ -1403,6 +1403,32 @@ def test_mixed_occupancy_takes_the_strictest_limit():
     assert "300" in only(s, 13)["required"]   # B at 300 ft, S-2 at 400 ft
 
 
+def test_a_floor_using_one_exit_meets_the_single_exit_travel_limit():
+    """One stair and a 100 ft route on every floor of a sprinklered R-2 building: under the 187.5 ft that Table 1017.2 asks at, over the 93.75 ft of the 125 ft single exit row.
+    Houston lets stories 2 and 3 use one exit and Seattle stories 2 to 5. The level of exit discharge has its own item, because its exits are doors, which are never counted."""
+    s, order = r2_stairs(base())
+    houston = [f for f in raised(s, 13) if f["severity"] == "check"]
+    assert sorted(f["sheet"] for f in houston) == order[1:3]
+    assert all("125 ft" in f["required"] and "Examiner to confirm" in f["required"] and "Table 1006.3.4(1)" in f["rule"] for f in houston)
+    seattle = [f for f in raised(s, 13, jurisdiction="seattle") if f["severity"] == "check"]
+    assert sorted(f["sheet"] for f in seattle) == order[1:]
+    assert "item 7" in next(f for f in seattle if f["sheet"] == order[4])["rule"] and "Seattle" in seattle[0]["rule"]
+    with_stairs(s, stair("A", *["found"] * 5, order=order), stair("B", *["found"] * 5, pos=(4000.0, 800.0), order=order))
+    assert [f["sheet"] for f in raised(s, 13)] == [f["sheet"] for f in raised(s, 13, jurisdiction="seattle")] == [order[0]]   # two stairs, so above discharge no floor uses one exit
+
+
+@pytest.mark.parametrize("city", ["houston", "seattle"])
+def test_a_long_route_on_the_level_of_exit_discharge_asks_how_many_exits_it_has(city):
+    """The first story of a sprinklered R-2 building may use one exit in both cities, and the 100 ft route is over 75% of that row's 125 ft but not of Table 1017.2's 250 ft."""
+    s, order = r2_stairs(base())
+    f = only(with_stairs(s), 13, jurisdiction=city)   # no stair rows, as in a building of one storey
+    assert f["sheet"] == order[0] and f["severity"] == "unknown" and "one exit" in f["required"] and "125 ft" in f["required"] and "Examiner to confirm" in f["required"]
+    assert "Table 1006.3.4(1)" in f["rule"] and "100 ft" in f["measured"]
+    assert raised(s, 13, jurisdiction=city, sprinklers="no") == []   # no single exit row without sprinklers, and 100 ft is under 75% of 200 ft
+    s["vector"]["sheets"][str(order[0])]["routes"] = [route(93.0)]
+    assert raised(s, 13, jurisdiction=city) == []
+
+
 # Check 14
 
 
