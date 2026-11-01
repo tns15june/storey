@@ -287,9 +287,17 @@ def test_schedule_with_no_header_row_is_not_read():
     assert schedules([line("DOOR SCHEDULE", 100, 200, 18.9), line("See sheet A6.0", 100, 240, 9.6)]) == []
 
 
-def test_schedules_side_by_side_at_one_height_are_each_read():
-    level = [x for n, mark in enumerate(("101", "201", "301")) for x in table(f"FLOOR {n + 1} DOOR SCHEDULE", ["MARK", "SIZE", "SWING"], [[mark, "36", "LEFT"]], x=70 + 760 * n)]
-    assert [s["rows"][0]["MARK"] for s in schedules(level)] == ["101", "201", "301"]
+@pytest.mark.parametrize("step", [760, 600, 400, 250, 210])   # a table here is 170 pt wide, so 210 leaves 40 pt between tables
+def test_schedules_side_by_side_at_one_height_are_each_read_with_only_their_own_cells(step):
+    level = [x for n, mark in enumerate(("101", "201", "301", "401", "501")) for x in table(f"DOOR SCHEDULE {n + 1}", ["MARK", "SIZE", "SWING"], [[mark, "36", "LEFT"], [f"{mark[0]}02", "34", "RIGHT"]], x=70 + step * n)]
+    got = schedules(level)
+    assert [[(r["MARK"], r["SIZE"]) for r in s["rows"]] for s in got] == [[(f"{n}01", "36"), (f"{n}02", "34")] for n in range(1, 6)]
+    assert {tuple(s["cols"]) for s in got} == {("MARK", "SIZE", "SWING")}
+
+
+def test_schedules_side_by_side_at_different_heights_end_where_the_first_column_is_printed_again():
+    level = table("DOOR SCHEDULE", ["MARK", "SIZE", "SWING"], [["1", "36", "LEFT"]], x=70) + table("DOOR SCHEDULE", ["MARK", "SIZE", "SWING"], [["2", "34", "RIGHT"]], x=280, y=230)
+    assert [(s["cols"], s["rows"][0]["MARK"], s["rows"][0]["SIZE"]) for s in schedules(level)] == [(["MARK", "SIZE", "SWING"], "1", "36"), (["MARK", "SIZE", "SWING"], "2", "34")]
 
 
 def test_schedule_two_headings_name_is_read_once():

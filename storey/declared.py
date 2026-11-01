@@ -426,22 +426,27 @@ def drawing_labels(lines, width):
 
 
 def schedules(lines):
-    """Each door, window and finish schedule as kind, title, cols, rows and box. Cells go to the nearest column centre."""
+    """Each door, window and finish schedule as kind, title, cols, rows and box. Cells go to the nearest column centre.
+    A table ends where the one beside it starts: at the next schedule heading on its line, or where its first column is printed again."""
     across = [x for x in lines if x["dir"] == [1, 0]]
+    titles = [x for x in across if x["size"] >= 9 and len(x["t"]) < 60 and any(p.search(x["t"]) for p in SCHEDULE_KINDS.values())]
     out, seen = [], set()
     for kind, title in SCHEDULE_KINDS.items():
         for t in across:
             if not (title.search(t["t"]) and t["size"] >= 9 and len(t["t"]) < 60):
                 continue
-            near = [x for x in across if t["y0"] < x["y0"] < t["y0"] + 95 and t["x0"] - 40 < x["x0"] < t["x0"] + 720 and x is not t]
+            end = min([o["x0"] - 30 for o in titles if abs(o["y0"] - t["y0"]) < t["size"] and o["x0"] > t["x0"] + 40] + [t["x0"] + 720])
+            near = [x for x in across if t["y0"] < x["y0"] < t["y0"] + 95 and t["x0"] - 40 < x["x0"] < end and x is not t]
             head = next((r for r in rows_of(near) if r[0]["t"].upper() in FIRST_COLUMN and len(r) >= 3), None)
             # two headings can name one table, and tables side by side share a height, so a table is known by its header's first cell
             if head is None or (key := (kind, round(head[0]["x0"]), round(head[0]["y0"]))) in seen:
                 continue
             seen.add(key)
+            end = min([c["x0"] - 30 for c in head[1:] if c["t"].upper() == head[0]["t"].upper()] + [end])
+            head = [c for c in head if c["x0"] < end]
             head = [c for i, c in enumerate(head) if i == 0 or c["x0"] - head[i - 1]["x1"] < 150]   # a stray callout on the header row is not a column
             cols = [(c["t"].upper(), (c["x0"] + c["x1"]) / 2) for c in head]
-            xmin, xmax = head[0]["x0"] - 30, head[-1]["x1"] + 130
+            xmin, xmax = head[0]["x0"] - 30, min(head[-1]["x1"] + 130, end)
             body = [x for x in across if x["y0"] > head[0]["y0"] + 3 and xmin < x["x0"] < xmax and x["size"] <= head[0]["size"] + 1]
             rows, last = [], head[0]["y0"]
             for r in rows_of(body):
