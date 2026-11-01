@@ -67,6 +67,7 @@ def draw_plan(page, doors=(420, 500, 560, 610, 655, 700), dx=0, dy=0, shut=(), d
 
 GOOD = (("33'-4\"", 400, 600), ("16'-8\"", 200, 620), ("8'-4\"", 100, 640))
 BAD = (*GOOD, ("10'-2\"", 120, 660))   # drawn 120 in long and labelled 122 in
+STRING = (("10'-6\"", 177, 372, 680), ("4'-0\"", 357, 435, 680), ("14'-0\"", 177, 435, 700))
 
 
 def write_fixture():
@@ -91,7 +92,19 @@ def write_fixture():
     draw_notched(doc.new_page(width=WIDTH, height=HEIGHT))                                           # 12 a U-shaped building
     half = doc.new_page(width=WIDTH, height=HEIGHT)                                                  # 13 page 4 at half size, as a life safety sheet at another scale
     half.show_pdf_page(pymupdf.Rect(HALF_X, HALF_Y, HALF_X + WIDTH / 2, HALF_Y + HEIGHT / 2), pymupdf.open("pdf", doc.tobytes()), 4)
+    draw_plan(doc.new_page(width=WIDTH, height=HEIGHT), doors=(420,), dims=GOOD, layer=dim)          # 14 a dimension string 6 in over its overall
+    draw_string(doc[14], dim)
     return doc.tobytes(garbage=4, deflate=True, no_new_id=True)
+
+
+def draw_string(page, layer):
+    """Capitol A2.1's rear stair: the 10'-6" runs 6 in past the landing and overlaps the 4'-0". Each value matches its own drawn length, and each line overruns its ticks by 3 pt."""
+    shape = page.new_shape()
+    for text, x0, x1, y in STRING:
+        shape.draw_line((x0, y), (x1, y))
+        shape.finish(color=(0, 0, 0), width=0.12, oc=layer)
+        page.insert_text(((x0 + x1) / 2 - 10, y - 4), text, fontsize=8)
+    shape.commit()
 
 
 def draw_hall(page, right=((189, 531),), oc=0):
@@ -676,3 +689,148 @@ def test_scale_notes_that_give_no_scale(note):
 @pytest.mark.parametrize("text, inches", [("14'-6 1/2\"", 174.5), ("8'-0\"", 96), ("8’-0”", 96), ("A5.0", None), ("3'-9 1/0\"", None)])
 def test_feet_and_inches(text, inches):
     assert vector.parse_ftin(text) == inches
+
+
+def dim(text, start, end, at=100.0, along_x=True):
+    """One row of dimensions()."""
+    return {"text": text, "inches": vector.parse_ftin(text), "along_x": along_x, "start": float(start), "end": float(end), "at": float(at)}
+
+
+def strings(*dims, px_per_pt=1.0):
+    return vector.dimension_strings(list(dims), vector.Plan(np.zeros((0, 8)), [], [], px_per_pt, (0, 0, 9, 9), None, vector.blank()))
+
+
+OVERALL = dim("14'-0\"", 0, 258)                # 168 in at 1.5 pt per inch, plus 3 pt of overrun at each end
+MEET = dim("7'-0\"", 0, 132, at=60), dim("7'-0\"", 126, 258, at=60)   # neighbours that meet overlap by the two overruns
+MEETING = tuple(dim("1'-0\"", x, x + 24, at=500) for x in (1000, 1018, 1036, 1054))   # neighbours far from the rest, so the sheet meets at -6 pt
+
+
+def test_string_over_its_overall_is_recorded():
+    assert strings(OVERALL, dim("10'-6\"", 0, 195, at=60), dim("4'-0\"", 180, 258, at=60)) == [
+        {"parts": ["10'-6\"", "4'-0\""], "sum_in": 174, "overall": "14'-0\"", "box": [0, 60 - vector.BESIDE_PT, 258, 60 + vector.BESIDE_PT]}]
+
+
+def test_string_that_adds_up_is_not_recorded():
+    assert strings(OVERALL, *MEET) == []
+
+
+def test_string_with_one_value_wrong_is_recorded():
+    assert strings(OVERALL, dim("7'-0\"", 0, 132, at=60), dim("7'-3\"", 126, 258, at=60))[0]["sum_in"] == 171
+
+
+@pytest.mark.parametrize("second, recorded", [("7'-0 1/2\"", False), ("7'-1\"", True), ("6'-11 1/2\"", False), ("6'-11\"", True)], ids=["half over", "one over", "half under", "one under"])
+def test_a_miss_of_half_an_inch_is_rounding(second, recorded):
+    assert bool(strings(OVERALL, dim("7'-0\"", 0, 132, at=60), dim(second, 126, 258, at=60))) is recorded
+
+
+@pytest.mark.parametrize("start, end, recorded", [(0, 258, True), (0.7, 258, True), (0, 257.3, True), (0, 258.7, True), (0.8, 258, False), (0, 257.2, False), (0, 258.8, False), (1.5, 258, False), (3, 255, False)],
+                         ids=["both meet", "start under half an inch short", "end under half an inch short", "end under half an inch past", "start over half an inch short",
+                              "end over half an inch short", "end over half an inch past", "start an inch short", "both stop short"])
+def test_a_string_must_meet_both_ends_of_its_overall(start, end, recorded):
+    """Both ends, to under 1/2 in by the overall's own drawn length, here 0.77 pt. A string that stops shorter than that and prints that much less is drawn correctly."""
+    assert bool(strings(OVERALL, dim("10'-6\"", start, 195, at=60), dim("4'-0\"", 180, end, at=60))) is recorded
+
+
+def test_ends_and_holes_are_measured_in_inches_at_any_scale():
+    """At 1/8" = 1'-0" an inch is 0.75 pt, under the 1.5 pt that held at 1/4". The Capitol and Baxter pairs that stop 1 in short of an 8'-1" and print 1 in less are drawn correctly."""
+    whole = dim("8'-1\"", 0, 78.75)   # 97 in at 0.75 pt per inch, plus 3 pt of overrun at each end
+    assert strings(whole, dim("4'-0\"", 0, 42, at=60), dim("4'-0\"", 36, 78, at=60), *MEETING) == []
+    assert strings(whole, dim("4'-0\"", 0, 42, at=60), dim("4'-0\"", 36.75, 78.75, at=60), *MEETING) == []
+    assert strings(whole, dim("4'-0\"", 0, 42, at=60), dim("4'-3\"", 36, 78.75, at=60), *MEETING)[0]["sum_in"] == 99
+
+
+def test_a_small_value_on_a_long_line_keeps_the_point_limit():
+    """A 0'-1" paired with a 258 pt line would allow 129 pt at each end, and a 0'-0" gives no scale at all. The part here starts 3 pt in."""
+    parts = dim("10'-6\"", 3, 195, at=60), dim("4'-0\"", 180, 258, at=60)
+    assert strings(dim("0'-1\"", 0, 258), *parts) == [] and strings(dim("0'-0\"", 0, 258), *parts) == []
+
+
+def test_a_parts_line_that_runs_past_both_ends_of_its_overall_still_holds_its_string():
+    """Capitol A2.1: the line under the 14'-0" carries on past both of its ends, as the 8'-7" there does past the 4'-0"."""
+    line = dim("2'-0\"", -42, 6, at=60), dim("10'-6\"", 0, 195, at=60), dim("4'-0\"", 180, 258, at=60), dim("8'-7\"", 252, 412, at=60)
+    assert [s["parts"] for s in strings(OVERALL, *line)] == [["10'-6\"", "4'-0\""]]
+
+
+def test_a_line_along_the_other_axis_holds_no_string():
+    assert strings(OVERALL, dim("10'-6\"", 0, 195, at=60, along_x=False), dim("4'-0\"", 180, 258, at=60, along_x=False)) == []
+
+
+def test_a_sheet_past_the_cap_has_no_strings(monkeypatch):
+    monkeypatch.setattr(vector, "STRING_MAX_DIMS", 2)
+    assert strings(OVERALL, dim("10'-6\"", 0, 195, at=60), dim("4'-0\"", 180, 258, at=60)) == []
+
+
+def test_one_part_is_no_string():
+    assert strings(OVERALL, dim("13'-0\"", 0, 258, at=60)) == []
+
+
+def test_parts_on_two_lines_are_not_one_string():
+    assert strings(OVERALL, dim("10'-6\"", 0, 195, at=60), dim("4'-0\"", 180, 258, at=70)) == []
+
+
+def test_parts_a_point_apart_are_one_line():
+    assert len(strings(OVERALL, dim("10'-6\"", 0, 195, at=60), dim("4'-0\"", 180, 258, at=61))) == 1
+
+
+def test_a_gap_past_the_overlap_limit_is_no_string():
+    """The sheet meets at -6 pt, and this part runs 25 pt over the next one."""
+    assert strings(OVERALL, dim("11'-0\"", 0, 205, at=60), dim("4'-0\"", 180, 258, at=60), *MEETING) == []
+
+
+def test_a_hole_in_a_string_is_no_string():
+    """Baxter X1.0: two ticks 4.2 pt apart inside a party wall, so the parts do not span the overall and their sum need not reach it. Neighbours elsewhere set what meeting looks like."""
+    hole = dim("6'-9\"", 0, 127.8, at=60), dim("7'-0\"", 126, 258, at=60)
+    assert strings(OVERALL, *hole, *(dim("1'-0\"", x, x + 24, at=500) for x in (0, 18, 36, 54))) == []
+
+
+def test_what_meeting_looks_like_comes_from_the_sheet():
+    """BCOE and the ADU sets end a dimension line at its tick, so their neighbours meet at 0 pt and a gap of 3 pt is a hole there too."""
+    flat = [dim("1'-0\"", x, x + 18, at=500) for x in (0, 18, 36, 54)]
+    wrong = dim("6'-9\"", 0, 126, at=60), dim("7'-0\"", 126, 252, at=60)
+    whole = dim("14'-0\"", 0, 252)
+    assert len(strings(whole, *wrong, *flat)) == 1
+    assert strings(whole, dim("6'-9\"", 0, 124, at=60), dim("7'-0\"", 127, 252, at=60), *flat) == []
+
+
+def test_two_neighbours_on_a_sheet_keep_an_observed_gap():
+    """A midpoint of -15 and -6 would read the -6 as a hole."""
+    assert len(strings(OVERALL, dim("10'-6\"", 0, 195, at=60), dim("4'-0\"", 180, 258, at=60), dim("7'-3\"", 0, 132, at=40), dim("7'-0\"", 126, 258, at=40))) == 2
+
+
+def test_a_string_printed_twice_is_one_row():
+    assert len(strings(OVERALL, *(dim(text, a, b, at=at) for at in (60, 500) for text, a, b in (("10'-6\"", 0, 195), ("4'-0\"", 180, 258))))) == 1
+
+
+def test_bold_text_printed_on_top_of_itself_is_one_part():
+    part = dim("10'-6\"", 0, 195, at=60)
+    assert strings(OVERALL, OVERALL, part, part, dim("4'-0\"", 180, 258, at=60))[0]["sum_in"] == 174
+
+
+def test_a_string_along_y_has_its_box_across_the_line():
+    rows = [dim(text, a, b, at, along_x=False) for text, a, b, at in (("14'-0\"", 10, 268, 700), ("10'-6\"", 10, 205, 660), ("4'-0\"", 190, 268, 660))]
+    assert strings(*rows, px_per_pt=2.0)[0]["box"] == [2 * (660 - vector.BESIDE_PT), 20, 2 * (660 + vector.BESIDE_PT), 536]
+
+
+def test_a_sheet_with_no_neighbours_has_no_strings():
+    assert strings(OVERALL) == [] and strings() == []
+
+
+def recorded(ctx):
+    return vector.vector_stage(ctx)["sheets"][14]
+
+
+def test_bad_string_reaches_the_stage_result(review):
+    entry = recorded(review([sheet(14)], [row(14)], **NO_EXITS))
+    assert entry["scale_in_per_pt"] and [(s["parts"], s["sum_in"], s["overall"]) for s in entry["strings"]] == [(["10'-6\"", "4'-0\""], 174, "14'-0\"")]
+    x0, y0, x1, y1 = entry["strings"][0]["box"]
+    assert (x0, x1) == (177 * PX_PER_PT, 435 * PX_PER_PT) and y0 < 680 * PX_PER_PT < y1
+
+
+@pytest.mark.parametrize("scale, reason", [("", "No drawing scale"), (EIGHTH, "disagrees")], ids=["no note", "wrong note"])
+def test_a_string_needs_no_scale(review, scale, reason):
+    entry = recorded(review([sheet(14)], [row(14, scale=scale)], **NO_EXITS))
+    assert reason in entry["skipped"] and entry["scale_in_per_pt"] is None and len(entry["strings"]) == 1
+
+
+def test_a_sheet_the_stage_does_not_open_has_no_strings(review):
+    assert recorded(review([sheet(14)], [row(14, cls="elevation")], **NO_EXITS))["strings"] == []

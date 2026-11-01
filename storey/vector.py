@@ -50,6 +50,12 @@ REGISTER_SHARE = 0.3
 MINIMUM = "Minimum. Examiner to confirm."
 UNNAMED = "Unnamed room"
 MAX_NAME = 60            # this text comes from the upload and goes on screen and into the letter
+BESIDE_PT = 22           # how far a dimension's text can sit from its line
+STRING_LINE_PT = 2       # dimension lines this close are one line
+STRING_END_PT = 1.5      # the most an end may miss in points whatever its overall prints, so a small value paired with a long line cannot take in a far string. Set after seeing the data: at 5 pt Baxter raised dozens of false pairs on party walls
+STRING_GAP_PT = -20, 3   # next start minus last end. Set after seeing Capitol, where a part drawn 6 in over its neighbour reads -14.9
+STRING_ROUNDING_IN = 0.5 # values print to 1/2 in, and the Capitol audit rules a miss of 1/2 in as rounding
+STRING_MAX_DIMS = 2000   # shortcut: a sheet with more dimension rows gets no strings, because each row is compared with every line, 0.15 s at 2,000 and 2.7 s at 8,000, index the lines by position if a real sheet holds this many. The most seen is 133
 
 LINE, CURVE, OUTLINE = range(3)
 QUOTES = str.maketrans({"’": "'", "‘": "'", "′": "'", "”": '"', "“": '"', "″": '"'})
@@ -145,7 +151,7 @@ def dimensions(lines, segs, layers, box):
             continue
         s, u, v = (across[0], cx, cy) if along_x else (across[1], cy, cx)
         lo, hi = np.minimum(s[:, 0], s[:, 2]), np.maximum(s[:, 0], s[:, 2])
-        beside = (lo - 1 <= u) & (u <= hi + 1) & (np.abs(s[:, 1] - v) < 22)
+        beside = (lo - 1 <= u) & (u <= hi + 1) & (np.abs(s[:, 1] - v) < BESIDE_PT)
         if beside.any():
             off = np.abs(s[:, 1] - v)
             near = np.flatnonzero(beside & (off <= off[beside].min() + 0.5))
@@ -165,6 +171,47 @@ def check_scale(dims, ipp, strict):
     if abs(fit) > MAX_OVERRUN_PT * ipp or (strict and abs(drawn[worst] - fit - dims[worst]["inches"]) > SCALE_STOP_IN):
         return len(dims), f"The printed scale disagrees with dimension {dims[worst]['text']}: drawn {drawn[worst] - fit:.1f} in, printed {dims[worst]['inches']:.1f} in."
     return len(dims), None
+
+
+def dimension_strings(dims, plan):
+    """Each run of shorter dimensions on one line that spans an overall and prints a different length, once per parts and overall because plans print a string twice. Needs no scale.
+    Neighbours that meet overlap by the lines' overruns, and that is a drawing style: -6 pt on the Michigan sets, 0 on BCOE and the ADUs, so the sheet's median says what meeting looks like.
+    Past it one length is dimensioned twice, as in audit items T37 and T38. Short of it the string has a hole, as on Baxter X1.0 inside a party wall, so its sum need not reach the overall.
+    shortcut: any parallel line can hold a string, so on Capitol A2.2 a front wall string 485 pt from a kitchen width misses one of its ends by only 1 in. The nearest line alone
+    would compare 1 string on Baxter A2.1 where this compares 9, so ask for it only if a real sheet raises a far one."""
+    rows = {(d["along_x"], d["at"], d["start"], d["end"], d["text"]): d for d in dims}.values()   # bold text is printed on top of itself
+    if len(rows) > STRING_MAX_DIMS:
+        return []
+    lines = []
+    for d in sorted(rows, key=lambda d: (d["along_x"], d["at"])):
+        if lines and lines[-1][0]["along_x"] == d["along_x"] and d["at"] - lines[-1][0]["at"] < STRING_LINE_PT:
+            lines[-1].append(d)
+        else:
+            lines.append([d])
+    for line in lines:
+        line.sort(key=lambda d: d["start"])
+    between = lambda parts: [b["start"] - a["end"] for a, b in zip(parts, parts[1:])]
+    low, high = STRING_GAP_PT
+    gaps = [gap for line in lines for gap in between(line) if low <= gap <= high]
+    if not gaps:
+        return []
+    meet = statistics.median_high(gaps)   # an observed gap: a midpoint on a sheet with few neighbours can read a real meeting as a hole
+    found = {}
+    for whole in rows:
+        length = whole["end"] - whole["start"]
+        # Ends and holes may miss by under the rounding, by the overall's own length, so at any scale a string drawn short raises nothing. That length holds both
+        # overruns, which loosens a short overall: a 1'-0" at 1/4" = 1'-0" reads 2 pt to the inch, not 1.5.
+        end = min(STRING_END_PT, STRING_ROUNDING_IN * length / whole["inches"]) if whole["inches"] else STRING_END_PT
+        for line in lines:
+            parts = [d for d in line if d["along_x"] == whole["along_x"] and d["end"] - d["start"] < length and d["start"] > whole["start"] - end and d["end"] < whole["end"] + end]
+            if len(parts) < 2 or abs(parts[0]["start"] - whole["start"]) >= end or abs(parts[-1]["end"] - whole["end"]) >= end:
+                continue
+            total = sum(d["inches"] for d in parts)
+            if abs(total - whole["inches"]) > STRING_ROUNDING_IN and all(low <= gap <= high and gap < meet + end for gap in between(parts)):
+                ends = (parts[0]["start"], parts[0]["at"] - BESIDE_PT), (parts[-1]["end"], parts[0]["at"] + BESIDE_PT)
+                a, b = ends if whole["along_x"] else (ends[0][::-1], ends[1][::-1])
+                found.setdefault((tuple(d["text"] for d in parts), whole["text"]), {"parts": [d["text"] for d in parts], "sum_in": total, "overall": whole["text"], "box": [*plan.px(a), *plan.px(b)]})
+    return list(found.values())
 
 
 def chains(segs, tol=0.13):
@@ -545,7 +592,7 @@ class Plan:
 
 
 def blank(reason=None):
-    return {"scale_in_per_pt": None, "scale_checked": 0, "doors": [], "routes": [], "corridors": [], "skipped": reason}
+    return {"scale_in_per_pt": None, "scale_checked": 0, "doors": [], "routes": [], "corridors": [], "strings": [], "skipped": reason}
 
 
 def plan_boxes(row, width, height, px_per_pt):
@@ -566,13 +613,14 @@ def open_plan(page, sheet, row):
 
 
 def measure(plan, row):
-    """Scale, doors and corridors. A scale that fails its check leaves no measurement on the sheet."""
-    plan.ipp = inches_per_pt(row.get("scale") or "")
+    """Dimension strings, which need no scale, then scale, doors and corridors. A scale that fails its check leaves no measurement on the sheet."""
     entry = plan.entry
+    dims = dimensions(plan.lines, plan.segs, plan.layers, plan.box)
+    entry["strings"] = dimension_strings(dims, plan)
+    plan.ipp = inches_per_pt(row.get("scale") or "")
     if plan.ipp is None:
         entry["skipped"] = "No drawing scale was read for this sheet."
         return
-    dims = dimensions(plan.lines, plan.segs, plan.layers, plan.box)
     entry["scale_checked"], problem = check_scale(dims, plan.ipp, any("dim" in name.lower() for name in plan.layers))
     if problem:
         entry["skipped"], plan.ipp = problem, None

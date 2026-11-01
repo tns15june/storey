@@ -67,7 +67,7 @@ def measured(length_ft=100.0):
 
 def base():
     sheets = [sheet(0, "G0.1", "CODE SUMMARY", "code_summary"), sheet(1, "A1.1", "LIFE SAFETY PLAN", level="FIRST FLOOR"), sheet(2, "A2.1", "FIRST FLOOR PLAN", level="FIRST FLOOR"),
-              sheet(3, "A2.2", "SECOND FLOOR PLAN", level="SECOND FLOOR"), sheet(4, "A2.3", "THIRD FLOOR PLAN", level="THIRD FLOOR"), sheet(5, "A6.1", "DOOR SCHEDULE", "schedule")]
+              sheet(3, "A2.2", "SECOND FLOOR PLAN", level="SECOND FLOOR"), sheet(4, "A2.3", "THIRD FLOOR PLAN", level="THIRD FLOOR"), sheet(5, "A6.1", "DOOR SCHEDULE", "schedule"), sheet(6, "C1.0", "SITE PLAN", "site_plan")]
     code = {"edition": code_field("2021 International Building Code"), "occupancy": code_field("B", mentions=[]), "construction": code_field("IIB"), "sprinklers": code_field("yes", mentions=[]),
             "stories": code_field("3 STORIES"), "area": code_field("30,000 SF"), "occupant_load": code_field("120")}
     return {
@@ -85,7 +85,7 @@ def base():
             "exits": {"sheets": []},
             "cannot_tell": [],
         },
-        "vector": {"sheets": {str(i): measured() if i in ORDER else blank("Not a floor plan.") for i in range(6)}},
+        "vector": {"sheets": {str(i): measured() if i in ORDER else blank("Not a floor plan.") for i in range(7)}},
     }
 
 
@@ -148,7 +148,7 @@ def test_the_base_set_raises_nothing():
 
 
 def test_severity_table_matches_the_spec():
-    assert SEVERITY == {1: "fix", 2: "fix", 3: "check", 4: "check", 5: "fix", 6: "check", 7: "fix", 8: "unknown", 9: "fix", 10: "check", 11: "check", 12: "open", 13: "check", 14: "check", 16: "check"}
+    assert SEVERITY == {1: "fix", 2: "fix", 3: "check", 4: "check", 5: "fix", 6: "check", 7: "fix", 8: "unknown", 9: "fix", 10: "check", 11: "check", 12: "open", 13: "check", 14: "check", 16: "check", 17: "check"}
 
 
 def test_finding_has_every_field():
@@ -173,8 +173,8 @@ def test_every_check_has_a_letter_instruction_and_output_drafts():
 
 def test_check_1_absent_sheets_are_fix():
     s = base()
-    s["read"]["sheets"] = [r for r in s["read"]["sheets"] if r["index"] in (2, 3, 4)]
-    s["declared"] |= {"code": {}, "schedules": [], "titles": [t for t in s["declared"]["titles"] if t["sheet"] in (2, 3, 4)]}
+    s["read"]["sheets"] = [r for r in s["read"]["sheets"] if r["index"] in (2, 3, 4, 6)]
+    s["declared"] |= {"code": {}, "schedules": [], "titles": [t for t in s["declared"]["titles"] if t["sheet"] in (2, 3, 4, 6)]}
     items = raised(s, 1)
     assert {f["severity"] for f in items} == {"fix"} and all(f["sheet"] is None for f in items)
     assert len(items) == 3
@@ -233,12 +233,62 @@ def test_check_1_code_summary_found_by_its_class_alone():
     assert raised(s, 1) == []
 
 
+def no_site_sheet(s):
+    s["read"]["sheets"] = [r for r in s["read"]["sheets"] if r["index"] != 6]
+    s["declared"]["titles"] = [t for t in s["declared"]["titles"] if t["sheet"] != 6]
+    s["declared"]["index"] = [x for x in s["declared"]["index"] if x["number"] != "C1.0"]
+    return s
+
+
+def test_check_1_no_site_plan_is_check_because_an_alteration_can_have_none():
+    f = only(no_site_sheet(base()), 1)
+    assert f["severity"] == "check" and f["sheet"] is None and "site plan" in f["title"] and f["required"] == "A site plan"
+
+
+@pytest.mark.parametrize("name", ["ARCHITECTURAL SITE PLAN", "PLOT PLAN", "Civil Notes", "SITE LAYOUT OPTIONS"])
+def test_check_1_a_title_with_a_site_word_is_a_site_plan(name):
+    s = no_site_sheet(base())
+    s["read"]["sheets"].append(sheet(6, "C1.0", name, "other"))
+    assert raised(s, 1) == []
+
+
+def test_check_1_a_title_read_by_declared_alone_counts():
+    s = no_site_sheet(base())
+    s["declared"]["titles"].append(title(0, "C1.0", "SITE PLAN"))
+    assert raised(s, 1) == []
+
+
+def test_check_1_a_sheet_the_read_classes_as_a_site_plan_counts():
+    s = no_site_sheet(base())
+    s["read"]["sheets"].append(sheet(6, "L1.0", "OPTIONS", "site_plan"))
+    assert raised(s, 1) == []
+
+
+@pytest.mark.parametrize("name", ["OPPOSITE ELEVATION", "COMPOSITE WALL", "CIVILIAN WING", "PLOTTED NOTES"])
+def test_check_1_a_longer_word_is_not_a_site_word(name):
+    s = no_site_sheet(base())
+    s["read"]["sheets"][0]["title"] = name
+    assert "site plan" in only(s, 1)["title"]
+
+
+def test_check_1_unread_sheet_makes_no_site_plan_unknown():
+    s = no_site_sheet(base())
+    unread(s, 3)
+    assert next(f for f in raised(s, 1) if "site plan" in f["title"])["severity"] == "unknown"
+
+
+def test_check_1_a_dwelling_is_still_asked_for_a_site_plan():
+    s = no_site_sheet(base())
+    s["declared"]["code"]["occupancy"]["value"] = "R-3"
+    assert "site plan" in only(s, 1)["title"]
+
+
 # Check 2
 
 
 def test_check_2_sheet_not_on_the_index():
     s = base()
-    s["declared"]["index"].pop()
+    del s["declared"]["index"][5]
     f = only(s, 2)
     assert f["severity"] == "fix" and f["sheet"] == 5 and "A6.1" in f["title"]
 
@@ -750,6 +800,92 @@ def test_check_7_arcs_need_the_vector_stage_only():
     assert any("did not finish" in line for line in out["not_checked"])
 
 
+def window(mark="B", **cells):
+    return row(mark, **{"QTY": "1", "WIDTH": "1'-5\"", "HEIGHT": "1'-6\""} | cells)
+
+
+def window_sets(s, *rows_by_sheet):
+    """One window schedule on each of A2.1, A2.2 and A2.3, in that order, with no tags to answer to."""
+    s["declared"]["schedules"] += [schedule(i, "window", rows, []) for i, rows in zip(ORDER, rows_by_sheet)]
+    return s
+
+
+def test_check_7_window_type_with_two_sizes_is_check():
+    """Capitol's window B, at quantity 0 on the odd sheet: a mark names a type whether or not that floor has one."""
+    s = window_sets(base(), [window(QTY="0")], [row("B", QTY="0", WIDTH="1'-5\"", HEIGHT="1'-5\"")], [window(QTY="2")])
+    s["declared"]["schedules"][-2]["rows"][0]["box"] = [7, 7, 9, 9]
+    f = only(s, 7)
+    assert f["severity"] == "check" and f["title"] == "Window B has more than one size" and f["required"] == "One size for each window type"
+    assert f["sheet"] == 3 and f["box"] == [7, 7, 9, 9]   # the odd one out
+    assert f["measured"] == "HEIGHT reads 1'-5\" on A2.2, and 1'-6\" on A2.1 and A2.3."
+
+
+def test_check_7_window_type_with_one_size_and_any_quantity_raises_nothing():
+    assert raised(window_sets(base(), [window(QTY="0")], [window(QTY="7")], [window()]), 7) == []
+
+
+def test_check_7_window_size_is_compared_as_a_length():
+    assert raised(window_sets(base(), [window(WIDTH="17\"")], [window(WIDTH="1'-5\"")]), 7) == []
+
+
+def test_check_7_window_size_cell_compares_its_width_and_height():
+    assert raised(window_sets(base(), [row("A", SIZE="36\" W x 48\" H")], [row("A", SIZE="36\" w  x 48\" h")]), 7) == []
+    assert only(window_sets(base(), [row("A", SIZE="36\" W x 48\" H")], [row("A", SIZE="36\" W x 36\" H")]), 7)["measured"] == "SIZE reads 36\" W x 48\" H on A2.1, and 36\" W x 36\" H on A2.2."
+
+
+@pytest.mark.parametrize("one, other", [("2'-5\"", "2'-5\" *"), ("2'-5\"", "2'-5\" (EGRESS)"), ("0'-11\"", "11\""), ("4'-0\"", "4' - 0\" 6' - 8\" 2"), ("4'-0\"", "SEE NOTE")],
+                         ids=["footnote mark", "remark", "eleven inches", "merged columns", "no length beside a length"])
+def test_check_7_one_window_size_written_two_ways_is_one_size(one, other):
+    """Text-layer cells carry footnote marks and remarks, and on Carpinteria ADU1 one HEIGHT cell joins the height, the head height and a remark number."""
+    assert raised(window_sets(base(), [window(HEIGHT=one)], [window(HEIGHT=other)]), 7) == []
+
+
+def test_check_7_window_cells_with_no_length_are_compared_as_text():
+    assert raised(window_sets(base(), [row("A", SIZE="3040")], [row("A", SIZE="3040")]), 7) == []
+    assert only(window_sets(base(), [row("A", SIZE="3040")], [row("A", SIZE="3050")]), 7)["measured"] == "SIZE reads 3040 on A2.1, and 3050 on A2.2."
+
+
+@pytest.mark.parametrize("cell", ["", "-", None], ids=["blank", "dash", "reads disagreed"])
+def test_check_7_window_cell_with_nothing_read_is_not_a_size(cell):
+    assert raised(window_sets(base(), [window(HEIGHT=cell)], [window()]), 7) == []
+
+
+def test_check_7_two_columns_that_differ_are_two_findings():
+    items = raised(window_sets(base(), [window()], [window(WIDTH="2'-0\"", HEIGHT="2'-0\"")]), 7)
+    assert len({f["key"] for f in items}) == 2 and {f["title"] for f in items} == {"Window B has more than one size"}
+
+
+def test_check_7_a_numbered_window_mark_is_not_a_type():
+    assert raised(window_sets(base(), [window("1")], [window("1", HEIGHT="9'-0\"")]), 7) == []
+
+
+def test_check_7_door_marks_restart_per_floor_so_door_sizes_are_not_compared():
+    s = base()
+    s["declared"]["schedules"] += [schedule(3, "door", [row("A", WIDTH="3'-0\"")], []), schedule(4, "door", [row("A", WIDTH="2'-6\"")], [])]
+    assert raised(s, 7) == []
+
+
+@pytest.mark.parametrize("cell", ["STEEL", "WOOD", "ALUMINUM", "ALUM", "ALUM.", "HOLLOW METAL", "HM", "GLASS", "VINYL", "FIBERGLASS", " steel "])
+def test_check_7_material_in_the_swing_column_is_check(cell):
+    s = base()
+    s["declared"]["schedules"][0]["rows"][1]["cells"]["SWING"] = cell
+    f = only(s, 7)
+    assert f["severity"] == "check" and f["sheet"] == 5 and f["box"] == [100, 100, 900, 120]
+    assert f["title"] == "Door 2 has a material in the swing column" and cell.strip() in f["measured"] and f["required"] == "A swing in the swing column"
+
+
+@pytest.mark.parametrize("cell", ["LEFT", "RIGHT", "BIFOLD", "POCKET", "PAIR", "OPEN", "-", "", None, "LH", "SLIDING GLASS", "WOOD LEFT"])
+def test_check_7_the_swing_column_has_no_closed_vocabulary(cell):
+    """Only a cell that is a material and nothing else. The closed swing vocabulary was dropped from the spec for false alarms."""
+    s = base()
+    s["declared"]["schedules"][0]["rows"][1]["cells"]["SWING"] = cell
+    assert raised(s, 7) == []
+
+
+def test_check_7_a_window_schedule_swing_column_is_not_read():
+    assert raised(window_sets(base(), [window(SWING="STEEL")]), 7) == []
+
+
 # Check 8
 
 
@@ -868,13 +1004,20 @@ def test_check_cell_on_discharge_with_found_above_is_check():
     ("MEETS CODE", "[word removed] CODE"),
     ("NO FURTHER REVIEW", "[word removed] REVIEW"),
     ("App\u200broved", "[word removed]"),
+    ("App\x1froved", "[word removed]"),
+    ("PASSED\x1fREVIEW", "[word removed]"),
+    ("FLOOR\u3000PLAN", "[word removed]"),
+    ("App\nroved", "[word removed]"),
+    ("MEETING\nROOM", "MEETING\nROOM"),
+    ("\uff30\uff21\uff33\uff33\uff25\uff24\u3000REVIEW", "[word removed]"),
+    ("App\u200aroved", "[word removed]"),
     ("\uff21\uff30\uff30\uff32\uff2f\uff36\uff25\uff24", "[word removed]"),
     ("MEETING ROOM", "MEETING ROOM"),
     ("BUILDING PERMIT NOTES", "BUILDING PERMIT NOTES"),
     ("ISSUED FOR REVIEW", "ISSUED FOR REVIEW"),
     ("1,728 ft\u00b2", "1,728 ft\u00b2"),
     ("3'-6\u00bd\"", "3'-6\u00bd\""),
-], ids=["meets", "no-further", "zero-width", "full-width", "meeting", "permit", "issued", "squared", "half"])
+], ids=["meets", "no-further", "zero-width", "control", "control-between-words", "hiding-character-with-no-status-word", "line-break-in-word", "line-break-between-words", "wide-space-between-words", "hair-space", "full-width", "meeting", "permit", "issued", "squared", "half"])
 def test_mask_takes_status_words_out_and_leaves_drawing_values(text, kept):
     assert findings._masked(text) == kept
 
@@ -1447,6 +1590,74 @@ def test_swing_with_no_arc_raises_nothing():
     assert raised(s, 7) == []
 
 
+# Check 17
+def string(parts=("10'-6\"", "4'-0\""), total=174, overall="14'-0\""):
+    return {"parts": list(parts), "sum_in": total, "overall": overall, "box": [100, 200, 300, 240]}
+
+
+def test_check_17_string_that_misses_its_overall_is_check():
+    s = base()
+    s["vector"]["sheets"]["2"]["strings"] = [string()]
+    f = only(s, 17)
+    assert f["severity"] == "check" and f["sheet"] == 2 and f["box"] == [100, 200, 300, 240]
+    assert f["title"] == "Dimension string does not add up to 14'-0\"" and f["required"] == "A dimension string adds up to its overall"
+    assert f["measured"] == "10'-6\" + 4'-0\" = 14'-6\", and the overall says 14'-0\"." and f["evidence"] == "Vector geometry."
+
+
+@pytest.mark.parametrize("inches, printed", [(174, "14'-6\""), (572.5, "47'-8 1/2\""), (8, "0'-8\""), (120.25, "10'-0 1/4\"")])
+def test_check_17_the_sum_prints_as_the_drawings_print(inches, printed):
+    s = base()
+    s["vector"]["sheets"]["2"]["strings"] = [string(total=inches)]
+    assert f"= {printed}," in only(s, 17)["measured"]
+
+
+def test_check_17_runs_on_a_sheet_outside_the_floor_order_with_no_scale():
+    s = base()
+    s["vector"]["sheets"]["1"] = blank("No drawing scale was read for this sheet.") | {"strings": [string()]}
+    assert only(s, 17)["sheet"] == 1
+
+
+def test_check_17_a_stored_stage_with_no_strings_raises_nothing():
+    s = base()
+    for entry in s["vector"]["sheets"].values():
+        entry.pop("strings", None)
+    assert raised(s, 17) == []
+
+
+def test_check_17_two_strings_keep_their_own_keys():
+    s = base()
+    s["vector"]["sheets"]["2"]["strings"] = [string(), string(("7'-0\"", "7'-3\""), 171)]
+    s["vector"]["sheets"]["3"]["strings"] = [string()]
+    assert len({f["key"] for f in raised(s, 17)}) == 3 and not any("#" in f["key"] for f in raised(s, 17))
+
+
+def test_check_17_long_string_lists_only_some_parts():
+    s = base()
+    s["vector"]["sheets"]["2"]["strings"] = [string([f"{n}'-0\"" for n in range(1, 41)], 9840)]
+    assert "and 30 more" in only(s, 17)["measured"]
+
+
+def test_check_17_goes_in_the_letter_with_its_instruction():
+    s = base()
+    s["vector"]["sheets"]["2"]["strings"] = [string()]
+    out = run(s)
+    text = draft(out["findings"], {"sheets": s["read"]["sheets"], "not_checked": out["not_checked"]})["items"][0]["text"]
+    assert text.startswith("Correct the dimension string or its overall. Dimension string does not add up to 14'-0\". Measured: 10'-6\" + 4'-0\" = 14'-6\"")
+
+
+def test_check_17_a_failed_vector_stage_says_so():
+    s = base()
+    s["vector"] = {"failed": "It stopped."}
+    assert any("dimension strings" in line for line in run(s)["not_checked"])
+
+
+def test_check_17_a_dwelling_still_has_its_strings_read():
+    s = base()
+    s["declared"]["code"]["occupancy"]["value"] = "R-3"
+    s["vector"]["sheets"]["2"]["strings"] = [string()]
+    assert only(s, 17)["sheet"] == 2
+
+
 # Reads that did not finish
 
 
@@ -1619,6 +1830,40 @@ def test_check_that_crashes_loses_only_itself():
 def test_unknown_jurisdiction_is_an_error_not_an_empty_review():
     with pytest.raises(KeyError):
         run(base(), jurisdiction="gotham")
+
+
+SEVERAL = "{} holds several floor plans, and only the main one was read, so the others were not followed."
+
+
+def test_sheet_with_several_plans_is_named_in_not_checked():
+    s = base()
+    s["read"]["sheets"][2]["viewports"] = [[0, 0, 100, 100], [200, 0, 300, 100]]
+    assert SEVERAL.format("A2.1") in run(s)["not_checked"]
+
+
+def test_several_plans_on_a_sheet_with_no_number_names_its_page():
+    s = base()
+    for page in s["read"]["sheets"]:
+        page["number"] = ""   # with no A sheet in the set, every plan sheet counts
+    s["read"]["sheets"][2]["viewports"] = [[0, 0, 100, 100], [200, 0, 300, 100]]
+    assert SEVERAL.format("page 3") in run(s)["not_checked"]
+
+
+def test_several_plans_stays_off_a_trade_sheet_beside_an_a_sheet():
+    s = base()
+    two = [[0, 0, 100, 100], [200, 0, 300, 100]]
+    s["read"]["sheets"][2]["viewports"] = two
+    s["read"]["sheets"].append(sheet(6, "E1.1", "FLOOR PLANS - LIGHTING") | {"viewports": two})
+    lines = run(s)["not_checked"]
+    assert SEVERAL.format("A2.1") in lines
+    assert SEVERAL.format("E1.1") not in lines
+
+
+@pytest.mark.parametrize("fields", [{}, {"viewports": []}, {"viewports": [[0, 0, 100, 100]]}], ids=["not-recorded", "not-known", "one"])
+def test_fewer_than_two_viewports_say_nothing(fields):
+    s = base()
+    s["read"]["sheets"][2] |= fields
+    assert not any("several floor plans" in line for line in run(s)["not_checked"])
 
 
 def test_fixed_not_checked_lines_are_always_there():

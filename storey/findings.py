@@ -9,17 +9,19 @@ import math
 import re
 from collections import Counter, defaultdict
 from dataclasses import dataclass, field
+from fractions import Fraction
 
 from .declared import CODE_TITLE, LIFE_SAFETY, NOT_USED, SCHEDULE_TITLES, YEAR, floor_words, norm, num, room_same, sheet_key, some, title_same
 from .floors import NOT_MAIN, _plan_sheets
-from .letter import STATUS, plain
+from .letter import STATUS, has_status
 from .rules import JURISDICTIONS, rule, stricter_when_unknown
+from .vector import QUOTES
 from .verticals import SHAFTS
 
 log = logging.getLogger(__name__)
 
 # 12 is a list for the examiner, not a finding. 15 is the second review's, which sets a state per comment.
-SEVERITY = {1: "fix", 2: "fix", 3: "check", 4: "check", 5: "fix", 6: "check", 7: "fix", 8: "unknown", 9: "fix", 10: "check", 11: "check", 12: "open", 13: "check", 14: "check", 16: "check"}
+SEVERITY = {1: "fix", 2: "fix", 3: "check", 4: "check", 5: "fix", 6: "check", 7: "fix", 8: "unknown", 9: "fix", 10: "check", 11: "check", 12: "open", 13: "check", 14: "check", 16: "check", 17: "check"}
 DISCIPLINE = "A"
 STAGES = ("read", "floors", "verticals", "declared", "vector")
 RANK = {"fix": 0, "check": 1, "unknown": 2}
@@ -32,6 +34,8 @@ WALL_IN = 12             # printed corridor widths run wall centre to wall centr
 NO_SWING = {"BIFOLD", "POCKET"}   # not the lab's dash too: a dash is a cased opening, and the vector stage keeps the dashed swings drawn as options, which came back on Capitol 6 and Baxter 6 and 11
 STAIR_HALF = 200         # sheet px round a place with no mask, about a stair on a 6000 px sheet
 TAG_HALF = 60
+SIZE_CELLS = ("WIDTH", "HEIGHT", "SIZE")
+MATERIALS = {"STEEL", "WOOD", "ALUMINUM", "ALUM", "HOLLOW METAL", "HM", "GLASS", "VINYL", "FIBERGLASS"}   # the whole cell only: a closed list of swings was dropped from the spec for false alarms
 
 IBC_ONLY = ("occupancy", "construction", "occupant_load")   # the residential code asks for none of these, and only checks 11, 13 and 14 read them
 CODE_FIELDS = {"edition": "code edition", "occupancy": "occupancy", "construction": "construction type", "sprinklers": "sprinkler statement", "stories": "number of stories", "area": "area", "occupant_load": "occupant load"}
@@ -47,6 +51,8 @@ RESIDENTIAL = re.compile(r"\bIRC\b|\bCRC\b|Residential Code|one.{0,8}two.family|
 BEDROOM = re.compile(r"\bBED\s?(ROOM)?\b|\bBDRM\b", re.I)
 NOT_A_STOREY = re.compile(r"foundation|roof|attic|crawl", re.I)
 BELOW_GRADE = re.compile(r"basement|cellar", re.I)
+SITE_TITLE = re.compile(r"\b(?:site|plot|civil)\b", re.I)
+LENGTH = re.compile(r"(?:(\d+)\s*')?\s*-?\s*(?:(\d+(?:\s+\d+/[1-9]\d*)?)\s*\")?")   # 4'-0", 4' - 0 1/2", 4' or 11", anywhere in a cell
 PLACED = re.compile(r"(\w+)@(-?\d+),(-?\d+)(?:#\d+)?")
 MASK = "[word removed]"
 _mark = sheet_key        # marks normalise as sheet numbers do, so `1 a`, `1A` and `1-A` are one mark
@@ -57,6 +63,7 @@ DWELLING = ("This set shows a one- or two-family dwelling, which uses the Intern
 ENDS_LIMIT = "A stair that ends on its top floor looks the same as one erased from that floor."
 CONTINUOUS = "A stair stays continuous between the floors it serves."
 REACHES = "A stair that serves upper floors reaches the level of exit discharge."
+SEVERAL_PLANS = "{} holds several floor plans, and only the main one was read, so the others were not followed."   # true on a sheet outside the floor order too, such as Abbot A2.0, where the read found no floor name
 LEGEND = {"missing": "Missing", "end": "Not on this floor", "check": "Check"}   # the screen's words, because a state name means nothing in a letter
 ONE_NAME = "One name for each room"
 VECTOR = "Vector geometry."
@@ -235,13 +242,15 @@ def _required_sheets(r):
 
     present = {"code summary": any((row or {}).get("value") for row in r.code.values()) or titled(CODE_TITLE) or any(s.get("cls") == "code_summary" for s in rows),
                "door schedule": any(s["kind"] == "door" for s in schedules) or titled(SCHEDULE_TITLES["door"]) or any(n["what"] == "Door schedule" for n in r.notes),
-               "floor plan": any(s.get("cls") == "floor_plan" for s in rows)}
+               "floor plan": any(s.get("cls") == "floor_plan" for s in rows),
+               "site plan": titled(SITE_TITLE) or any(s.get("cls") == "site_plan" for s in rows)}
     if not r.dwelling:
         present["life safety plan"] = bool((r.declared.get("exits") or {}).get("sheets")) or titled(LIFE_SAFETY)
     unsure = not all(s.get("read_ok") for s in rows) or r.partial(("Sheets not placed",))
     for name, there in present.items():
         if not there:
-            r.add(1, f"No {name} in the set", severity="unknown" if unsure else None, measured="No sheet was read as one.", required=f"A {name}", evidence="Sheet read.", thing=name)
+            severity = "unknown" if unsure else "check" if name == "site plan" else None   # an interior alteration can properly have no site plan
+            r.add(1, f"No {name} in the set", severity=severity, measured="No sheet was read as one.", required=f"A {name}", evidence="Sheet read.", thing=name)
 
 
 def _unread_sheets(r):
@@ -511,6 +520,44 @@ def _swings(r):
                           required="One door type for each tag", evidence=f"{_source(s)} {VECTOR}", thing=f"arc {t['mark']}")
 
 
+def _size(text, column):
+    """The lengths a size cell prints, in inches: the first, or the first two in a SIZE cell, which prints width by height. A footnote mark, a remark or a merged column after them is no part of the size."""
+    lengths = [12 * int(feet or 0) + sum(map(Fraction, inches.split())) for feet, inches in LENGTH.findall(text.translate(QUOTES)) if feet or inches]
+    return tuple(lengths[:2 if column == "SIZE" else 1])
+
+
+def _window_types(r):
+    """A window mark that is a letter names a type, so its size holds across the set whatever the quantity. Door marks restart per floor, so this is windows only."""
+    # shortcut: a set of two modules could use one letter for two types, though Abbot's modules agree, keep to sheets of one letter as _rooms_near does if a set does this.
+    rows = defaultdict(list)
+    for s in (s for s in _tag_schedules(r) if s["kind"] == "window"):
+        for row in s["rows"]:
+            if re.fullmatch("[A-Z]", _mark(row["mark"])):
+                rows[_mark(row["mark"])].append((s, row))
+    for mark, group in rows.items():
+        for column in SIZE_CELLS:
+            read = [(s, row, _size(row["cells"][column], column)) for s, row in group if norm(row["cells"].get(column))]
+            lengths = any(size for *_, size in read)   # a cell with no length is compared as text only when no cell in the group has one
+            sizes = defaultdict(list)
+            for s, row, size in read:
+                if size or not lengths:
+                    sizes[size or norm(row["cells"][column])].append((s, row))
+            if len(sizes) > 1:
+                odd, *rest = sorted(sizes.values(), key=len)
+                said = ", and ".join(f"{found[0][1]['cells'][column]} on {' and '.join(r.number(s['sheet']) for s, _ in found)}" for found in (odd, *rest))
+                r.add(7, f"Window {mark} has more than one size", sheet=odd[0][0]["sheet"], box=odd[0][1].get("box"), severity="check", measured=f"{column} reads {said}.", required="One size for each window type",
+                      evidence=_source(odd[0][0]), thing=f"size {mark} {column}")
+
+
+def _swing_materials(r):
+    for s in (s for s in _tag_schedules(r) if s["kind"] == "door"):
+        for row in s["rows"]:
+            swing = row["cells"].get("SWING")
+            if norm(swing) in MATERIALS:
+                r.add(7, f"Door {row['mark']} has a material in the swing column", sheet=s["sheet"], box=row.get("box"), severity="check", measured=f"The swing column says {swing.strip()}.", required="A swing in the swing column",
+                      evidence=_source(s), thing=f"swing {_mark(row['mark'])}")
+
+
 def _exit_capacity(r):
     for s in (r.declared.get("exits") or {}).get("sheets") or ():
         total = s.get("sum")
@@ -748,6 +795,21 @@ def _room_names(r):
                 different(got, name, "door")
 
 
+def _feet(inches):
+    """Inches as drawings print them. 572.5 gives 47'-8 1/2"."""
+    feet, rest = divmod(Fraction(inches).limit_denominator(64), 12)
+    whole, part = divmod(rest, 1)
+    return f"{feet}'-{whole} {part}\"" if part else f"{feet}'-{whole}\""
+
+
+def _dimension_strings(r):
+    for i, entry in (r.vector.get("sheets") or {}).items():
+        for s in entry.get("strings") or ():
+            parts = " + ".join(s["parts"]) if len(s["parts"]) <= 10 else some(s["parts"])
+            r.add(17, f"Dimension string does not add up to {s['overall']}", sheet=int(i), box=s["box"], measured=f"{parts} = {_feet(s['sum_in'])}, and the overall says {s['overall']}.", required="A dimension string adds up to its overall",
+                  evidence=VECTOR, thing=f"string {s['parts']} {s['overall']}")
+
+
 def _read_notes(r):
     """Every cannot_tell from declared stays visible."""
     for n in r.notes:
@@ -768,6 +830,8 @@ CHECKS = [
     ("table arithmetic", _tables, ("declared",)),
     ("door and window tags", _tags, ("declared",)),
     ("door type against its swing", _swings, ("declared", "vector")),
+    ("window sizes", _window_types, ("declared",)),
+    ("swing column", _swing_materials, ("declared",)),
     ("exit capacity", _exit_capacity, ("declared",)),
     ("stair continuity", _stair_gaps, ("read", "floors", "verticals")),
     ("stairs at the discharge level", _stair_discharge, ("read", "floors", "verticals")),
@@ -776,6 +840,7 @@ CHECKS = [
     ("travel distance", _travel, ("read", "floors", "vector", "declared")),
     ("corridor width", _corridors, ("read", "floors", "vector", "declared")),
     ("room names", _room_names, ("declared",)),
+    ("dimension strings", _dimension_strings, ("vector",)),
     ("reads that did not finish", _read_notes, ("declared",)),
 ]
 RULE_BASED = ("code edition", "exits per floor", "travel distance", "corridor width")   # moved to not_checked on a dwelling, as is the life safety sheet within required sheets. No adopted residential code is held, so an edition has nothing to compare with
@@ -794,7 +859,7 @@ def _masked(value):
     """A value with status words taken out. Drawing text reaches the output in many fields, a planted room label can say the set is approved, and the letter prints what it is given."""
     if isinstance(value, str):
         text = STATUS.sub(MASK, value)
-        return MASK if STATUS.search(plain(text)) else text   # the whole value goes, because normalising it in place would turn ft\u00b2 into ft2
+        return MASK if has_status(text) else text   # the whole value goes, because normalising it in place would turn ft\u00b2 into ft2
     if isinstance(value, list):
         return [_masked(v) for v in value]
     if isinstance(value, dict):
@@ -825,7 +890,9 @@ def evaluate(stages: dict, jurisdiction: str, sprinklers: str | None, discharge:
     r.findings.sort(key=lambda f: RANK[f["severity"]])
     _unique(r.findings)
     _unique(r.open_items)
+    # shortcut: this is the floors rule, so beside an A sheet a plan sheet such as B2.0, X4.1 or one with no number gets no line, and with no A sheet a trade sheet still gets one, share assemble's trade rule if a real set shows either.
     lines = [*(f"The {name} stage did not finish: {lost[name]} Not checked because of it: {', '.join(labels)}." for name, labels in skipped.items()), *broken, r.floors.get("not_checked"), *(r.verticals.get("not_checked") or ()),
+             *(SEVERAL_PLANS.format(r.number(s["index"])) for s in _plan_sheets(list(r.sheets.values())) if len(s.get("viewports") or ()) >= 2),   # one box or none says nothing, because SAM misses plans
              SHAFTS, OTHER_TRADES, DWELLING if r.dwelling else None]
     return _masked({"findings": r.findings, "open_items": r.open_items, "not_checked": list(dict.fromkeys(line for line in lines if line))})
 
