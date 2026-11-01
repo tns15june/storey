@@ -14,6 +14,7 @@ from .floors import floors_stage
 from .letter import letter_stage
 from .meta import BudgetReached, Meter
 from .read import read_stage
+from .recheck import recheck_stage
 from .vector import vector_stage
 from .verticals import verticals_stage
 
@@ -62,6 +63,7 @@ STAGES: list[tuple[str, str, Callable[[Context], dict]]] = [
     ("vector", "Measure the vector sheets", vector_stage),
     ("evaluate", "Run the checks", evaluate_stage),
     ("letter", "Draft the comment letter", letter_stage),
+    ("recheck", "Compare with the last review", recheck_stage),
     ("assemble", "Put the review together", assemble_stage),
 ]
 

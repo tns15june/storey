@@ -25,6 +25,7 @@ from .assemble import assemble
 from .findings import _masked
 from .ingest import MAX_SHEETS
 from .rules import JURISDICTIONS
+from .testtool import remove_stair
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA = Path(os.environ.get("STOREY_DATA", ROOT / "data/reviews"))
@@ -145,6 +146,14 @@ def _ingest(path, uploads):
     return out["sheets"]
 
 
+def _stages(path):
+    try:
+        pipeline.run(path)
+    except Exception as e:
+        pipeline.log.error("Review %s stopped with %s\n%s", path.name, type(e).__name__, "".join(traceback.format_tb(e.__traceback__)))
+        _status(path, state="failed", step="Stopped", message="The review stopped before it finished")
+
+
 def _run(path, uploads):
     try:
         _status(path, state="running", step="Reading the drawings")
@@ -158,11 +167,14 @@ def _run(path, uploads):
     except Exception:
         _status(path, state="failed", step="Stopped", message="Could not read this upload")
     else:
-        try:
-            pipeline.run(path)
-        except Exception as e:
-            pipeline.log.error("Review %s stopped with %s\n%s", path.name, type(e).__name__, "".join(traceback.format_tb(e.__traceback__)))
-            _status(path, state="failed", step="Stopped", message="The review stopped before it finished")
+        _stages(path)
+    finally:
+        waiting.release()
+
+
+def _run_copy(path):
+    try:
+        _stages(path)
     finally:
         waiting.release()
 
@@ -280,6 +292,30 @@ def decide(review_id: str, body: Decision):
 async def recheck(review_id: str, files: list[UploadFile]):
     _finished(review_id)
     return await _accept(files, review_id)
+
+
+class Removal(BaseModel):
+    vertical: str
+    sheet: int
+
+
+@app.post("/api/reviews/{review_id}/remove")
+def remove(review_id: str, body: Removal):
+    """Starts a labelled test copy of a finished review with one stair removed. The stage run spends credit, so it takes a slot like an upload."""
+    path = _finished(review_id)
+    if not waiting.acquire(blocking=False):
+        raise HTTPException(429, "Too many reviews are running. Try again in a few minutes.")
+    try:
+        with edits:   # the copy must not catch a selector change half written
+            copy = remove_stair(path, body.vertical, body.sheet)
+    except ValueError as e:
+        waiting.release()
+        raise HTTPException(422, str(e)) from None
+    except BaseException:
+        waiting.release()
+        raise
+    workers.submit(_run_copy, copy)
+    return {"id": copy.name}
 
 
 app.mount("/", StaticFiles(directory=ROOT / "app/web", html=True), name="web")

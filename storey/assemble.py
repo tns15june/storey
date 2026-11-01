@@ -22,6 +22,7 @@ NOT_READ = "This sheet could not be read."
 OTHER_TRADE = "Not an architectural sheet, so only its number and title were read."
 LEFT_OUT = "This plan is outside the floor order, so its stairs, travel distance and corridor width were not checked."
 ALL_DROPPED = "The examiner dropped every comment, so this letter lists none."
+MOVED_AGAIN = "This place changed, but the checks raised this comment again."
 
 
 def _evaluated(stored, choices, previous):
@@ -32,11 +33,13 @@ def _evaluated(stored, choices, previous):
 
 
 def evaluate_stage(ctx) -> dict:
-    """Comment ids go on here, because the letter stage reads them. A second review starts from its parent's ids, jurisdiction and sprinklers, so a comment keeps its id across cycles and the letter cites the same code."""
-    parent = ctx.stage("upload").get("parent")
-    earlier = replace(ctx, dir=ctx.dir.parent / parent).stage("evaluate") if parent else {}
+    """Comment ids go on here, because the letter stage reads them. A second review starts from its parent's ids, jurisdiction and sprinklers, so a comment keeps its id across cycles and the letter cites the same code.
+    A test tool copy starts from the review it copied in the same way, and it is the same set, so it keeps the discharge level too."""
+    upload = ctx.stage("upload")
+    origin = upload.get("parent") or upload.get("source")
+    earlier = replace(ctx, dir=ctx.dir.parent / origin).stage("evaluate") if origin else {}
     chosen = earlier.get("choices", {})
-    choices = {"jurisdiction": chosen.get("jurisdiction", JURISDICTION), "sprinklers": chosen.get("sprinklers"), "discharge": None}   # discharge is a sheet index, which does not carry across sets
+    choices = {"jurisdiction": chosen.get("jurisdiction", JURISDICTION), "sprinklers": chosen.get("sprinklers"), "discharge": chosen.get("discharge") if upload.get("source") else None}   # discharge is a sheet index, which does not carry across sets
     return _evaluated(ctx.stage, choices, earlier.get("ids", {}) | ctx.stage("evaluate").get("ids", {}))
 
 
@@ -49,18 +52,22 @@ def _image(dir, sheet):
         return path.name, *image.size
 
 
+def _cut(image, box, path):
+    """Saves the sheet round a box, and returns False if the box holds none of it."""
+    x1, y1, x2, y2 = (int(v) for v in box)
+    cut = image[max(y1 - CROP_PAD, 0):max(y2 + CROP_PAD, 0), max(x1 - CROP_PAD, 0):max(x2 + CROP_PAD, 0)]
+    if not cut.size:
+        return False
+    cv2.imwrite(str(path), _resized(cut, CROP_MAX) if max(cut.shape[:2]) > CROP_MAX else cut, JPEG)
+    return True
+
+
 def _crop(dir, f, load):
     """The file name of a finding's crop, cut once from the full sheet because the 2000 px copy is too coarse to read a tag, or None with no place to cut."""
     if f["sheet"] is None or not f["box"]:
         return None
     name = f"crop_{f['comment_id']}.jpg"
-    if not (dir / name).exists():
-        x1, y1, x2, y2 = (int(v) for v in f["box"])
-        cut = load(f["sheet"])[max(y1 - CROP_PAD, 0):max(y2 + CROP_PAD, 0), max(x1 - CROP_PAD, 0):max(x2 + CROP_PAD, 0)]
-        if not cut.size:
-            return None
-        cv2.imwrite(str(dir / name), _resized(cut, CROP_MAX) if max(cut.shape[:2]) > CROP_MAX else cut, JPEG)
-    return name
+    return name if (dir / name).exists() or _cut(load(f["sheet"]), f["box"], dir / name) else None
 
 
 def _scaled(values, k):
@@ -113,9 +120,23 @@ def _travel_checked(evaluated):
 
 
 def _lost(stored, evaluated):
-    """Lines for stages evaluate could not report: the letter, and if evaluate itself did not finish, every stage before it too."""
-    names = ("letter",) if "findings" in evaluated else (*FACT_STAGES, "evaluate", "letter")
+    """Lines for stages evaluate could not report: those after it, and if evaluate itself did not finish, every stage before it too."""
+    names = ("letter", "recheck") if "findings" in evaluated else (*FACT_STAGES, "evaluate", "letter", "recheck")
     return [f"The {name} stage did not finish: {stored(name)['failed']}" for name in names if "failed" in stored(name)]
+
+
+def _current(result, raised):
+    """The stored second review, less any Looks resolved on a comment the checks raise now: a selector change can bring one back, and the stage does not run again."""
+    comments = [c | {"state": "open", "why": MOVED_AGAIN} if c["state"] == "resolved_looks" and c["comment_id"] in raised else c for c in result.get("comments", ())]
+    return result | {"comments": comments} if "comments" in result else result
+
+
+def _rechecked(result, scales, url):
+    """The second review as the screen reads it, with crops as urls and boxes in each sheet's JPEG. None on a first review, or if the stage did not finish."""
+    if "comments" not in result:
+        return None
+    return result | {"comments": [c | {side: c[side] and url(c[side]) for side in ("old_crop", "new_crop")} for c in result["comments"]],
+                     "changes": [_placed(c, scales) for c in result["changes"]], "clouds": [_placed(c, scales) for c in result["clouds"]]}
 
 
 def _carried(earlier, findings):
@@ -123,7 +144,7 @@ def _carried(earlier, findings):
     before, now = ({f["key"]: f for f in rows} for rows in (earlier.get("findings", ()), findings))
 
     def same(key):
-        return key in before and all(now[key].get(k) == before[key].get(k) for k in ("title", "measured", "required"))
+        return key in before and all(now[key].get(k) == before[key].get(k) for k in ("title", "measured", "required", "severity", "rule"))
 
     return {key: decision for key, decision in earlier.get("decisions", {}).items() if key not in now or same(key)}
 
@@ -156,7 +177,10 @@ def assemble(dir: Path, jurisdiction: str = JURISDICTION, sprinklers: str | None
     level = floors.get("discharge") if discharge is None else discharge
     parent = upload.get("parent")
     earlier = read_json(dir.parent / parent / "review.json") if parent else {}
-    decisions = _carried(earlier, evaluated.get("findings", ())) | read_json(dir / "decisions.json")   # review.json, so a decision from any earlier cycle arrives
+    note = upload.get("note") or earlier.get("project", {}).get("note", "")   # a review that follows a test is built on a test
+    rechecked = _current(stored("recheck"), {f["comment_id"] for f in evaluated.get("findings", ())})
+    states = {c["comment_id"]: c["state"] for c in rechecked.get("comments", ())}
+    decisions =_carried(earlier, evaluated.get("findings", ())) | read_json(dir / "decisions.json")   # review.json, so a decision from any earlier cycle arrives
     kept = [item for item in letter.get("items", ()) if decisions.get(item["key"]) != "drop"]
     lost = [name for name in (*FACT_STAGES, "evaluate") if not (stage := stored(name)) or "failed" in stage]
     left_out = {s["index"] for s in _left_out(Review(stored("read"), floors, {}, {}, {}, jurisdiction, None, None))}   # findings' own test, so a row and its finding agree
@@ -166,16 +190,17 @@ def assemble(dir: Path, jurisdiction: str = JURISDICTION, sprinklers: str | None
     review = {
         "id": dir.name,
         "parent": parent,
-        "project": {"name": upload.get("name", ""), "address": "", "cycle": earlier.get("project", {}).get("cycle", 1) + 1 if parent else 1,
-                    "code": adopted, "note": "", "jurisdiction": jurisdiction, "adopted_code": adopted, "sprinklers": sprinklers, "discharge_level": str(level) if level in order else None, "facts": facts},
+        "project": {"name": upload.get("name", ""), "address": "", "cycle": earlier.get("project", {}).get("cycle", 1) + 1 if parent else upload.get("cycle", 1),
+                    "code": adopted, "note": note, "jurisdiction": jurisdiction, "adopted_code": adopted, "sprinklers": sprinklers, "discharge_level": str(level) if level in order else None, "facts": facts},
         "floor_order": [str(i) for i in order],
         "sheets": [_sheet(s, rows.get(i, {}), images[i], url, lost, left_out) for i, s in sheets.items()],
         "verticals": [_vertical(row, scales, floors.get("reference"), url) for row in stored("verticals").get("verticals", ())],
-        "findings": [_placed(f, scales) | {"id": f["comment_id"], "state": None, "crop": (name := _crop(dir, f, load)) and url(name)} for f in evaluated.get("findings", ())],
+        "findings": [_placed(f, scales) | {"id": f["comment_id"], "state": states.get(f["comment_id"]), "crop": (name := _crop(dir, f, load)) and url(name)} for f in evaluated.get("findings", ())],
         "routes": _routes(stored("vector"), scales) if _travel_checked(evaluated) else [],
         "open_items": [_placed(item, scales) for item in evaluated.get("open_items", ())],
-        "not_checked": [*evaluated.get("not_checked", ()), *_lost(stored, evaluated)],
-        "letter": letter | {"items": kept, "note": ALL_DROPPED if letter.get("items") and not kept else letter.get("note")},
+        "not_checked": [*evaluated.get("not_checked", ()), *_lost(stored, evaluated), *rechecked.get("not_checked", ())],
+        "letter": letter | {"items": kept, "note": " ".join(filter(None, (note, ALL_DROPPED if letter.get("items") and not kept else letter.get("note")))) or None},
+        "recheck": _rechecked(rechecked, scales, url),
         "decisions": decisions,
         # shortcut: this stage's own row reaches cost.json only after this file is written, so review.json has no assemble row, rewrite the file after the run if the screen must show it.
         "cost": {"usd": round(sum(c["usd"] for c in costs.values()), 4), "seconds": round(sum(c["seconds"] for c in costs.values()), 1), "stages": [{"name": name, **c} for name, c in costs.items()]},

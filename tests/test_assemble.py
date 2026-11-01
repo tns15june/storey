@@ -10,11 +10,12 @@ from fastapi.testclient import TestClient
 from PIL import Image
 
 from storey import meta, pipeline, server
-from storey.assemble import ALL_DROPPED, CROP_MAX, CROP_PAD, OTHER_TRADE, assemble
+from storey.assemble import _carried, ALL_DROPPED, CROP_MAX, CROP_PAD, OTHER_TRADE, assemble
 from storey.letter import NOT_EVALUATED
 from storey.pipeline import read_json, run, write_json
 
 RID, CHILD = "a" * 32, "b" * 32
+LATER = pipeline.STAGES[-4:]   # evaluate to assemble, the stages that make no model call on a first review
 KEY = {"x-storey-key": "test-key"}
 SIZES = {0: (4000, 3000), 1: (1000, 800), 2: (4000, 3000), 3: (3000, 2000), 4: (3000, 2000), 5: (3000, 2000)}   # factors 0.5, 2.0, 0.5, then 2/3 across and 1333/2000 down, because a JPEG has whole pixels
 DOWN = 1333 / 2000
@@ -76,7 +77,7 @@ def isolated(tmp_path, monkeypatch):
 @pytest.fixture
 def review(tmp_path):
     path = build(tmp_path / "reviews" / RID)
-    run(path, stages=pipeline.STAGES[-3:])
+    run(path, stages=LATER)
     return path
 
 
@@ -96,7 +97,7 @@ def one(items, **fields):
 
 
 def test_stages_are_registered_in_order():
-    assert [name for name, _, _ in pipeline.STAGES] == ["read", "floors", "verticals", "declared", "vector", "evaluate", "letter", "assemble"]
+    assert [name for name, _, _ in pipeline.STAGES] == ["read", "floors", "verticals", "declared", "vector", "evaluate", "letter", "recheck", "assemble"]
 
 
 def test_review_json_matches_contract(review):
@@ -123,7 +124,7 @@ def test_review_json_matches_contract(review):
 def test_a_dwelling_draws_no_route_because_travel_distance_is_not_checked_there(tmp_path):
     residential = DECLARED | {"code": {"edition": {"value": "2015 Michigan Residential Code", "sheet": 3, "box": None, "reads": 2}}}
     path = build(tmp_path / "reviews" / RID, FACTS | {"declared": residential})
-    run(path, stages=pipeline.STAGES[-3:])
+    run(path, stages=LATER)
     r = stored(path)
     assert any("travel distance" in line for line in r["not_checked"])
     assert r["routes"] == []
@@ -181,7 +182,7 @@ def test_each_finding_with_a_box_carries_a_crop_cut_from_the_full_sheet(review):
 def test_a_crop_over_the_limit_is_scaled_down(tmp_path):
     whole = DECLARED | {"schedules": [DECLARED["schedules"][0] | {"rows": [{"mark": "8", "cells": {}, "box": [0, 0, 3000, 2000]}]}]}
     path = build(tmp_path / "reviews" / RID, FACTS | {"declared": whole})
-    run(path, stages=pipeline.STAGES[-3:])
+    run(path, stages=LATER)
     rows = one(stored(path)["findings"], check=7, sheet="3")
     assert max(cv2.imread(str(path / f"crop_{rows['id']}.jpg")).shape[:2]) == CROP_MAX
 
@@ -222,7 +223,7 @@ def test_comment_ids_survive_a_change_of_jurisdiction_and_back(review):
 
 def test_a_failed_stage_still_gives_a_review_that_says_so(tmp_path):
     path = build(tmp_path / "reviews" / RID, FACTS | {"verticals": {"failed": "This review reached its spend cap of 4.00 USD."}})
-    run(path, stages=pipeline.STAGES[-3:])
+    run(path, stages=LATER)
     r = stored(path)
     assert r["verticals"] == [] and r["sheets"]
     assert any("spend cap of 4.00 USD" in line for line in r["not_checked"])
@@ -261,7 +262,7 @@ def test_a_stage_that_did_not_finish_leaves_no_sheet_reviewed(tmp_path, stage):
 
 def test_a_stage_with_no_result_counts_as_not_finished(tmp_path):
     path = build(tmp_path / "reviews" / RID, {name: result for name, result in FACTS.items() if name != "vector"})
-    run(path, stages=pipeline.STAGES[-3:])
+    run(path, stages=LATER)
     assert "vector" in stored(path)["sheets"][0]["reason"]   # evaluate reads it the same way
 
 
@@ -277,7 +278,7 @@ def test_a_route_is_drawn_only_where_travel_distance_was_checked(tmp_path, stage
 
 def test_a_plan_outside_the_floor_order_says_what_was_not_checked(tmp_path):
     path = build(tmp_path / "reviews" / RID, FACTS | {"floors": FLOORS | {"order": [0, 2]}})
-    run(path, stages=pipeline.STAGES[-3:])
+    run(path, stages=LATER)
     r = stored(path)
     sheets = {s["id"]: s for s in r["sheets"]}
     assert sheets["1"]["reviewed"] is False and "stairs, travel distance and corridor width" in sheets["1"]["reason"]
@@ -288,7 +289,7 @@ def test_a_plan_outside_the_floor_order_says_what_was_not_checked(tmp_path):
 def test_a_copy_of_a_floor_left_out_on_purpose_stays_reviewed(tmp_path):
     copy = READ | {"sheets": [*READ["sheets"][:3], row(3, "A6.1", "FIRST FLOOR LIFE SAFETY PLAN", level="FIRST FLOOR"), *READ["sheets"][4:]]}
     path = build(tmp_path / "reviews" / RID, FACTS | {"read": copy})
-    run(path, stages=pipeline.STAGES[-3:])
+    run(path, stages=LATER)
     assert stored(path)["sheets"][3]["reviewed"] is True
 
 
@@ -308,7 +309,7 @@ def test_sheets_outside_the_review_say_why(review):
 def test_a_trade_sheet_is_found_by_its_title_alone(tmp_path):
     riser = READ | {"sheets": [*READ["sheets"][:3], row(3, "A6.1", "PLUMBING RISER DIAGRAM", "other"), *READ["sheets"][4:]]}
     path = build(tmp_path / "reviews" / RID, FACTS | {"read": riser})
-    run(path, stages=pipeline.STAGES[-3:])
+    run(path, stages=LATER)
     sheet = stored(path)["sheets"][3]
     assert (sheet["reviewed"], sheet["reason"]) == (False, OTHER_TRADE)
 
@@ -317,7 +318,7 @@ def test_status_words_never_reach_the_review(tmp_path):
     hostile = READ | {"sheets": [READ["sheets"][0] | {"title": "APPROVED BY THE CITY"}, *READ["sheets"][1:]]}
     path = build(tmp_path / "reviews" / RID, FACTS | {"read": hostile})
     write_json(path / "stage_upload.json", {"name": "Approved set", "parent": None})
-    run(path, stages=pipeline.STAGES[-3:])
+    run(path, stages=LATER)
     assert not STATUS.search(json.dumps(stored(path)))
 
 
@@ -329,12 +330,12 @@ def test_a_second_assemble_makes_no_images(review, monkeypatch):
 def test_cost_is_kept_per_stage_across_reruns(tmp_path):
     path = build(tmp_path / "reviews" / RID)
     write_json(path / "cost.json", {"ingest": {"usd": 0, "seconds": 3.0}})
-    stages = [("spend", "Spend", lambda ctx: ctx.meter.add(0.25, model="m") or {}), *pipeline.STAGES[-3:]]
+    stages = [("spend", "Spend", lambda ctx: ctx.meter.add(0.25, model="m") or {}), *LATER]
     run(path, stages=stages)
     (path / "stage_assemble.json").unlink()
     run(path, stages=stages)
     costs = read_json(path / "cost.json")
-    assert list(costs) == ["ingest", "spend", "evaluate", "letter", "assemble"]
+    assert list(costs) == ["ingest", "spend", "evaluate", "letter", "recheck", "assemble"]
     assert costs["spend"]["usd"] == 0.25 and costs["spend"]["seconds"] >= 0
     r = stored(path)
     assert r["cost"]["usd"] == pytest.approx(0.25) and r["cost"]["seconds"] >= 3.0
@@ -344,7 +345,7 @@ def test_cost_is_kept_per_stage_across_reruns(tmp_path):
 def second_review(review, facts=FACTS, name=CHILD):
     child = build(review.parent / name, facts)
     write_json(child / "stage_upload.json", {"name": "Second set", "parent": review.name})
-    run(child, stages=pipeline.STAGES[-3:])
+    run(child, stages=LATER)
     return child
 
 
@@ -392,10 +393,18 @@ def test_a_drop_does_not_carry_to_a_finding_that_changed(client, review):
     assert key in [item["key"] for item in stored(child)["letter"]["items"]]
 
 
+@pytest.mark.parametrize("field", ["title", "measured", "required", "severity", "rule"])
+def test_a_drop_stays_only_on_a_finding_that_reads_the_same(field):
+    finding = {"key": "k", "title": "t", "measured": "m", "required": "r", "severity": "check", "rule": "s"}
+    earlier = {"findings": [finding], "decisions": {"k": "drop"}}
+    assert _carried(earlier, [finding]) == {"k": "drop"}
+    assert _carried(earlier, [finding | {field: "changed"}]) == {}
+
+
 def test_a_rerun_of_the_evaluate_stage_keeps_its_ids(review):
     before = ids(review)
     write_json(review / "stage_declared.json", TAGGED)
-    run(review, fresh=True, stages=pipeline.STAGES[-3:])
+    run(review, fresh=True, stages=LATER)
     assert ids(review).items() < before.items()
 
 
@@ -567,7 +576,7 @@ def test_images_run_every_stage_to_a_review_when_every_reply_is_empty(client, re
     rid = client.post("/api/reviews", files=[("files", (f"{i}.png", png(), "image/png")) for i in range(3)]).json()["id"]
     st = finished(client, rid)
     assert st["state"] == "done" and st["sheets"] == 3
-    assert [row["state"] for row in st["stages"]] == ["done"] * 8
+    assert [row["state"] for row in st["stages"]] == ["done"] * 9
     r = stored(review.parent / rid)
     assert r["project"]["name"] == "3 page images"
     assert [s["reviewed"] for s in r["sheets"]] == [False] * 3
