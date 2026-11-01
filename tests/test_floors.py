@@ -482,6 +482,41 @@ def test_notes_are_joined_when_two_apply(tmp_path, quick_fit):
     assert "A2" in note and "floor order could not be read" in note
 
 
+@ffmpeg
+def test_sheet_that_repeats_a_floor_name_is_named(tmp_path, quick_fit):
+    # bme_k as read: II. EMELET. came back as I. EMELET., and no sheet there has a printed number.
+    base = plan(3)
+    ctx = review(tmp_path, [marked(base, 1), marked(base, 2), marked(base, 3)], ["FÖLDSZINT", "I. EMELET.", "I. EMELET."])
+    stored = ctx.stage("read")
+    for s in stored["sheets"]:
+        s["number"] = ""
+    write_json(tmp_path / "stage_read.json", stored)
+    model_answers(truly_sorted)
+    out = floors_stage(ctx)
+    assert out["order"] == [0, 1]
+    assert "page 3" in out["not_checked"] and "same floor name" in out["not_checked"]
+
+
+@ffmpeg
+def test_life_safety_copy_of_a_floor_stays_quiet(tmp_path, quick_fit):
+    base = plan(3)
+    ctx = review(tmp_path, [marked(base, 1), marked(base, 2), marked(base, 3)], ["FIRST FLOOR", "SECOND FLOOR", "SECOND FLOOR"])
+    stored = ctx.stage("read")
+    stored["sheets"][2]["title"] = "LIFE SAFETY SECOND FLOOR PLAN"
+    write_json(tmp_path / "stage_read.json", stored)
+    model_answers(truly_sorted)
+    out = floors_stage(ctx)
+    assert out["order"] == [0, 1]
+    assert out["not_checked"] is None
+
+
+def test_two_sheets_with_one_floor_name_are_not_called_one_floor_plan(tmp_path):
+    ctx = review(tmp_path, [plan(1), plan(1)], ["First floor", "First floor"])
+    note = floors_stage(ctx)["not_checked"]
+    assert "A1" in note and "same floor name" in note
+    assert "one floor plan" not in note
+
+
 def test_unread_sheet_is_left_out(tmp_path):
     ctx = review(tmp_path, [plan(1), plan(1)], ["First floor", "Second floor"])
     stored = ctx.stage("read")

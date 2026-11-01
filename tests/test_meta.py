@@ -75,6 +75,11 @@ def rows(meter):
     return [json.loads(line) for line in meter.ledger.read_text().splitlines()]
 
 
+def plain(video_rows):
+    """sam_video rows without the mask, because an array has no plain equality."""
+    return [{k: v for k, v in row.items() if k != "mask"} for row in video_rows]
+
+
 def api_status(code):
     return openai.APIStatusError("no", response=httpx.Response(code, request=httpx.Request("POST", "http://x")), body=None)
 
@@ -90,6 +95,37 @@ def test_cache_hit_costs_nothing(m):
     assert len(f.calls) == 1
     assert m.spent == pytest.approx(REPLY_USD)
     assert len(rows(m)) == 1
+
+
+def test_run_gives_a_repeat_its_own_cache_entry(m):
+    f = fake(REPLY)
+    for run in (0, 1, 2):
+        spark("q", meter=m, schema=SCHEMA, run=run)
+    assert len(f.calls) == 3
+    assert len(rows(m)) == 3
+    spark("q", meter=m, schema=SCHEMA, run=2)
+    assert len(f.calls) == 3
+
+
+def test_run_zero_is_the_plain_call(m):
+    f = fake(REPLY)
+    spark("q", meter=m, schema=SCHEMA)
+    spark("q", meter=m, schema=SCHEMA, run=0)
+    assert len(f.calls) == 1
+
+
+def test_run_is_never_sent_to_the_model(m):
+    f = fake(REPLY)
+    spark("q", meter=m, schema=SCHEMA, run=0)
+    spark("q", meter=m, schema=SCHEMA, run=7)
+    assert f.calls[0] == f.calls[1]
+
+
+def test_run_differs_across_efforts(m):
+    f = fake(REPLY)
+    spark("q", meter=m, schema=SCHEMA, effort="low", run=1)
+    spark("q", meter=m, schema=SCHEMA, effort="medium", run=1)
+    assert len(f.calls) == 2
 
 
 def test_token_cap_always_sent(m):
@@ -394,7 +430,7 @@ def test_sam_video_rows(m, tmp_path):
     path = tmp_path / "stack.mp4"
     path.write_bytes(b"video bytes")
     f = fake("file-1", VIDEO)
-    assert sam_video("<0f>1<|box;x1=1;y1=2;x2=3;y2=4;w=9;h=9|>", path, 6, meter=m) == VIDEO_ROWS
+    assert plain(sam_video("<0f>1<|box;x1=1;y1=2;x2=3;y2=4;w=9;h=9|>", path, 6, meter=m)) == VIDEO_ROWS
     assert f.calls[0] == ("upload", {"purpose": "user_data", "file": ("stack.mp4", b"video bytes")})
     kind, r = f.calls[1]
     assert (kind, r["model"]) == ("sam", "sam-3.1")
@@ -403,6 +439,23 @@ def test_sam_video_rows(m, tmp_path):
         {"type": "input_text", "text": "<0f>1<|box;x1=1;y1=2;x2=3;y2=4;w=9;h=9|>"},
         {"type": "input_video", "file_id": "file-1"},
     ]
+
+
+def test_sam_video_rows_carry_a_mask_the_size_of_their_box(m, tmp_path):
+    (tmp_path / "s.mp4").write_bytes(b"v")
+    fake("file-1", VIDEO)
+    rows_ = sam_video("p", tmp_path / "s.mp4", 6, meter=m)
+    assert [row["mask"].shape for row in rows_] == [(27, 60), (27, 48), (2, 3)]
+    assert rows_[2]["mask"].dtype == bool
+    assert rows_[2]["mask"].tolist() == [[True, False, True], [False, True, True]]
+
+
+def test_sam_video_mask_survives_the_cache(m, tmp_path):
+    (tmp_path / "s.mp4").write_bytes(b"v")
+    fake("file-1", VIDEO)
+    first = sam_video("p", tmp_path / "s.mp4", 6, meter=m)
+    second = sam_video("p", tmp_path / "s.mp4", 6, meter=m)
+    assert second[2]["mask"].tolist() == first[2]["mask"].tolist()
 
 
 def test_sam_video_object_ids_are_ints(m, tmp_path):
@@ -425,7 +478,7 @@ def test_sam_video_cache_hit_is_free_and_skips_the_upload(m, tmp_path):
     f = fake("file-1", VIDEO)
     sam_video("p", tmp_path / "s.mp4", 6, meter=m)
     spent = m.spent
-    assert sam_video("p", tmp_path / "s.mp4", 6, meter=m) == VIDEO_ROWS
+    assert plain(sam_video("p", tmp_path / "s.mp4", 6, meter=m)) == VIDEO_ROWS
     assert len(f.calls) == 2
     assert m.spent == spent
 
@@ -688,7 +741,7 @@ def test_real_video_call_uploads_bytes_and_sends_the_file_id(m, monkeypatch, tmp
         seen[request.url.path] = request
         return httpx.Response(200, json=FILE) if request.url.path == "/v1/files" else sse(delta(VIDEO), COMPLETED)
     serve(monkeypatch, handler)
-    assert sam_video("p", tmp_path / "s.mp4", 6, meter=m) == VIDEO_ROWS
+    assert plain(sam_video("p", tmp_path / "s.mp4", 6, meter=m)) == VIDEO_ROWS
     assert b"video bytes" in seen["/v1/files"].content
     assert b"user_data" in seen["/v1/files"].content
     sent = json.loads(seen["/v1/responses"].content)

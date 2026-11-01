@@ -211,12 +211,19 @@ def _plan_sheets(sheets):
     return [s for s in plans if s["number"].upper().startswith("A")] or plans
 
 
+def _named_plans(sheets):
+    return _plan_sheets([s for s in sheets if s.get("level", "").strip()])
+
+
+def _sheet_name(s):
+    return s["number"] or f"page {s['index'] + 1}"
+
+
 def select_floors(sheets: list[dict]) -> list[dict]:
     """One sheet per storey in set order, because the read's floor_plan class also covers life safety, demolition, framing and trade plans."""
     # shortcut: picks by sheet number prefix and title words, and a plan with no level label is left out, ask the model to pick if a real set defeats this.
-    plans = _plan_sheets([s for s in sheets if s.get("level", "").strip()])
     storeys = {}
-    for s in sorted(plans, key=lambda s: (bool(NOT_MAIN.search(s["title"])), s["index"])):
+    for s in sorted(_named_plans(sheets), key=lambda s: (bool(NOT_MAIN.search(s["title"])), s["index"])):
         storeys.setdefault(" ".join(re.sub(r"\bplans?\b", "", s["level"].lower()).split()), s)
     return sorted(storeys.values(), key=lambda s: s["index"])
 
@@ -257,15 +264,19 @@ def floors_stage(ctx) -> dict:
     floors = select_floors(rows)
     ids = [s["index"] for s in floors]
     box = {s["index"]: s["plan_box"] for s in floors}
-    unnamed = [s["number"] or f"page {s['index'] + 1}" for s in _plan_sheets(rows) if not s.get("level", "").strip()]
+    unnamed = [_sheet_name(s) for s in _plan_sheets(rows) if not s.get("level", "").strip()]
+    # a misread floor name would otherwise lose a storey with no trace, while a life safety or demolition copy of a floor is left out on purpose
+    repeats = [_sheet_name(s) for s in _named_plans(rows) if s["index"] not in ids and not NOT_MAIN.search(s["title"])]
     notes = [f"No floor name was read on {', '.join(unnamed)}, so stairs were not followed there."] if unnamed else []
+    if repeats:
+        notes.append(f"{', '.join(repeats)} read the same floor name as another sheet, so stairs were not followed there.")
     result = {"order": ids, "reference": ids[0] if ids else None, "transforms": {}, "inliers": {}, "unaligned": [], "stack": None, "frame_size": None,
               "discharge": discharge_floor({s["index"]: s["level"] for s in floors}), "not_checked": None}
     if len(ids) < 2:
         if "sheets" not in read:
             why = "the sheet read did not finish"
-        elif unnamed or not all(s.get("read_ok") for s in rows):
-            why = "fewer than two floor plans were read with a floor name"
+        elif unnamed or repeats or not all(s.get("read_ok") for s in rows):
+            why = "fewer than two floor plans were read with a floor name of their own"
         else:
             why = f"this set has {'one floor plan' if ids else 'no floor plans'}"
         return result | {"not_checked": " ".join([f"Stairs were not followed across floors, because {why}.", *notes])}

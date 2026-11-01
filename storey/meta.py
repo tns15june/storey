@@ -210,11 +210,12 @@ def _parsed(text, schema):
 
 
 def spark(prompt: str, images: Sequence = (), *, meter: Meter, schema: dict | None = None, effort: str = "low", model: str = "muse-spark-1.3",
-          system: str | None = None, max_tokens: int = 24000, fresh: bool = False) -> dict | str:
-    """One chat call: the parsed object with a schema, otherwise the text. A malformed, empty or cut-off reply raises ValueError."""
+          system: str | None = None, max_tokens: int = 24000, fresh: bool = False, run: int = 0) -> dict | str:
+    """One chat call: the parsed object with a schema, otherwise the text. A malformed, empty or cut-off reply raises ValueError.
+    `run` repeats a call: a non-zero run has its own cache entry, the model never sees it, and without it identical requests collapse into one reply."""
     input_price, cached_price, output_price = PRICES[model]   # a model not listed, such as a Contributor variant, stops here
     encoded = [_encode(image) for image in images]
-    key = _cache_key(model, effort, system, prompt, schema, [blob for _, blob in encoded])
+    key = _cache_key(model, f"{effort}#{run}" if run else effort, system, prompt, schema, [blob for _, blob in encoded])
     text = None if fresh else _cached(key)
     if text is not None:
         return _parsed(text, schema)
@@ -301,7 +302,7 @@ def sam_image(prompt: str, image, *, meter: Meter) -> list[dict]:
 
 
 def sam_video(prompt: str, path: Path, frames: int, *, meter: Meter, direction: str = "both") -> list[dict]:
-    """Box or point prompts on an MP4. `frames` is the clip length, used for the cost. `conf` is None if SAM left it out."""
+    """Box or point prompts on an MP4. `frames` is the clip length, used for the cost. `conf` is None if SAM left it out. `mask` is a bool array the size of `box`."""
     name, blob = Path(path).name, Path(path).read_bytes()   # bytes, not an open handle: a retried upload would otherwise send a spent file object
 
     def media():
@@ -310,4 +311,4 @@ def sam_video(prompt: str, path: Path, frames: int, *, meter: Meter, direction: 
     key = _cache_key(SAM, direction, None, prompt, None, [blob])
     usd = max(frames, SAM_MIN_FRAMES) * SAM_FRAME_USD
     records = _sam(prompt, media, {"propagation_direction": direction}, video_segmentation_format, key, usd, meter, kind="video", frames=frames)
-    return [{"object": int(r.object_id), "frame": r.frame.frame_index, "box": _box(r), "conf": r.confidence} for r in records]
+    return [{"object": int(r.object_id), "frame": r.frame.frame_index, "box": _box(r), "conf": r.confidence, "mask": _raster(r)} for r in records]

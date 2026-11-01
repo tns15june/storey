@@ -46,7 +46,7 @@ class Context:
         write_json(self.dir / "status.json", self.status)
 
 
-# Empty until the stage modules land. Order: read, floors, verticals, declared, vector, letter. evaluate and assemble run after them.
+# Empty until the stage modules land. Order: read, floors, verticals, declared, vector, evaluate, letter, assemble.
 STAGES: list[tuple[str, str, Callable[[Context], dict]]] = []
 
 
