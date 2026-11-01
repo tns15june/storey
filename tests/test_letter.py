@@ -146,12 +146,16 @@ def test_missing_finding_fields_are_read_as_empty():
 
 
 def test_each_check_opens_with_an_instruction_and_passes_its_own_gate():
-    assert set(ASK) == (set(range(1, 15)) - {12}) | {16}
+    assert set(ASK) == (set(range(1, 15)) - {12}) | {16, 17}
     for check in ASK:
         f = finding(check=check, measured="3'-5\" clear, load 1,440", required="44 in on Level 2", rule="IBC 1020.3")
         text = template(f)[0]
         assert text.startswith(ASK[check])
         assert no_new_facts(text, f)
+
+
+def test_check_17_asks_for_the_string_or_its_overall_to_be_corrected():
+    assert ASK[17] == "Correct the dimension string or its overall"
 
 
 def test_check_3_covers_each_place_a_sheet_is_named():
@@ -304,8 +308,8 @@ def test_rewrite_made_long_with_allowed_words_keeps_the_template(tmp_path):
     assert letter_stage(make(tmp_path, stored(finding())))["items"][0]["text"] == body
 
 
-@pytest.mark.parametrize("text", ["App\u200broved.", "\uff21\uff30\uff30\uff32\uff2f\uff36\uff25\uff24.", "Co\u00admpliant.", "App\u034froved.", "App\ufe0froved.", "App\u3164roved.", "Appr\u00f3ved.", "App\u2800roved.", "App\U000e0001roved.", "App\u0488roved.", "App\x1froved.", "App\x85roved.", "App\u200aroved."],
-                         ids=["zero-width", "full-width", "soft-hyphen", "grapheme-joiner", "variation-selector", "hangul-filler", "accent", "braille-blank", "tag", "enclosing-mark", "control", "next-line", "hair-space"])
+@pytest.mark.parametrize("text", ["App\u200broved.", "\uff21\uff30\uff30\uff32\uff2f\uff36\uff25\uff24.", "Co\u00admpliant.", "App\u034froved.", "App\ufe0froved.", "App\u3164roved.", "Appr\u00f3ved.", "App\u2800roved.", "App\U000e0001roved.", "App\u0488roved.", "App\x1froved.", "App\x85roved.", "App\u200aroved.", "Passed\u3000review.", "No\u00a0further review.", "Passed\x1freview."],
+                         ids=["zero-width", "full-width", "soft-hyphen", "grapheme-joiner", "variation-selector", "hangul-filler", "accent", "braille-blank", "tag", "enclosing-mark", "control", "next-line", "hair-space", "wide-space-between-words", "no-break-space-in-phrase", "control-between-words"])
 def test_status_word_hidden_in_unicode_is_rejected(text):
     assert not no_new_facts(text, WIDTH)
 

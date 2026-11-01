@@ -32,6 +32,7 @@ ASK = {
     13: "Confirm the travel distance to the exit, shown here as a minimum",   # here because a rewrite must keep the instruction, and routes run 16 to 19% under printed figures
     14: "Dimension the clear width of the corridor",
     16: "Make the room names in the schedule and on the plan agree",
+    17: "Correct the dimension string or its overall",
 }
 SCHEMA = {
     "type": "object",
@@ -71,11 +72,16 @@ MAX_GROWTH = 1.5   # kept rewrites ran 0.93 to 1.36 times the template on 43 rea
 SHEET_NUMBER = re.compile(r"(?=.*\d)[A-Za-z0-9][A-Za-z0-9./-]{0,15}")   # as printed. Anything else in this field is drawing text
 
 
-def plain(text: str) -> str:
-    """Text as a reader sees it, for searching only: a status word can hide behind invisible characters, full-width letters or accents."""
+def plain(text: str, gap: str = " ") -> str:
+    """Text as a reader sees it, for searching only: a status word can hide behind invisible characters, full-width letters or accents. `gap` replaces every separator but a plain space."""
     # shortcut: a Cyrillic letter that looks Latin still passes, add a confusables table if a drawing shows one. A rewrite cannot use it, because _closed counts it as an added word.
-    joined = "".join(c for c in text if unicodedata.category(c) != "Zs" or c == " ")   # before NFKD, which turns a thin space into a plain one that splits the word
-    return "".join(c for c in unicodedata.normalize("NFKD", joined) if (unicodedata.category(c)[0] in "LNPS" or c in " \t\n\r") and c not in "\u115f\u1160\u3164\uffa0\u2800")
+    spaced = "".join(gap if c.isspace() and c != " " else c for c in text)   # before NFKD, which turns a thin space into a plain one
+    return "".join(c for c in unicodedata.normalize("NFKD", spaced) if (unicodedata.category(c)[0] in "LNPS" or c == " ") and c not in "\u115f\u1160\u3164\uffa0\u2800")
+
+
+def has_status(text: str, words: re.Pattern = STATUS) -> bool:
+    """Both readings of an unusual separator, because it can sit between two words or split one."""
+    return any(words.search(plain(text, gap)) for gap in (" ", ""))
 
 
 def _codes(text):
@@ -107,7 +113,7 @@ def no_new_facts(text: str, finding: dict) -> bool:
     """True when `text` states no value, code or name beyond the finding's own words and uses no status word."""
     # shortcut: a new name that opens a sentence or follows a colon, a new unit on a kept number (44 mm for 44 in), and a number word or status phrase off the lists all pass, compare units and every capital if a live letter shows one.
     source = ". ".join(str(finding.get(field) or "") for field in FACT_FIELDS)   # each field opens a sentence, so its opening article A is not a stair letter
-    return (not STATUS_WORDS.search(plain(text)) and _facts(text) <= _facts(source) and set(_names(text)) <= set(re.findall(r"[A-Za-z]+", source))
+    return (not has_status(text, STATUS_WORDS) and _facts(text) <= _facts(source) and set(_names(text)) <= set(re.findall(r"[A-Za-z]+", source))
             and _letters(text) <= _letters(source))
 
 
