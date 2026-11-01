@@ -1,0 +1,63 @@
+{
+ "set": "3370_1_clean",
+ "method": "baseline",
+ "judge": "Two judges, each a Claude agent shown only the match sheet's claims and truth, not which method made the claims, ruled on every claim without seeing each other's rulings. An adjudicating agent ruled on each claim where they differed. Rules: the same problem at the same place; a general claim states nothing; when unsure, no match.",
+ "sheet_sha256": "70f6d1d195c30da2ca305f1b361a0b73590e168bb2fd71d456bf9721c40ec450",
+ "matches": [
+  {
+   "id": "B01",
+   "truth": [],
+   "note": "About the Table 504.4 limit on the number of stories (building height), not the number of stairs. No truth item covers it."
+  },
+  {
+   "id": "B02",
+   "truth": [],
+   "note": "States the single-stair shortfall, but for 'the entire 5-story building' on G0.1. It names no floor in words or by sheet, so it does not point at the fourth or fifth floor (rules 2 and 4). Unsure, so not matched (rule 9). By contrast, a claim naming G1.4 or G1.5 would match."
+  },
+  {
+   "id": "B03",
+   "truth": [],
+   "note": "First-floor stair discharging through the interior hall. No truth item in this set covers exit discharge."
+  },
+  {
+   "id": "B04",
+   "truth": [],
+   "note": "Exit enclosure includes the hall and opens to the elevator. No matching truth item."
+  },
+  {
+   "id": "B05",
+   "truth": [],
+   "note": "General claim that no fire-resistance ratings are shown (rule 3). No matching truth item."
+  },
+  {
+   "id": "B06",
+   "truth": [],
+   "note": "G1.5 does not match A1.5 (footprint, rooms, stair layout). The claim does not say the fifth floor has too few stairs, so it is not check 11 on FIFTH FLOOR."
+  },
+  {
+   "id": "B07",
+   "truth": [],
+   "note": "Duplicated door tags and the room 100 vs 105 mismatch on A1.1. No matching truth item."
+  },
+  {
+   "id": "B08",
+   "truth": [],
+   "note": "Door schedule fire ratings and panic hardware. No matching truth item."
+  },
+  {
+   "id": "B09",
+   "truth": [],
+   "note": "General claim that emergency escape openings cannot be verified (rule 3). No matching truth item."
+  },
+  {
+   "id": "B10",
+   "truth": [],
+   "note": "General claim that accessibility information is missing. No matching truth item."
+  },
+  {
+   "id": "B11",
+   "truth": [],
+   "note": "Missing height and area analysis and egress dimensions. This is general (rule 3) and is not the missing site plan."
+  }
+ ]
+}

@@ -1,0 +1,58 @@
+{
+ "set": "16281_1_clean",
+ "method": "baseline",
+ "judge": "Two judges, each a Claude agent shown only the match sheet's claims and truth, not which method made the claims, ruled on every claim without seeing each other's rulings. An adjudicating agent ruled on each claim where they differed. Rules: the same problem at the same place; a general claim states nothing; when unsure, no match.",
+ "sheet_sha256": "a556a5efc17d38293807550a546b9fa47b1d3321b78a637c5c8a7195dd14a6f5",
+ "matches": [
+  {
+   "id": "B01",
+   "truth": [],
+   "note": "Adjudicated: The claim names a specific shortfall (one exit stair where two exits per story are required), but it covers the whole 5-story building. It names no floor in words or by sheet, and it says the same about floors 1-3, which this set does not flag. A building-wide finding does not point at FOURTH or FIFTH FLOOR, and rule 4 requires the claim to name each item it states (compare a claim naming G1.4 and G1.5). Not matched under rules 2, 4 and 9."
+  },
+  {
+   "id": "B02",
+   "truth": [],
+   "note": "Exit width calculation for EXIT 1 conflicts with door 1002 leaf sizes. No truth item covers exit door width."
+  },
+  {
+   "id": "B03",
+   "truth": [],
+   "note": "Door leaves under 32 in clear in the door schedule. No truth item covers door widths."
+  },
+  {
+   "id": "B04",
+   "truth": [],
+   "note": "The exit enclosure takes in the corridor and the elevator. No truth item covers enclosure extent."
+  },
+  {
+   "id": "B05",
+   "truth": [],
+   "note": "Stair enclosure and door fire ratings. No truth item covers ratings."
+  },
+  {
+   "id": "B06",
+   "truth": [],
+   "note": "Emergency escape and rescue openings are not identified. No truth item covers EEROs."
+  },
+  {
+   "id": "B07",
+   "truth": [],
+   "note": "The stated defect is missing travel distance, common path, dead-end, corridor width and discharge information on the life safety plans. The site plan appears only in the recommended action, and 'provide a site plan showing discharge' could also mean a site plan exists without discharge, so it does not clearly say the set has no site plan. Unsure, so not matched to 'no site plan'."
+  },
+  {
+   "id": "B08",
+   "truth": [],
+   "note": "Fire-resistance ratings and wall types are missing. No truth item covers ratings."
+  },
+  {
+   "id": "B09",
+   "truth": [],
+   "note": "General accessibility claim. No truth item covers accessibility."
+  },
+  {
+   "id": "B10",
+   "truth": [],
+   "note": "Lists missing calculations, consultant drawings and sprinkler plans, but does not name a site plan. No truth item covers these."
+  }
+ ]
+}

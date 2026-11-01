@@ -1,0 +1,137 @@
+{
+ "set": "mml_capitol",
+ "method": "baseline",
+ "judge": "Two judges, each a Claude agent shown only the match sheet's claims and truth, not which method made the claims, ruled on every claim without seeing each other's rulings. An adjudicating agent ruled on each claim where they differed. Rules: the same problem at the same place; a general claim states nothing; when unsure, no match.",
+ "sheet_sha256": "f30394f1ab994f047e60f65cee2f02449e654812658e12d00fc9dc8297890221",
+ "matches": [
+  {
+   "id": "B01",
+   "truth": [],
+   "note": "The claim is about the set's status (NOT FOR CONSTRUCTION, Substantially Complete, disclaimer), and no truth item covers that. T08 is about plot stamps and the MML Review Set line on the engineering sheets, not the set's status."
+  },
+  {
+   "id": "B02",
+   "truth": [],
+   "note": "The claim says the project address, owner, architect, engineer and contractor fields are blank. The nearest item, T13, is the empty BUILDING DATA box (stories, occupancy, construction type, sprinkler) and the placeholder job number. T09 is a project-name mismatch. Those are different fields."
+  },
+  {
+   "id": "B03",
+   "truth": [],
+   "note": "The claim says the DESIGN CRITERIA box (loads, wind, seismic, soil bearing) is blank. The nearest item, T13, is the BUILDING DATA box, a different box with different fields."
+  },
+  {
+   "id": "B04",
+   "truth": [],
+   "note": "The claim says the energy R and U values are blank, and no truth item covers that. The claim lists crawlspace among the blank fields but does not say the building has no crawlspace, so T77 is not stated."
+  },
+  {
+   "id": "B05",
+   "truth": [],
+   "note": "The nearest item is T45, but T45 is a dangling reference: two notes cite a site plan that is not in the set. The claim names no note that refers to a site plan. It only says, as a completeness item, that the set has no site plan and that L1.0 shows generic lot options. Unsure, so not matched (rule 9), consistent with B22."
+  },
+  {
+   "id": "B06",
+   "truth": [],
+   "note": "The claim says the foundation plan gives no soil bearing value or frost depth, and no truth item covers that. The A2.0 items (T31, T32, T35, T43) are dimension and joist conflicts, and the claim names none of them."
+  },
+  {
+   "id": "B07",
+   "truth": [],
+   "note": "The claim is about roof truss shop drawings deferred to a later submittal, and no truth item covers that. T49 covers general notes that cite drawings and specifications not in the set, plus gas service and rooftop equipment. A deferred submittal is not stated as a dangling reference."
+  },
+  {
+   "id": "B08",
+   "truth": [
+    "T03"
+   ],
+   "note": "Same defect at the same place. The A2.1 title block says MAIN FLOOR PLAN while the drawing is the Ground Floor Plan, so the title block names the wrong floor and repeats the A2.2 title."
+  },
+  {
+   "id": "B09",
+   "truth": [],
+   "note": "The claim is a code-clearance comment on the ground-floor bathroom water closet, and no truth item covers fixture clearances. T76 (a tub drawn where there is a shower) is not named."
+  },
+  {
+   "id": "B10",
+   "truth": [],
+   "note": "The claim says egress data is missing from the window schedule, and no truth item covers that. T47 is about the blank NOTES column giving no jack stud counts, which is a different defect."
+  },
+  {
+   "id": "B11",
+   "truth": [],
+   "note": "A general barrier-free compliance claim with no specific discrepancy (rule 3). T30 (the powder room called a bathroom) and T26 (the dashed swing at opening 6) are not named."
+  },
+  {
+   "id": "B12",
+   "truth": [],
+   "note": "The claim is a code-clearance comment on the upper bathroom water closet, and no truth item covers that. T25 (the door width and knob on elevation 10) and T50 (rotated elevation tags) are not named."
+  },
+  {
+   "id": "B13",
+   "truth": [],
+   "note": "A general claim that no floor plan shows the alarms. The nearest item, T73, says E2.1 does show alarms but places them wrongly: Unit 1 has one, inside Bedroom/Office 006, and none outside the sleeping room, and Unit 2's main level has none. The claim names no specific location and contradicts T73's facts."
+  },
+  {
+   "id": "B14",
+   "truth": [],
+   "note": "The claim says the R-values on the Building Section are blank, and no truth item covers that. The claim uses the Building Section title without flagging that the wall section is mislabelled, so T05 is not stated."
+  },
+  {
+   "id": "B15",
+   "truth": [],
+   "note": "The claim says the rated floor detail does not show continuity or firestopping. The nearest item, T43, is the conflict between 16 in and 12 in joist spacing. T12 is about vents through the SIP walls on M1.1. The claim names neither."
+  },
+  {
+   "id": "B16",
+   "truth": [],
+   "note": "A general claim that stair details are missing (rule 3). It does not name the interior stair headroom that scales to about 5'-9\" or 6'-5\" (T87), or the mismatch in treads and start position (T33)."
+  },
+  {
+   "id": "B17",
+   "truth": [],
+   "note": "The claim quotes the Grade 0'-6\" label but does not flag its missing minus sign or its conflict with the A3.0 grade (T62). Its defect, missing site grading, frost depth and a zoning height check, is not a truth item."
+  },
+  {
+   "id": "B18",
+   "truth": [
+    "T04"
+   ],
+   "note": "Same defect at the same place: both drawings on A2.4 are titled Roof Plan. T56 is not stated, because the claim says slopes are missing, not that they conflict. T80 (roof penetrations) is not named."
+  },
+  {
+   "id": "B19",
+   "truth": [],
+   "note": "A general claim that the bathroom elevations are not tied to rooms. The nearest item, T50, is specific: the upper bathroom tag is turned a quarter, while the ground and powder room tags are correct. The claim does not name it, nor T30, T60, T61 or T25."
+  },
+  {
+   "id": "B20",
+   "truth": [],
+   "note": "The claim is about commercial fire alarm, sprinkler and telecom content and missing load calculations on E0.1. The nearest item, T49, covers notes citing absent drawings and specifications, gas service and rooftop equipment, which are different items. T10 (codes stated inconsistently) is not stated."
+  },
+  {
+   "id": "B21",
+   "truth": [],
+   "note": "A general claim that the lighting plans are incomplete. T69 says E1.1 does show switches for Stair Hall 100, which contradicts the claim. T48 (track lengths) and T73 (alarm placement on E2.1) are not named."
+  },
+  {
+   "id": "B22",
+   "truth": [],
+   "note": "The claim is about the P1.1 sewer connection assumption and the missing site-specific utility connections. The nearest item is T45 (notes refer to a site plan not in the set). The claim names neither the missing site plan nor any reference to it, so it is not matched (rule 9)."
+  },
+  {
+   "id": "B23",
+   "truth": [],
+   "note": "The claim is about blank electrical columns and generic water heater schematics on P6.1. It names none of the P6.1 items: T84 (heat trap minimum), T85 (tank water closet with hot water), T75 (scale), T76 (tub vs shower) or T72 (dishwasher connection)."
+  },
+  {
+   "id": "B24",
+   "truth": [],
+   "note": "The claim is about missing Manual J, S and D calculations and termination details. It names none of the nearest items: T12 (vents through SIP walls), T80 (wall cap vs roof cap) or T63 (range hood vs kitchen elevations)."
+  },
+  {
+   "id": "B25",
+   "truth": [],
+   "note": "The claim says L1.0 lacks setback, easement, parking and stormwater dimensions. It names neither T45 (a site plan referenced but missing, with no water or sewer routing) nor T07 (detail numbering)."
+  }
+ ]
+}

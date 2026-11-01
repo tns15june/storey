@@ -22,3 +22,6 @@ lab/gather_practice/examples.py
 lab/realsets/
 lab/audit2/navy_words.py
 lab/audit2/realsets_check.py
+
+# The Richmond judge mappings quote the examiner letter, which is never public. They stay local beside the other private Richmond material.
+eval/matches/va_trb_richmond.*

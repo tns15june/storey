@@ -1,0 +1,68 @@
+{
+ "set": "army_bt_bcof_plant",
+ "method": "baseline",
+ "judge": "Two judges, each a Claude agent shown only the match sheet's claims and truth, not which method made the claims, ruled on every claim without seeing each other's rulings. An adjudicating agent ruled on each claim where they differed. Rules: the same problem at the same place; a general claim states nothing; when unsure, no match.",
+ "sheet_sha256": "78ce448fa0e11d699709ff1e227ae6755733e69820f565905ca9448b7499b0bb",
+ "matches": [
+  {
+   "id": "B01",
+   "truth": [],
+   "note": "Not-for-construction stamp. No truth item covers this."
+  },
+  {
+   "id": "B02",
+   "truth": [],
+   "note": "Cover sheet and code data missing. No truth item covers this."
+  },
+  {
+   "id": "B03",
+   "truth": [],
+   "note": "Complains that first floor rooms 142, 116 and 116A have only one remote exit stair. This is about the number of exits. It does not say a stair is missing, not drawn or discontinuous at C_stair_1's place (Rule 6), so it is unsure and not matched."
+  },
+  {
+   "id": "B04",
+   "truth": [],
+   "note": "Second floor occupant loads and egress data. No truth item covers this."
+  },
+  {
+   "id": "B05",
+   "truth": [],
+   "note": "Accessibility items. No truth item covers this."
+  },
+  {
+   "id": "B06",
+   "truth": [],
+   "note": "Elevation height contradictions. No truth item covers this."
+  },
+  {
+   "id": "B07",
+   "truth": [],
+   "note": "Duplicate SOUTH ELEVATION titles and scope line. No truth item covers this."
+  },
+  {
+   "id": "B08",
+   "truth": [],
+   "note": "Match line and section marks on the north elevations. No truth item covers this."
+  },
+  {
+   "id": "B09",
+   "truth": [],
+   "note": "Specifications not submitted. No truth item covers this."
+  },
+  {
+   "id": "B10",
+   "truth": [],
+   "note": "Finish schedule gaps. No truth item covers this."
+  },
+  {
+   "id": "B11",
+   "truth": [],
+   "note": "Disciplines and site plan missing. This set has no site-plan truth item, and the claim says nothing about a missing stair."
+  },
+  {
+   "id": "B12",
+   "truth": [],
+   "note": "No design professional seal. No truth item covers this."
+  }
+ ]
+}

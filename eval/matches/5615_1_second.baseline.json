@@ -1,0 +1,76 @@
+{
+ "set": "5615_1_second",
+ "method": "baseline",
+ "judge": "Two judges, each a Claude agent shown only the match sheet's claims and truth, not which method made the claims, ruled on every claim without seeing each other's rulings. An adjudicating agent ruled on each claim where they differed. Rules: the same problem at the same place; a general claim states nothing; when unsure, no match.",
+ "sheet_sha256": "c9fe34efaddad0f94d4acda675bca5ade8dc8adcffedb8705c43c613d7806a1b",
+ "matches": [
+  {
+   "id": "B01",
+   "truth": [],
+   "note": "Adjudicated: Building-wide single-exit claim filed on G0.1. It says '5-story building' and 'per story' but never names the fourth or fifth floor or a floor sheet. Rule 4 requires naming each item, and rule 6 says a floor is named in words or by sheet. 'Per story' also covers floors 1-3, which the truth does not flag, so it does not point at the specific floors (rules 2, 3, 4, 9)."
+  },
+  {
+   "id": "B02",
+   "truth": [],
+   "note": "Stair enclosure fire rating; no truth item covers it."
+  },
+  {
+   "id": "B03",
+   "truth": [],
+   "note": "Hall and elevator inside the exit enclosure; no truth item covers it."
+  },
+  {
+   "id": "B04",
+   "truth": [
+    "exit_capacity"
+   ],
+   "note": "Adjudicated: Same G1.3 stair marker and the same 46-person capacity the truth flags (14 in / 0.3 = 46). The claim treats that value as deficient. It compares it with the 44 in minimum and the 47 in on other floors instead of the load of 65, but it names the same wrong value at the same marker, which is the same defect in other wording (rule 1)."
+  },
+  {
+   "id": "B05",
+   "truth": [],
+   "note": "Door leaf widths in the schedule; no truth item covers widths, and door 2003 (tag_no_row) is not named."
+  },
+  {
+   "id": "B06",
+   "truth": [
+    "door_type"
+   ],
+   "note": "Door 4002 is listed as a pocket door in the schedule where a swinging door is expected. Same door and same schedule anomaly as door_type; the claim compares it with other floors rather than the A1.4 swing arc."
+  },
+  {
+   "id": "B07",
+   "truth": [],
+   "note": "Window sill height and escape openings; no truth item covers it."
+  },
+  {
+   "id": "B08",
+   "truth": [
+    "stair_discharge"
+   ],
+   "note": "A1.1 does not show Stair 1, so the stair is missing on the first floor, the level of exit discharge."
+  },
+  {
+   "id": "B09",
+   "truth": [
+    "index_extra"
+   ],
+   "note": "The index lists A7.1 Roof Plan and the set has no such sheet. A roof plan is not a site plan, so it does not state no site plan."
+  },
+  {
+   "id": "B10",
+   "truth": [],
+   "note": "General egress verification (travel distance, dead ends, ratings) with no specific discrepancy (rule 3)."
+  },
+  {
+   "id": "B11",
+   "truth": [],
+   "note": "Accessibility of units and doors; no truth item covers it."
+  },
+  {
+   "id": "B12",
+   "truth": [],
+   "note": "Missing height/area analysis; no truth item covers it."
+  }
+ ]
+}

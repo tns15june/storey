@@ -1,0 +1,58 @@
+{
+ "set": "3370_1_second",
+ "method": "baseline",
+ "judge": "Two judges, each a Claude agent shown only the match sheet's claims and truth, not which method made the claims, ruled on every claim without seeing each other's rulings. An adjudicating agent ruled on each claim where they differed. Rules: the same problem at the same place; a general claim states nothing; when unsure, no match.",
+ "sheet_sha256": "f2cf035de16ee02e839f415b8b38e0d197a9aa3deef99829c494db8a9c4edbab",
+ "matches": [
+  {
+   "id": "B01",
+   "truth": [
+    "check 11 on FOURTH FLOOR",
+    "check 11 on FIFTH FLOOR"
+   ],
+   "note": "Single exit stair in a 5-story R-2 building where single exit is capped at 3 stories. The stories past the cap are the fourth and fifth floors, so it states too few stairs on both."
+  },
+  {
+   "id": "B02",
+   "truth": [
+    "check 11 on FOURTH FLOOR",
+    "check 11 on FIFTH FLOOR"
+   ],
+   "note": "Names each floor by sheet (G1.1 through G1.5, including G1.4 and G1.5) as having only one exit where two per story are required, so it covers the fourth and fifth floor shortfall. Its claim about floors 1-3 has no truth item."
+  },
+  {
+   "id": "B03",
+   "truth": [
+    "exit_capacity"
+   ],
+   "note": "Adjudicated: Same Stair 1 marker on G1.3. The claim reads the width as 18 in. At the drawing's 0.3 in per person (46 in = 153 people on the other floors), 18 in gives exactly the truth's 60 people. The claim's 99-person capacity is a misread, and it compares the stair to the 44 in minimum and to the other floors instead of the 85 load. Still, it flags the same undersized width and capacity at the same marker. Under rule 1 (any wording) and rule 6 (match the defect in the drawing, not how it is framed), it states exit_capacity."
+  },
+  {
+   "id": "B04",
+   "truth": [],
+   "note": "Bedroom 219 escape opening and light/ventilation. The only A1.2 truth item is door tag 2008 missing from the schedule."
+  },
+  {
+   "id": "B05",
+   "truth": [],
+   "note": "Fire door ratings at the stair enclosure. The door truth items are tag 2008 with no schedule row and door 4020 pocket vs swing; neither is stated."
+  },
+  {
+   "id": "B06",
+   "truth": [],
+   "note": "Faults the discharge route from Stair 1/Hall to the public way and what the enclosure contains, and treats Stair 1 as present on the first floor. Rule 6 needs the claim to say the stair is missing or not drawn there, so it does not state stair_discharge. Unsure, so not matched."
+  },
+  {
+   "id": "B07",
+   "truth": [
+    "index_extra"
+   ],
+   "note": "The index lists A7.1 Roof Plan, and that sheet is not in the set."
+  },
+  {
+   "id": "B08",
+   "truth": [],
+   "note": "A1.5 layout vs G1.5 life safety plan mismatch. This is not a stair count or any other truth item."
+  }
+ ]
+}

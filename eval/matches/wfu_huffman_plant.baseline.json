@@ -1,0 +1,68 @@
+{
+ "set": "wfu_huffman_plant",
+ "method": "baseline",
+ "judge": "Two judges, each a Claude agent shown only the match sheet's claims and truth, not which method made the claims, ruled on every claim without seeing each other's rulings. An adjudicating agent ruled on each claim where they differed. Rules: the same problem at the same place; a general claim states nothing; when unsure, no match.",
+ "sheet_sha256": "ed0618fa82975d54ec8269027dd010d42cee5bfc677e8bd578e76140abb277e7",
+ "matches": [
+  {
+   "id": "B01",
+   "truth": [],
+   "note": "General point that the submittal is not construction documents; names no stair or place."
+  },
+  {
+   "id": "B02",
+   "truth": [],
+   "note": "Missing building code summary is a general completeness point (Rule 3); names no stair."
+  },
+  {
+   "id": "B03",
+   "truth": [],
+   "note": "General egress and life-safety completeness claim (Rule 3); names no specific stair, floor or discrepancy."
+  },
+  {
+   "id": "B04",
+   "truth": [],
+   "note": "Missing accessibility information is a general point; names no stair."
+  },
+  {
+   "id": "B05",
+   "truth": [],
+   "note": "Missing structural, MEP and energy drawings is a general point; names no stair."
+  },
+  {
+   "id": "B06",
+   "truth": [],
+   "note": "Seal, sheet numbers and revision dates are a title-block issue; names no stair."
+  },
+  {
+   "id": "B07",
+   "truth": [],
+   "note": "Unlabeled bathroom and common areas on the Ground Floor Plan; a room-labeling defect, not a missing central stair on floor 0."
+  },
+  {
+   "id": "B08",
+   "truth": [],
+   "note": "Kitchen symbols in Lounge 101 without MEP details; unrelated to any stair."
+  },
+  {
+   "id": "B09",
+   "truth": [],
+   "note": "Second Floor Plan, but it names the southwest stair, not the central stair (different place, Rule 2), and says the stair is shown dashed with no legend, not that it is missing or not drawn (Rule 6). Nothing in the sheet ties southwest to central, so it is not matched to 'central on floor 2' (Rule 9)."
+  },
+  {
+   "id": "B10",
+   "truth": [],
+   "note": "Room numbering out of sequence; a labeling issue, not a missing stair."
+  },
+  {
+   "id": "B11",
+   "truth": [],
+   "note": "'Mechanical' misspelled on MH31 and MH32; unrelated to any stair."
+  },
+  {
+   "id": "B12",
+   "truth": [],
+   "note": "Third Floor Plan north portion shown in outline with an unlabeled room; names no stair, and 'means of egress cannot be reviewed' is general (Rule 3). Not matched to 'central on floor 3'."
+  }
+ ]
+}

@@ -1,0 +1,62 @@
+{
+ "set": "6267_1_second",
+ "method": "baseline",
+ "judge": "Two judges, each a Claude agent shown only the match sheet's claims and truth, not which method made the claims, ruled on every claim without seeing each other's rulings. An adjudicating agent ruled on each claim where they differed. Rules: the same problem at the same place; a general claim states nothing; when unsure, no match.",
+ "sheet_sha256": "4abcbc256f7157767f88a4c3e7079d1d041198298dbbe4f1b51735d504119b87",
+ "matches": [
+  {
+   "id": "B01",
+   "truth": [],
+   "note": "Building-wide claim that every story needs two exits; it names no fourth, fifth or sixth floor (rule 4), so the per-floor check 11 items are not stated."
+  },
+  {
+   "id": "B02",
+   "truth": [
+    "exit_capacity"
+   ],
+   "note": "Same G1.3 Stair 1 marker with the same 63-person capacity, called deficient and inconsistent with other sheets. It argues from the 19-in minimum width and never compares 63 to the 90 load."
+  },
+  {
+   "id": "B03",
+   "truth": [],
+   "note": "Missing fire-resistance ratings; no truth item covers ratings."
+  },
+  {
+   "id": "B04",
+   "truth": [],
+   "note": "Door fire ratings in the schedule; no truth item, and not about door 2014 or 4013."
+  },
+  {
+   "id": "B05",
+   "truth": [],
+   "note": "Narrow door leaves; no truth item covers door widths."
+  },
+  {
+   "id": "B06",
+   "truth": [],
+   "note": "STORAGE vs Units 101/102 naming on A1.1; no truth item, and it does not say the stair is missing on the first floor."
+  },
+  {
+   "id": "B07",
+   "truth": [],
+   "note": "Stair direction arrows on A1.2-A1.5; not a missing stair, and not on A1.1."
+  },
+  {
+   "id": "B08",
+   "truth": [
+    "index_extra"
+   ],
+   "note": "Index lists A7.1 Roof Plan and the set has no such sheet."
+  },
+  {
+   "id": "B09",
+   "truth": [],
+   "note": "Emergency escape openings; no truth item."
+  },
+  {
+   "id": "B10",
+   "truth": [],
+   "note": "General accessibility claim; no truth item, and not about door tag 2014."
+  }
+ ]
+}

@@ -1,0 +1,59 @@
+{
+ "set": "16281_1_second",
+ "method": "baseline",
+ "judge": "Two judges, each a Claude agent shown only the match sheet's claims and truth, not which method made the claims, ruled on every claim without seeing each other's rulings. An adjudicating agent ruled on each claim where they differed. Rules: the same problem at the same place; a general claim states nothing; when unsure, no match.",
+ "sheet_sha256": "ce7dcc28c7ccce23c8ccf6983775611e053a5b238014d986b1fd5d7553ac7c79",
+ "matches": [
+  {
+   "id": "B01",
+   "truth": [],
+   "note": "Adjudicated: Building-wide single-exit claim with no floor named in words or by sheet and no per-story wording. It does not point at FOURTH or FIFTH FLOOR or set them apart from the floors this set does not flag. It is weaker than sheet_01 B01, so it gets the same ruling. Not matched under rules 2, 4 and 9."
+  },
+  {
+   "id": "B02",
+   "truth": [],
+   "note": "Only one exit on the first floor (G1.1). The check 11 items are for the fourth and fifth floors. stair_discharge is the stair missing from A1.1, not the exit count. Neither matches."
+  },
+  {
+   "id": "B03",
+   "truth": [
+    "exit_capacity"
+   ],
+   "note": "Calls the G1.3 stair marker (21 in, 70 persons) insufficient for the occupant load served. That is the capacity-below-load defect in exit_capacity."
+  },
+  {
+   "id": "B04",
+   "truth": [],
+   "note": "Says Stair 1 is drawn narrower on A1.3. exit_capacity is about the G1.3 marker's capacity being below the load of 100, so both the sheet and the defect differ. This set has no truth item for a third-floor stair."
+  },
+  {
+   "id": "B05",
+   "truth": [
+    "index_extra"
+   ],
+   "note": "The sheet index lists A7.1 Roof Plan, which is not in the set."
+  },
+  {
+   "id": "B06",
+   "truth": [
+    "door_type"
+   ],
+   "note": "The schedule lists door 4006 as a pocket door, and the claim says it 'does not match the plan swing'. That is the schedule-vs-plan conflict in door_type."
+  },
+  {
+   "id": "B07",
+   "truth": [],
+   "note": "Door leaf widths in the schedule. No truth item covers door widths."
+  },
+  {
+   "id": "B08",
+   "truth": [],
+   "note": "EERO window sizes. No truth item covers EEROs."
+  },
+  {
+   "id": "B09",
+   "truth": [],
+   "note": "Room 219 lacks EERO, light and ventilation for a sleeping room. This set has no truth item for room 219, and tag_no_row is about door 2010."
+  }
+ ]
+}

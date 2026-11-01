@@ -1,0 +1,86 @@
+{
+ "set": "mml_capitol",
+ "method": "Storey",
+ "judge": "Two judges, each a Claude agent shown only the match sheet's claims and truth, not which method made the claims, ruled on every claim without seeing each other's rulings. An adjudicating agent ruled on each claim where they differed. Rules: the same problem at the same place; a general claim states nothing; when unsure, no match.",
+ "sheet_sha256": "59a117f04d95ca8c8771df33aa5271dd6c826f9d86dbc97aef5e0a962387b225",
+ "matches": [
+  {
+   "id": "A-01",
+   "truth": [
+    "T03"
+   ],
+   "note": "The A2.1 title block says MAIN FLOOR PLAN, but the drawing and index say Ground Floor Plan. That is T03: the A2.1 title block names the wrong floor and repeats A2.2's title. T02 is about A2.4 and A3.0, not A2.1."
+  },
+  {
+   "id": "A-02",
+   "truth": [
+    "T01"
+   ],
+   "note": "The index gives P6.1 the title HVAC Cover Sheet, while its title block says Plumbing Schedules. That is exactly T01. T02 does not cover P6.1."
+  },
+  {
+   "id": "A-03",
+   "truth": [
+    "T13"
+   ],
+   "note": "No sprinkler statement on A1.0. T13 says the empty BUILDING DATA box on A1.0 leaves sprinkler status unstated anywhere. Calling it the code summary rather than the BUILDING DATA box is only a wording difference on the same sheet, so the claim states one part of T13."
+  },
+  {
+   "id": "A-04",
+   "truth": [
+    "T13"
+   ],
+   "note": "No number of stories on A1.0. T13 lists number of stories among the items missing because the BUILDING DATA box is empty, so the claim states one part of T13 on the same sheet."
+  },
+  {
+   "id": "A-05",
+   "truth": [
+    "T17"
+   ],
+   "note": "Window B height is 1'-5\" on A2.2 against 1'-6\" on A2.1 and A2.3. That is T17: Window B on A2.2 has a different height from the other two schedules."
+  },
+  {
+   "id": "A-06",
+   "truth": [
+    "T16"
+   ],
+   "note": "Door 8 on A2.1 has a material (STEEL) in the swing column, the same defect at the same schedule row as T16. Not mentioning that the material is also wrong does not change the match."
+  },
+  {
+   "id": "A-07",
+   "truth": [],
+   "note": "The claim says Stair C does not reach the ground floor, but no truth item says any stair is missing or erased on the ground floor. T33 covers the interior stair's treads and start position between plans and section, not its absence on a level. T31, T32 and T37-T39 cover exterior stair lengths and dimensions."
+  },
+  {
+   "id": "A-08",
+   "truth": [
+    "T27"
+   ],
+   "note": "Room 205 is in the A2.3 finish schedule but not labelled on the plan. T27 says 205 is not on the A2.3 plan while the schedule uses 205. Same discrepancy and sheet, even though the claim does not mention 201 appearing twice."
+  },
+  {
+   "id": "A-09",
+   "truth": [
+    "T38"
+   ],
+   "note": "On A2.1, 4'-0\" + 6'-8\" = 10'-8\" against a 10'-5\" overall. T38 says the front stair string adds to more than its overall and names the 6'-8\" dimension overlapping by 3 in. T39 is not matched because it is about the left and right overalls disagreeing with each other, which the claim does not state."
+  },
+  {
+   "id": "A-10",
+   "truth": [
+    "T37"
+   ],
+   "note": "On A2.1, 10'-6\" + 4'-0\" = 14'-6\" against a 14'-0\" overall. T37 says the rear stair string adds to more than its overall, with the 10'-6\" dimension overlapping the 4'-0\" by 6 in. Same figures and same sheet."
+  },
+  {
+   "id": "A-11",
+   "truth": [],
+   "note": "The claim reports two reads of the A1.0 area field that are identical apart from ft2 versus ft\u00b2. It names no drawing defect, and no truth item concerns floor areas."
+  },
+  {
+   "id": "A-12",
+   "truth": [],
+   "note": "A general statement that no life safety sheet was found, with no sheet and no specific discrepancy (rule 3). No truth item is about a missing life safety sheet. T45 and T49 are about notes that refer to a missing site plan, specifications and other drawings."
+  }
+ ]
+}

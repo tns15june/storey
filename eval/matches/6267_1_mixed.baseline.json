@@ -1,0 +1,79 @@
+{
+ "set": "6267_1_mixed",
+ "method": "baseline",
+ "judge": "Two judges, each a Claude agent shown only the match sheet's claims and truth, not which method made the claims, ruled on every claim without seeing each other's rulings. An adjudicating agent ruled on each claim where they differed. Rules: the same problem at the same place; a general claim states nothing; when unsure, no match.",
+ "sheet_sha256": "16f7022a28f9904cb4b43bbb31bb30ff419ecb7d0b0a3d1d1bdc68f461e593ba",
+ "matches": [
+  {
+   "id": "B01",
+   "truth": [
+    "stories"
+   ],
+   "note": "The code summary says 7 stories and the set shows 6 floors; same as stories."
+  },
+  {
+   "id": "B02",
+   "truth": [
+    "area_total"
+   ],
+   "note": "The area TOTAL row on G0.1 does not equal the 17,381 SF floor sum. Same row and discrepancy as area_total; the claim misreads the total as 16,581 instead of 18,581."
+  },
+  {
+   "id": "B03",
+   "truth": [
+    "index_extra"
+   ],
+   "note": "The index lists A7.1 Roof Plan and the set has no such sheet; same as index_extra."
+  },
+  {
+   "id": "B04",
+   "truth": [],
+   "note": "The G0.1 stair width calculation lists OCC 75 against 90 occupants. That is a different place and discrepancy from the G1.3 marker in exit_capacity."
+  },
+  {
+   "id": "B05",
+   "truth": [
+    "check 11 on FOURTH FLOOR",
+    "check 11 on FIFTH FLOOR",
+    "check 11 on SIXTH FLOOR"
+   ],
+   "note": "Names plans G1.1 through G1.6 (G1.N is floor N; B07 calls G1.1 the first floor life safety plan), which covers the fourth to sixth floor sheets. It says each has only one stair where two exits are required. Including floors 1-3 does not prevent the match."
+  },
+  {
+   "id": "B06",
+   "truth": [
+    "exit_capacity"
+   ],
+   "note": "Adjudicated: Same G1.3 stair marker and the same 63-person capacity the truth flags (19 in / 0.3 = 63). The claim compares it with the 44 in minimum and the 48 in on other floors instead of the load of 90, but it names the same wrong value at the same marker (rule 1)."
+  },
+  {
+   "id": "B07",
+   "truth": [
+    "stair_discharge"
+   ],
+   "note": "The A1.1 first floor plan does not show Stair 1; same as stair_discharge."
+  },
+  {
+   "id": "B08",
+   "truth": [
+    "floor_name"
+   ],
+   "note": "The A1.2 plan label says SECOND FLOOR PLAN and the title block says THIRD FLOOR PLAN; same as floor_name."
+  },
+  {
+   "id": "B09",
+   "truth": [],
+   "note": "Door widths. Mark 4012 is neither door 4013 (door_type) nor tag 2014 (tag_no_row)."
+  },
+  {
+   "id": "B10",
+   "truth": [],
+   "note": "Stair door fire ratings; no truth item covers it."
+  },
+  {
+   "id": "B11",
+   "truth": [],
+   "note": "General statement that escape openings are not identified; no truth item covers it."
+  }
+ ]
+}

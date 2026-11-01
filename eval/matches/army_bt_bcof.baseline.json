@@ -1,0 +1,76 @@
+{
+ "set": "army_bt_bcof",
+ "method": "baseline",
+ "judge": "Two judges, each a Claude agent shown only the match sheet's claims and truth, not which method made the claims, ruled on every claim without seeing each other's rulings. An adjudicating agent ruled on each claim where they differed. Rules: the same problem at the same place; a general claim states nothing; when unsure, no match.",
+ "sheet_sha256": "5ab938179ee6c07ff300d63a6600e3f405655097c0679ba73b4eb0ac6aff4b43",
+ "matches": [
+  {
+   "id": "B01",
+   "truth": [],
+   "note": "Claim's defect is the NOT FOR CONSTRUCTION marking on the submittal. J25 also mentions a 100% submittal, but its defect is unfilled title block placeholders (File Name, Solicitation/Contract). Those are different problems, and no truth item covers the marking."
+  },
+  {
+   "id": "B02",
+   "truth": [
+    "J11",
+    "J12",
+    "J13",
+    "J14"
+   ],
+   "note": "On A-101 the claim names the missing-sheet callouts 1/A-301 (J11), 1/2/3 A-302 (J12), A-406 (J13) and A-407 (J14). All four truth items list A-101."
+  },
+  {
+   "id": "B03",
+   "truth": [],
+   "note": "Claim says the floor 1 and floor 2 areas do not add up to the total. J32 says the printed totals do add correctly, and its defect is that the floor 2 area is lower than the drawn outline. The claim never compares the area to the outline, so it states a different discrepancy. It does not match J31 (key plan outline) either."
+  },
+  {
+   "id": "B04",
+   "truth": [],
+   "note": "A general complaint about a missing code summary, egress, plumbing and accessibility information, with no specific discrepancy (rule 3). No truth item covers it."
+  },
+  {
+   "id": "B05",
+   "truth": [
+    "J20"
+   ],
+   "note": "On A-201, two different partial views (Details 1 and 2) carry the same title, SOUTH ELEVATION. That is the same defect as J20. It is not J30 (missing grid line) or J18 (plan markers)."
+  },
+  {
+   "id": "B06",
+   "truth": [
+    "J15"
+   ],
+   "note": "Callout 1/A-210 on the A-201 elevations points at a sheet that is not in the set, which matches J15. No truth item covers the A-510 reference."
+  },
+  {
+   "id": "B07",
+   "truth": [
+    "J12"
+   ],
+   "note": "On A-202 the claim names callout 1/A-302 pointing at the missing A-302, which matches J12 (A-202 is listed). Not J11: A-202 is not among J11's sheets, and the claim names no A-301 callout. It only says sheet A-301 is absent."
+  },
+  {
+   "id": "B08",
+   "truth": [
+    "J11",
+    "J12"
+   ],
+   "note": "On A-203 the claim names callouts 1/A-301 (J11) and 3/A-302 (J12), both pointing at missing sheets. Both truth items list A-203. No truth item covers the missing site datum for the eave height (J44 and J45 are about the EAVE spelling and the ROOF level name)."
+  },
+  {
+   "id": "B09",
+   "truth": [
+    "J17"
+   ],
+   "note": "Note 13 on I-601 points to a finish legend sheet that is not in the set, so the finish codes are undefined. That is the same defect as J17. The claim reads the sheet as L-602 where the truth says I-602; this looks like a one-letter misread of the same reference. Not J16, which is about Note 9."
+  },
+  {
+   "id": "B10",
+   "truth": [
+    "J02"
+   ],
+   "note": "Room tag 159 CTA has no row in the first floor finish schedule, which matches J02. The closing request to coordinate all room numbers and names is general (rule 3), so it does not state J01, J03 or J04."
+  }
+ ]
+}

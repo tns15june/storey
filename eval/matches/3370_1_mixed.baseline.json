@@ -1,0 +1,60 @@
+{
+ "set": "3370_1_mixed",
+ "method": "baseline",
+ "judge": "Two judges, each a Claude agent shown only the match sheet's claims and truth, not which method made the claims, ruled on every claim without seeing each other's rulings. An adjudicating agent ruled on each claim where they differed. Rules: the same problem at the same place; a general claim states nothing; when unsure, no match.",
+ "sheet_sha256": "72cf9764d0a3664c04ac2fc53154c0b442e18564c2bbd5ddb62edc7f984119ac",
+ "matches": [
+  {
+   "id": "B01",
+   "truth": [
+    "stories"
+   ],
+   "note": "Same defect at the same place: the G0.1 code summary says 6 stories and the set shows 5."
+  },
+  {
+   "id": "B02",
+   "truth": [
+    "index_extra"
+   ],
+   "note": "Same index entry: G0.1 lists A7.1 and the set has no such sheet."
+  },
+  {
+   "id": "B03",
+   "truth": [
+    "check 11 on THIRD FLOOR",
+    "check 11 on FOURTH FLOOR",
+    "check 11 on FIFTH FLOOR"
+   ],
+   "note": "Adjudicated: B03 names Sheets G1.1 through G1.5, and B05 confirms G1.3 is the Third Floor Life Safety Plan. Rule 6 lets a floor be named by sheet, so the range names the third, fourth and fifth floors. It also gives a specific discrepancy: one stair where two exits are required per story. That is the 'too few stairs' defect at those floors, so rule 3 does not apply and rule 4 allows all three matches. Floors 1 and 2 are over-named; they get no match, but that does not cancel the matches on floors 3 to 5 (rule 2). The third-floor item uses the same words as the fourth- and fifth-floor items, has no sheet and names no cause. Floors 4 and 5 are flagged with no erased stair, so check 11 flags a single stair on these floors, and the third floor would be flagged with or without stair_mid. B03 does not state stair_mid, which is a separate item."
+  },
+  {
+   "id": "B04",
+   "truth": [],
+   "note": "Exit enclosure includes the hall and the elevator lobby. No matching truth item."
+  },
+  {
+   "id": "B05",
+   "truth": [
+    "exit_capacity"
+   ],
+   "note": "Same Stair 1 marker on G1.3, quoting the same 60-person capacity and calling it deficient. It compares to the 44-inch minimum and to other floors rather than to the 85 load, but it is the same altered marker. Because it says the stair is labeled there, it is not stair_mid or check 11 on THIRD FLOOR."
+  },
+  {
+   "id": "B06",
+   "truth": [
+    "floor_name"
+   ],
+   "note": "Same defect on A1.2: the title block says THIRD FLOOR PLAN and the drawing label says SECOND FLOOR PLAN. It is not room_name or tag_no_row, which are other A1.2 defects."
+  },
+  {
+   "id": "B07",
+   "truth": [],
+   "note": "Door fire ratings in the schedule. No matching truth item, and the claim names neither door 2008 nor door 4020."
+  },
+  {
+   "id": "B08",
+   "truth": [],
+   "note": "General claim that travel distance, common path, corridor ratings and exit separation are missing (rule 3). No matching truth item."
+  }
+ ]
+}

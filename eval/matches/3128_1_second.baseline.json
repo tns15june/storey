@@ -1,0 +1,74 @@
+{
+ "set": "3128_1_second",
+ "method": "baseline",
+ "judge": "Two judges, each a Claude agent shown only the match sheet's claims and truth, not which method made the claims, ruled on every claim without seeing each other's rulings. An adjudicating agent ruled on each claim where they differed. Rules: the same problem at the same place; a general claim states nothing; when unsure, no match.",
+ "sheet_sha256": "a14f0a41dae62d4842209b2914d01d7654eabd3748390738f3c65da786604ea9",
+ "matches": [
+  {
+   "id": "B01",
+   "truth": [
+    "index_extra"
+   ],
+   "note": "Same defect at the same index entry: G0.1 lists A7.1 and the set has no such sheet."
+  },
+  {
+   "id": "B02",
+   "truth": [
+    "check 11 on FIFTH FLOOR"
+   ],
+   "note": "The claim sits on G1.5, the fifth-floor life safety plan, so it names the fifth floor by sheet. It says there is one stair where a second is required because a single-exit R-2 may have at most 4 stories, which makes the fifth story the one short of stairs. It does not name the fourth floor, and under its own rule floor 4 may have a single exit, so FOURTH is not matched."
+  },
+  {
+   "id": "B03",
+   "truth": [],
+   "note": "Points at G1.1 (first floor) and gives a building-wide exit count based on the load of 101. It names no fourth or fifth floor, so no check 11 item. Not exit_capacity: that item is the 71-person stair marker on G1.3, a different defect on a different sheet, even though both use the number 101."
+  },
+  {
+   "id": "B04",
+   "truth": [
+    "exit_capacity"
+   ],
+   "note": "Same Stair 1 marker on G1.3, quoting the same 71-person capacity and calling it deficient. The claim compares it to the 44-inch minimum and to other floors rather than to the 101 load, but it is the same altered marker."
+  },
+  {
+   "id": "B05",
+   "truth": [],
+   "note": "About the exit enclosure on G1.1 being open at the south end and the hall serving unit entries. No truth item covers this, and the claim does not say the stair is missing on the first floor (stair_discharge)."
+  },
+  {
+   "id": "B06",
+   "truth": [],
+   "note": "Elevator opening into exit-enclosure Hall 225 on A1.2. No truth item covers this. The only A1.2 truth item is tag_no_row (door 2004), a different defect."
+  },
+  {
+   "id": "B07",
+   "truth": [],
+   "note": "Bedroom 216 has no window on A1.2. No matching truth item."
+  },
+  {
+   "id": "B08",
+   "truth": [],
+   "note": "Scheduled doors narrower than 32 inches. No truth item covers this, and the claim does not name door 2004 (tag_no_row) or door 4008 (door_type)."
+  },
+  {
+   "id": "B09",
+   "truth": [],
+   "note": "Fire ratings of the stair enclosure doors in the schedule. No matching truth item."
+  },
+  {
+   "id": "B10",
+   "truth": [],
+   "note": "Unit and room numbering differs between the life safety plans and A1.1. No matching truth item, and the claim does not say the stair is missing on the first floor."
+  },
+  {
+   "id": "B11",
+   "truth": [],
+   "note": "General claim that fire-resistance ratings are not shown. It names no specific discrepancy (rule 3) and matches no truth item."
+  },
+  {
+   "id": "B12",
+   "truth": [],
+   "note": "General claim that travel distance, common path and dead-end dimensions are missing (rule 3). No matching truth item."
+  }
+ ]
+}
