@@ -274,6 +274,12 @@ Reading only. Comparison lives in Task 9. The method is `recommended_method` of 
   - `SEVERITY: dict[int, str]`, the table from the spec
   - `assign_ids(findings, previous: dict[str, str]) -> None`, keeps a comment id for a known `key`, otherwise issues the next `A-01` style id
 
+**Reading the stair stage.** Each of these gives a wrong or missing finding with no error if it is missed:
+- Check 10's condition is `end` or `missing` on the discharge floor of an established row with a Found floor above it. Task 5 turns every Missing outside the span of Found and Check floors into `end`, so a stair that stops above discharge shows `end` there, and a test for `missing` alone never fires. `evaluate` makes this decision, not Task 5, because it runs with no model call and the examiner's discharge selector can change the floor. Named test: `test_stair_stopping_above_discharge_raises_check_10`.
+- Raise check 9 only for a `missing` cell with Found floors on both sides. A Check floor, and so an unaligned floor, also extends the span, so `missing` alone does not mean a gap between Found floors. With one floor unaligned, a row can read `['found', 'missing', 'check', 'end', 'end']`.
+- Build stair keys from position and never from `id`. `id` is cluster order and changes between fresh runs: row B was `Stair_W_North` in one `bme_k` run and `central_west_main` in the next, so a key or a recheck match built on `id` does not survive a second review. `pos` moves too, by up to 146 sheet pixels on those 6000 px sheets, which is 49 px on the 2000 px copy, so allow for that much drift.
+- Read `not_checked` from the floors stage as well as the verticals stage. It is a string or None on the floors stage and a list on the verticals stage, and the verticals stage copies the floors note only when there are fewer than two floors.
+
 - [ ] **Step 1: Write the failing tests,** one per check in the spec's table, 1 to 14 and 16, each from a small hand-built stages dict. Port the comparison logic and normaliser from `lab/declared/checks.py` and `rules.py`, the v3 changes from `posthoc.py`, and only the checks the spec keeps. Add `test_every_dropped_check_stays_dropped` (marker with no capacity, plan room not in schedule, width against arc raise nothing), `test_floor_word_conflict_is_flagged` (Ground Floor Plan against MAIN FLOOR PLAN), `test_exit_sum_never_reads_as_pass`, `test_missing_cell_between_found_is_fix`, `test_check_cell_between_found_is_check`, `test_not_followed_row_is_open_item`, `test_unknown_read_gives_unknown_not_silence`. Also: `test_no_pass_value_anywhere` (no field in a full evaluate output contains pass, approved or compliant), `test_failed_stage_appears_in_not_checked`, `test_route_never_fix`, `test_scan_distance_is_unknown`, `test_seattle_r2_single_exit_differs_from_houston`, `test_dwelling_moves_rule_checks_to_not_checked`, `test_unknown_discharge_makes_check_10_unknown`, `test_key_is_stable_across_runs`.
 - [ ] **Step 2: Run.** Expected: import error.
 - [ ] **Step 3: Implement.** One small function per check, registered in a list. Margin on route check: raise when route length is at least 75% of the limit, since routes run 16 to 19% under the architect's figures.
@@ -312,6 +318,14 @@ Reading only. Comparison lives in Task 9. The method is `recommended_method` of 
   - `POST /api/reviews/{id}/recheck` multipart resubmittal, returns a new review id with `parent` set.
   - `POST /api/reviews/{id}/remove {vertical, sheet}`, calls Task 13.
   - `GET /api/reviews`, list of past reviews.
+
+**Letter integration.** Each of these gives a wrong letter with no error if it is missed:
+- The letter stage runs before `assemble`, so ids assigned in `assemble` leave every item with a blank `comment_id`. Call `assign_ids` in the evaluate stage, or fill each item's `comment_id` from its `key` in `assemble`.
+- `draft(findings, project)` takes `{"sheets": <read stage rows>, "not_checked": <evaluate's list>}`. It does not take the `project` object of `review.json`: that object has no `sheets`, so the items get "Page N" headings and evaluate's `not_checked` list is lost.
+- `POST /api/reviews/{id}/evaluate` changes rule sections and values, so `stage_letter.json` goes stale. The route rebuilds the letter with `draft`, which makes no model call.
+- Keep and Drop decisions do not reach the letter by themselves. Filter the letter's `items` by `key` against `decisions.json`.
+
+**Stair crops.** A cell's `crop` field is a path such as `verticals/A_3.jpg`. The route `/api/reviews/{review_id}/files/{name}` takes no slash and `review_file` refuses any target whose parent is not the review folder, so the screen cannot show a crop yet. Serve the verticals folder with a path converter that still confines the target to the review folder, or add a route for it, and add a test that a path outside the folder is refused.
 
 - [ ] **Step 1: Write the failing tests:** `test_review_json_matches_contract`, `test_evaluate_makes_no_model_call` (fake transport counts zero), `test_decision_is_saved`, `test_key_required_on_new_routes`, `test_cross_site_post_refused_on_new_routes`.
 - [ ] **Step 2: Run.** Expected: failures.
@@ -374,7 +388,7 @@ Reading only. Comparison lives in Task 9. The method is `recommended_method` of 
 
 - [ ] **Step 1: Write the failing tests:** `test_wrong_pass_counted_first`, `test_baseline_beside_each_score`, `test_miss_listed_by_name`.
 - [ ] **Step 2: Run.** Expected: import error.
-- [ ] **Step 3: Implement.** Freeze truth files and record their sha256 before any run. Sets, defects and metrics per the spec. Budget 25 USD. `queens_royce` Phase 2 and `army_bt_bcof` stay unopened until the pipeline code is frozen by hash. Richmond runs on packet page 107 only, with pages 84, 86, 87, 101 and 176 on a refuse list in `eval/run.py`, and is scored on whether each of the 10 sheet-only comments was raised. Write the sheet-by-sheet audit of `mml_capitol` into `eval/truth/` before its run.
+- [ ] **Step 3: Implement.** Freeze truth files and record their sha256 before any run. Sets, defects and metrics per the spec. Budget 25 USD. `queens_royce` Phase 2 and `army_bt_bcof` stay unopened until the pipeline code is frozen by hash. Richmond runs on packet page 107 only, with pages 84, 86, 87, 101 and 176 on a refuse list in `eval/run.py`, and is scored on whether each of the 10 sheet-only comments was raised. Write the sheet-by-sheet audit of `mml_capitol` into `eval/truth/` before its run. Quote the stair rule's 15 held-out plants in the shipped states: 12 Check, 1 Missing, 2 Not on this floor, 0 Found. The lab's 12 Check, 3 Missing comes from `decide` alone, before a Missing cell outside the span becomes `end`.
 - [ ] **Step 4: Run** the tests. Expected: pass.
 - [ ] **Step 5: Run the evaluation** after Tasks 5, 6, 9 and 13. Commit the report and the list of misses.
 
@@ -386,7 +400,7 @@ Reading only. Comparison lives in Task 9. The method is `recommended_method` of 
 
 - [ ] **Step 1:** Replace the sample with real pipeline output on `habs_stelizabeths_center` and the `mml` sets, one review per jurisdiction, images under `app/web/sample/<set>/`, and delete `app/web/sample/{L2,L1,L0,B1}.jpg`. Add a GitHub Pages deploy from `app/web/`.
 - [ ] **Step 2:** Replace absolute `/Users/tsharma/...` paths in `lab/` with paths relative to the repo root, and confirm one lab script still runs.
-- [ ] **Step 3:** Write the README: what it is, how to run, evaluation with misses, Meta tooling, "Built during the hackathon", "Pre-existing assets", licence.
+- [ ] **Step 3:** Write the README: what it is, how to run, evaluation with misses, Meta tooling, "Built during the hackathon", "Pre-existing assets", licence. Where it describes the stair rule, quote the 15 held-out plants as 12 Check, 1 Missing, 2 Not on this floor, 0 Found.
 - [ ] **Step 4:** Confirm no file in the repo holds a key, IBC tables beyond `rows.json`, or a sheet without `public_demo: yes`.
 - [ ] **Step 5:** Record the video, 3 minutes at most, with the link checked signed out.
 - [ ] **Step 6:** Make the repo public, merge `build` to `main`, and submit.
