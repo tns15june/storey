@@ -1,0 +1,155 @@
+{
+ "set": "army_bt_bcof",
+ "pdf_sha256": "0307ef8ad579b3df02092cb8606550670a36f3380cd7d0a4ea1b40feeff8c8b7",
+ "written": "2026-11-01, before any pipeline run on this set",
+ "labeller": "The assistant, not a licensed examiner. Two labellers worked blind to any pipeline output, one floor by floor and one stair by stair, and an adjudicator opened every disagreement.",
+ "boxes": "PDF points, origin top left, as pymupdf reports page coordinates",
+ "pages": "pymupdf page index",
+ "floors": [
+  {
+   "page": 0,
+   "name": "FIRST FLOOR",
+   "plan_box": [
+    82,
+    44,
+    1005,
+    734
+   ],
+   "note": "Storey 1 of 2, the lowest; the set has no basement plan. Sheet A-101 FIRST FLOOR PLAN, drawing 1/A-101 'FIRST FLOOR COMPOSITION PLAN', one drawing on the page. The elevations put FIRST FLOOR at 0 ft, SECOND FLOOR at 14 ft, ROOF at 28 ft and the stair mid landings at 7 ft. All boxes are in the unrotated get_text/get_drawings frame (1224 x 792 pt, origin top-left); see limits. plan_box is the union of the plan content: the building, the CTA 159 canopy, the grid bubbles and the section and elevation markers. It leaves out the key plan OUTLINE FLOOR 1 (about x 1000-1125, y 560-722), the gross-area notes (x 926-1105, y 40-62), the title block (x > 1135) and the drawing title (y >= 729; only a 5 pt sliver at x 114-347 falls inside the box). All three enclosed stairs are marked UP here."
+  },
+  {
+   "page": 1,
+   "name": "SECOND FLOOR",
+   "plan_box": [
+    88,
+    37,
+    1014,
+    733
+   ],
+   "note": "Storey 2 of 2, the top storey; the set has no roof plan. Sheet A-102 SECOND FLOOR PLAN, drawing 1/A-102 'SECOND FLOOR COMPOSITION PLAN', one drawing on the page. The whole plan sits about +8.75 pt in x and -0.85 pt in y from page 0, and the grid bubbles and stair walls agree on this offset within 0.1 pt. The same place on this page is therefore the page-0 box shifted by that offset. plan_box is the union of the plan content, including grid bubbles and markers. Its right edge (1014) is set by the A-202 marker, so it takes in the left ends of the gross-area notes (x >= 900, y 43-71) and of the key plan OUTLINE FLOOR 2 (x >= 1005). Its bottom-left corner overlaps the drawing title (x 123-379, y >= 721). None of those areas holds a stair. All three enclosed stairs are marked DN only, so none continues above this floor."
+  }
+ ],
+ "stairs": [
+  {
+   "id": "W_exit_stair",
+   "type": "U: enclosed EXIT STAIR tower projecting from the west end of wing A1 (grids 0-1 / D.5-E.6), two flights with a mid landing at 7 ft. Room 115 on floor 1, with an exterior door at its foot; room 239 on floor 2.",
+   "main": true,
+   "cells": [
+    {
+     "page": 0,
+     "state": "present",
+     "box": [
+      218,
+      456.3,
+      240.6,
+      504.4
+     ],
+     "confidence": "certain"
+    },
+    {
+     "page": 1,
+     "state": "present",
+     "box": [
+      226.8,
+      455.5,
+      249.3,
+      503.5
+     ],
+     "confidence": "certain"
+    }
+   ]
+  },
+  {
+   "id": "C_stair_1",
+   "type": "U: enclosed interior STAIR 1 in the central core of wing B1, between the DRILL INST. offices (grids 8.5-9 / D.5-E.6), two parallel flights with a landing. Room 128 on floor 1, room 220 on floor 2.",
+   "main": true,
+   "cells": [
+    {
+     "page": 0,
+     "state": "present",
+     "box": [
+      537.6,
+      457.6,
+      563.5,
+      503.9
+     ],
+     "confidence": "certain"
+    },
+    {
+     "page": 1,
+     "state": "present",
+     "box": [
+      546.3,
+      456.7,
+      571.7,
+      503.1
+     ],
+     "confidence": "certain"
+    }
+   ]
+  },
+  {
+   "id": "E_exit_stair",
+   "type": "U: enclosed EXIT STAIR tower projecting from the east end of wing C1 (grids 18-19 / D.5-E.6), two flights with a mid landing at 7 ft. Room 143 on floor 1, with an exterior door at its foot; room 238 on floor 2.",
+   "main": true,
+   "cells": [
+    {
+     "page": 0,
+     "state": "present",
+     "box": [
+      912.3,
+      456.3,
+      935,
+      504.4
+     ],
+     "confidence": "certain"
+    },
+    {
+     "page": 1,
+     "state": "present",
+     "box": [
+      921,
+      455.4,
+      943.7,
+      503.5
+     ],
+     "confidence": "certain"
+    }
+   ]
+  },
+  {
+   "id": "C_atd_mech_platform",
+   "type": "straight: steep alternating-tread device (a ship's-ladder-type service stair), not labelled, tagged by interior elevation 1/A-407. It stands against the west wall of the unnamed floor-1 room between TOILET/SHOWER 146 and HALL 154 (grid 7 / G.4-H, wing B1) and serves MECHANICAL PLATFORM 233, which is drawn on the floor-2 plan. It may be classed as a ladder rather than a stair; see limits.",
+   "main": false,
+   "cells": [
+    {
+     "page": 0,
+     "state": "present",
+     "box": [
+      515.2,
+      380.9,
+      521.9,
+      400.1
+     ],
+     "confidence": "unsure"
+    },
+    {
+     "page": 1,
+     "state": "present",
+     "box": [
+      524,
+      380,
+      531.1,
+      399.5
+     ],
+     "confidence": "unsure"
+    }
+   ]
+  }
+ ],
+ "limits": "COORDINATE FRAME (read first). Every box and plan_box uses the frame that pymupdf 2.0 (MuPDF 1.28.5) uses for page.get_text('words'), search_for and get_drawings on this file. That frame is the unrotated mediabox, 1224 x 792 pt, with the origin at top-left. All 6 pages carry /Rotate 270, so page.rect is 792 x 1224 and a default get_pixmap renders the page portrait. To convert a box to the page.rect (rotated) frame, map (x0,y0,x1,y1) -> (y0, 1224-x1, y1, 1224-x0). This equals page.rotation_matrix = (0,-1,1,0,0,1224), which I checked in code. The rotated-frame boxes are: page 0: W (456.3,983.4,504.4,1006.0), C (457.6,660.5,503.9,686.4), E (456.3,289.0,504.4,311.7), ATD (380.9,702.1,400.1,708.8); page 1: W (455.5,974.7,503.5,997.2), C (456.7,652.3,503.1,677.7), E (455.4,280.3,503.5,303.0), ATD (380.0,692.9,399.5,700.0). For my own renders I called page.set_rotation(0) in memory so the images matched the text frame.\n\nSET. The PDF has 6 pages. Only pages 0 (A-101) and 1 (A-102) are floor plans: one building, one drawing per page, two storeys. Pages 2-4 are elevations (A-201 south, A-202 east/west, A-203 north) and page 5 is the I-601 interior finish schedule. The elevations also show an '01 FLOOR UTILITY' datum at 15 ft 8 in. It has no plan of its own and probably belongs to the north utility block or the mechanical platform. The OUTLINE FLOOR 1/2 key plans are schematic outlines, not floor plans. The queens_royce Phase 2 clause does not apply to this set.\n\nADJUDICATION. The two labellers found the same four objects at the same places, and every cell agreed on state: all four objects are present on both floors. I matched their lists by place: A stair_W_exit_115_239 = B W_exit -> W_exit_stair; A stair_C_stair1_128_220 = B C_stair1 -> C_stair_1; A stair_E_exit_143_238 = B E_exit -> E_exit_stair; A atd_C_mech_platform_233 = B M_platform_ladder -> C_atd_mech_platform. They disagreed in these places:\n(1) MAIN FLAG for the two exit stairs: A set true and B set false, because the drawing labels them egress stairs. I ruled TRUE. The key plan splits the building into wings A1 (west), B1 (centre), C1 (east) and D (north utility, which has no stair). A1 and C1 each contain exactly one stair, the EXIT STAIR, so on the literal reading of the task it is the main stair of its wing. STAIR 1 is the main stair of B1 and the building's core stair. A user who wants only the building's principal stair should keep C_stair_1 alone.\n(2) BOX CONVENTION: A drew boxes near the inside wall faces, B on the outer wall faces. I ruled for the clear inside of the enclosure: the inside wall faces, covering both flights and all landings, the lower landing included. I re-measured every enclosed-stair cell from pixel-darkness profiles at 1200 dpi and checked them against the vector walls. My boxes are within 1.4 pt of A's and 1.2-2.6 pt inside B's on each side. B's outer-face boxes are within about 1 pt of my own outer-face measurements and remain a valid alternative: page 0 W [215.5,454.1,242,506.6], C [536.3,456.3,564.8,505.8], E [910.8,454.1,937.4,506.6]; page 1 W [224.2,454,250.8,505], C [545,455.5,573.5,505], E [919.5,453.9,946.2,505]. The IoU between the two conventions is about 0.78-0.85. The ATD box is the device outline with its handrails, and it matches both labellers within 0.4 pt.\n(3) PLAN_BOX: the labellers' extents differed by 5-27 pt on some sides. I used my own union of the plan content; see each floor note.\n(4) ATD CELLS: both labellers marked them present and unsure on both floors, and I opened both. The device is certainly drawn on both pages at the same place. It has two rails, two staggered columns of small treads on a centre rail, and a handrail on each side. On page 1 it sits in a notch cut out of the hatched MECHANICAL PLATFORM 233. Its run is about 16-19 pt, or 7.5-9 ft at 2.15 pt per ft. For a rise of 14-16 ft that is about 57-64 degrees: an alternating-tread device or ship's ladder, not a vertical ladder. Building and safety codes group alternating-tread devices with ship's ladders in their stairway provisions, but some treat them as devices rather than stairs. The plan does not label it, and detail A-407 is not in this PDF. I ruled PRESENT on both floors with confidence UNSURE. The unsure covers only whether this object counts as a stair, not whether it is drawn. main=false. If ladders and alternating-tread devices do not count, drop this stair.\n(5) IDS AND TYPE TEXT differed only in wording. Each type string starts with the type word (U or straight).\n\nCROSS-FLOOR MATCHING. Page 1 is drawn about +8.75 pt in x and -0.85 pt in y from page 0. For example, the W stair's inner west face moves from 218.0 to 226.8, and the E stair's from 912.3 to 921.0. A checker that matches stairs across floors by position needs about 10 pt of tolerance or an alignment step. No stair is absent on either floor.\n\nCHECKED AND EXCLUDED (my own look). I tiled both plans at 220 dpi and zoomed on candidates at 600-1600 dpi. I also searched the vectors on both pages for runs of 4 or more evenly spaced parallel segments (2.5-40 pt long, 0.9-4.5 pt apart). That search found only the three enclosed stairs, the ATD and the following, none of them a stair. The dark ruled rectangles in VEST. 101 and VEST. 155 are walk-off grilles: their lines are about 0.95 pt apart and the door swings are drawn over them. The two units in MECHANICAL 156, and those on the platform, are air handlers. The stippled pads outside the exit-stair doors and the walk south of VEST. 101 are paving at grade, framed by canopy columns. The small striped items in the toilet/shower rooms, the D.I. toilets and COMM. are fixtures and benches. The screened yard at the upper left holds condensers. CTA 159 shows only columns on floor 1, and its roof is drawn on floor 2. No lift shaft, ramp, spiral stair or exterior step is drawn, and the exterior doors of the vestibules and sleeping rooms open at grade.\n\nCORROBORATION. The page-5 finish schedule lists exactly these stair rooms: 115 EXIT STAIR, 128 STAIR 1 and 143 EXIT STAIR on floor 1, and 220 STAIR 1, 238 EXIT STAIR and 239 EXIT STAIR on floor 2. It also lists 233 MECHANICAL PLATFORM, and no other stair, step, ladder or ramp room. The plan labels agree: all three enclosed stairs are marked UP on page 0 and DN on page 1.\n\nBLINDNESS. I opened only the PDF and files I created under scratchpad/truth_army/adj. I did not open the labellers' a/ or b/ folders, run git, call any model API, read any key, or see any checker output. My working files are in the same folder: truth_army_bt_bcof_adj.json (this truth), the overlay checks final_p0.png, final_p1.png and ov_*.png, and the measuring scripts s*.py.",
+ "labeller_limits": {
+  "a": "COORDINATE FRAME (read this first): every box and plan_box is in the frame that pymupdf 2.0 (MuPDF 1.28.5) uses for page.get_text('words'), search_for and get_drawings on this file. That frame is the unrotated mediabox, 1224 x 792 pt, with the origin at top-left. All 6 pages carry /Rotate 270, so page.rect is 792 x 1224, and a default get_pixmap renders in that rotated frame. To convert a box to the page.rect / rendered frame, use (x0,y0,x1,y1) -> (y0, 1224-x1, y1, 1224-x0), which is page.rotation_matrix = (0,-1,1,0,0,1224). Example: the west-stair 'UP' at (220.9,486.1) maps to (486.1,996.7). I rendered with page.set_rotation(0) so the images matched the text frame.\n\nBOX CONVENTION: a stair box is the clear interior of the stair enclosure (inside wall faces), covering the flights and both landings. For the alternating-tread device (ATD), the box is the drawn symbol including handrails.\n\nSET CONTENTS: page 0 is A-101 First Floor Plan and page 1 is A-102 Second Floor Plan. These are the only floor plans: one plan per page for one building, two storeys. Pages 2-4 are elevations (A-201 south, A-202 east/west, A-203 north) and page 5 is the I-601 finish schedule. The elevations also show an '01 FLOOR UTILITY 15'-8\"' datum; it belongs to the one-storey north utility wing and has no plan of its own. The queens_royce Phase-2 clause does not apply to this set.\n\nCORROBORATION: the page-5 finish schedule lists exactly these stair rooms: 115 EXIT STAIR, 128 STAIR 1, 143 EXIT STAIR (floor 1) and 220 STAIR 1, 238 EXIT STAIR, 239 EXIT STAIR (floor 2). It also lists 233 MECHANICAL PLATFORM. No other stair, ladder, step or ramp room appears. The plan labels agree: UP on page 0 and DN on page 1 at all three stairs.\n\nSTAIR MATCHING ACROSS FLOORS: the whole plan is drawn about +8.7 pt in x (and -0.9 pt in y) further right on page 1 than on page 0. For example, exit-stair x0 moves 218.0 -> 227.6 and 912.0 -> 921.3. A checker matching stairs across floors by position needs at least 10 pt of tolerance.\n\nMAIN FLAG: the key plan splits the building into wings A (west), B (centre), C (east) and D (north utility, one storey). A, B and C each have exactly one stair, so each of the three U stairs is that wing's main stair. D has no stair.\n\nATD 'unsure': the device is certainly drawn on both pages. A 2400 dpi check and the vector data show half-width treads alternating about every 0.57 pt, and the device rises to the floor-2 mechanical platform. 'unsure' expresses only whether the device counts as a stair or as a ladder, not whether it is drawn.\n\nCHECKED AND EXCLUDED: dark hatched rectangles in VEST 101 and VEST 155 are walk-off grilles, not steps. Hatched pads outside the exit-stair doors and the main entry are paving. Equipment in MECHANICAL 156 and the screened condenser yard are not stairs. No lift shafts, ramps, spiral stairs or exterior steps were found on either plan. I scanned both plans at 150-190 dpi and every stair at 300-600 dpi or finer.\n\nBox accuracy is about ±1 pt.\n\nWorking files: /private/tmp/claude-502/-Users-tsharma-Github-Meta/d2f17afe-61e4-408b-8021-6e14992e68e7/scratchpad/truth_army/a/truth_army_bt_bcof.json, plus overlay checks ov*.png in the same folder.",
+  "b": "COORDINATE SPACE. Every box and plan_box is in the space that pymupdf's page.get_text('words'), page.search_for and page.get_drawings return for these pages. That is the UNROTATED page (mediabox 1224 x 792 pt), origin top left. This is not page.rect space. Each page carries /Rotate 270, so page.rect is 792 x 1224 and a default get_pixmap render is portrait. To convert a box to page.rect (rotated) space, use (x0r, y0r, x1r, y1r) = (y0, 1224 - x1, y1, 1224 - x0). This is the same as multiplying by page.rotation_matrix = (0, -1, 1, 0, 0, 1224), and I checked the two against each other for all 8 boxes. Worked example: W_exit on page 0 is (215.5, 454.1, 242.0, 506.6) unrotated, which becomes (454.1, 982.0, 506.6, 1008.5) in page.rect space. I drew that converted box on a default rotated render and it sits on the stair.\n\nPAGES. The PDF has 6 pages. Only pages 0 (A-101, FIRST FLOOR) and 1 (A-102, SECOND FLOOR) are floor plans, one drawing each. Pages 2-4 are elevations: A-201 South, A-202 East/West, A-203 North. Page 5 is the finish schedule I-601. There is no basement, roof or mezzanine plan, so the building has two storeys. The queens_royce Phase 2 rule does not apply to this set.\n\nBOX CONVENTION. Each stair box is the outer faces of the stair-enclosure walls, measured from vector lines, so it includes the flights and landings. Precision is about +/-1 pt. The ladder box is the outline of the device only. The scale is about 2.15 pt per ft (the 138'-0\\\" dimension between grids 5.2 and 13.8 spans 296.9 pt). Treads are about 2.07 pt apart and the enclosures are about 12 x 24 ft.\n\nIDS BY PLACE. The four stair ids follow places across the sheet offset of +8.75 pt in x and -0.85 pt in y, and every stair is drawn on both floors. The room numbers change between floors: 115/239, 128/220 and 143/238.\n\nMAIN FLAG. main=true only for STAIR 1, the named core stair. The two EXIT STAIRs are each the only stair of their sleeping wing, but the drawing labels them as egress stairs, so I set main=false. A reader who counts the only stair of a wing as its main stair should change W_exit and E_exit to true.\n\nLADDER (M_platform_ladder). The unsure confidence is about classification, not about whether it is drawn. It is drawn the same way on both floors at the same place. It has two rails and two columns of small staggered treads, about 6 in apart on each side. The whole device is about 3 ft wide with a horizontal run of about 9 ft. That fits an alternating-tread device or ship's ladder serving the mechanical platform; detail sheet A-407 is not in this PDF. Leave it out if ladders or alternating-tread devices do not count as stairs.\n\nEXTERIOR STAIRS AND OTHER CHECKS. No exterior stairs are drawn. I scanned both plans in tiles at 200 dpi and the candidate areas at 400-900 dpi. The dark hatched rectangles in VEST. 101 and VEST. 155 are walk-off mats or grilles, not stairs. The stippled areas outside the exit-stair doors are flat paving at grade. The CTA 159 canopy has only columns, and the mechanical yard at upper left has equipment. I also searched by vector for evenly spaced parallel lines (spacing 1.6-3.6 pt, 3 or more lines) on both pages. It found only the three enclosed stairs, the ladder, and some equipment lines in MECHANICAL 156 and a few tiny detail groups, which I checked and rejected. There are no lift shafts and no ramps.\n\nBLINDNESS. I opened only the PDF and files I wrote under scratchpad/truth_army/b. I did not run git, call any model API, read any key, or see any checker output. A copy of this truth is saved as truth.json in that folder."
+ }
+}

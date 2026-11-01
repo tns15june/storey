@@ -1,0 +1,826 @@
+{
+ "set": "queens_royce",
+ "pdf_sha256": "5b928b17af7e43644a652b4d52e880809080914b8602904d5fd3faca34be5ac4",
+ "written": "2026-11-01, before any pipeline run on this set",
+ "labeller": "The assistant, not a licensed examiner. Two labellers worked blind to any pipeline output, one floor by floor and one stair by stair, and an adjudicator opened every disagreement.",
+ "boxes": "PDF points, origin top left, as pymupdf reports page coordinates",
+ "pages": "pymupdf page index",
+ "floors": [
+  {
+   "page": 6,
+   "name": "Phase 2: 1st Floor",
+   "plan_box": [
+    43.2,
+    231.7,
+    572.8,
+    534.1
+   ],
+   "note": "PDF page 6 (pymupdf index 5), printed title 'Jean Royce Hall – Phase 2: 1st Floor'. One plan: raster xref 61 drawn at x 43.2-636.4 but clipped to x 43.2-574.3, y 231.7-606.7; plan_box is the drawn extent inside the clip. The one-storey ELEC/MECH service block (west) and the grey east-west link corridor are on this floor."
+  },
+  {
+   "page": 7,
+   "name": "Phase 2: 2nd Floor",
+   "plan_box": [
+    35.6,
+    233.9,
+    576,
+    542.5
+   ],
+   "note": "PDF page 7 (index 6), printed title 'Jean Royce Hall – Phase 2: 2nd Floor'. One plan (xref 66, clip x 35.6-576.0). About 1.022x the page-6 scale, offset (-8.5, -3.1) pt. Service block shown as ROOF; the link is still drawn (white) with its doors and the east exterior stair."
+  },
+  {
+   "page": 8,
+   "name": "Phase 2: 3rd Floor",
+   "plan_box": [
+    36.1,
+    234.2,
+    573.9,
+    557.4
+   ],
+   "note": "PDF page 8 (index 7), printed title 'Jean Royce Hall – Phase 2: 3rd Floor'. One plan (xref 70, clip x 36-576, y 234.3-557.7; the raster runs past the clip on the left, right and bottom). About 1.070x the page-6 scale, offset (-38.6, -13.6) pt. Link and service block shown as ROOF."
+  },
+  {
+   "page": 9,
+   "name": "Phase 2: 4th Floor",
+   "plan_box": [
+    36.1,
+    234.5,
+    574.7,
+    557.7
+   ],
+   "note": "PDF page 9 (index 8), printed title 'Jean Royce Hall – Phase 2: 4th Floor'. Top storey: same placement as page 8 within 0.3 pt; the U-stairs are drawn with DN only."
+  }
+ ],
+ "stairs": [
+  {
+   "id": "CTR_N",
+   "type": "U",
+   "main": true,
+   "cells": [
+    {
+     "page": 6,
+     "state": "present",
+     "box": [
+      387,
+      272.5,
+      408,
+      305
+     ],
+     "confidence": "certain"
+    },
+    {
+     "page": 7,
+     "state": "present",
+     "box": [
+      387.5,
+      276,
+      407,
+      308
+     ],
+     "confidence": "certain"
+    },
+    {
+     "page": 8,
+     "state": "present",
+     "box": [
+      376.5,
+      279,
+      396,
+      310.5
+     ],
+     "confidence": "certain"
+    },
+    {
+     "page": 9,
+     "state": "present",
+     "box": [
+      377.5,
+      279,
+      396,
+      310.5
+     ],
+     "confidence": "certain"
+    }
+   ]
+  },
+  {
+   "id": "SHO_SW",
+   "type": "U",
+   "main": true,
+   "cells": [
+    {
+     "page": 6,
+     "state": "present",
+     "box": [
+      250.5,
+      353.5,
+      282,
+      371.5
+     ],
+     "confidence": "certain"
+    },
+    {
+     "page": 7,
+     "state": "present",
+     "box": [
+      253,
+      359.5,
+      286,
+      376.5
+     ],
+     "confidence": "certain"
+    },
+    {
+     "page": 8,
+     "state": "present",
+     "box": [
+      236.5,
+      366,
+      270,
+      384
+     ],
+     "confidence": "certain"
+    },
+    {
+     "page": 9,
+     "state": "present",
+     "box": [
+      237,
+      366,
+      270,
+      384
+     ],
+     "confidence": "certain"
+    }
+   ]
+  },
+  {
+   "id": "SHO_SE",
+   "type": "straight",
+   "main": false,
+   "cells": [
+    {
+     "page": 6,
+     "state": "present",
+     "box": [
+      315,
+      364.5,
+      328,
+      371
+     ],
+     "confidence": "certain"
+    },
+    {
+     "page": 7,
+     "state": "present",
+     "box": [
+      313,
+      368.5,
+      327,
+      376
+     ],
+     "confidence": "certain"
+    },
+    {
+     "page": 8,
+     "state": "absent",
+     "box": [
+      298,
+      375,
+      312.5,
+      383
+     ],
+     "confidence": "certain"
+    },
+    {
+     "page": 9,
+     "state": "absent",
+     "box": [
+      298.5,
+      375.5,
+      313.5,
+      383.5
+     ],
+     "confidence": "certain"
+    }
+   ]
+  },
+  {
+   "id": "TRA_SW",
+   "type": "straight",
+   "main": false,
+   "cells": [
+    {
+     "page": 6,
+     "state": "present",
+     "box": [
+      456,
+      364.5,
+      468,
+      371
+     ],
+     "confidence": "certain"
+    },
+    {
+     "page": 7,
+     "state": "present",
+     "box": [
+      457,
+      369.5,
+      470,
+      376
+     ],
+     "confidence": "certain"
+    },
+    {
+     "page": 8,
+     "state": "absent",
+     "box": [
+      448.5,
+      376,
+      462.5,
+      383
+     ],
+     "confidence": "certain"
+    },
+    {
+     "page": 9,
+     "state": "absent",
+     "box": [
+      449.5,
+      376.5,
+      463,
+      383.5
+     ],
+     "confidence": "certain"
+    }
+   ]
+  },
+  {
+   "id": "TRA_SE",
+   "type": "U",
+   "main": true,
+   "cells": [
+    {
+     "page": 6,
+     "state": "present",
+     "box": [
+      504,
+      354.5,
+      534,
+      371.5
+     ],
+     "confidence": "certain"
+    },
+    {
+     "page": 7,
+     "state": "present",
+     "box": [
+      498.5,
+      360,
+      531.5,
+      376.5
+     ],
+     "confidence": "certain"
+    },
+    {
+     "page": 8,
+     "state": "present",
+     "box": [
+      492.5,
+      366,
+      527,
+      384
+     ],
+     "confidence": "certain"
+    },
+    {
+     "page": 9,
+     "state": "present",
+     "box": [
+      493,
+      366,
+      528,
+      384
+     ],
+     "confidence": "certain"
+    }
+   ]
+  },
+  {
+   "id": "EAST_EXT",
+   "type": "exterior",
+   "main": false,
+   "cells": [
+    {
+     "page": 6,
+     "state": "present",
+     "box": [
+      540.5,
+      376.5,
+      563.5,
+      390
+     ],
+     "confidence": "certain"
+    },
+    {
+     "page": 7,
+     "state": "present",
+     "box": [
+      543.5,
+      381.5,
+      568,
+      395.5
+     ],
+     "confidence": "certain"
+    },
+    {
+     "page": 8,
+     "state": "absent",
+     "box": [
+      539,
+      388.5,
+      565,
+      403.5
+     ],
+     "confidence": "certain"
+    },
+    {
+     "page": 9,
+     "state": "absent",
+     "box": [
+      540,
+      389,
+      566,
+      404
+     ],
+     "confidence": "certain"
+    }
+   ]
+  },
+  {
+   "id": "MIL_NW",
+   "type": "U",
+   "main": true,
+   "cells": [
+    {
+     "page": 6,
+     "state": "present",
+     "box": [
+      75.5,
+      394.5,
+      104,
+      411
+     ],
+     "confidence": "certain"
+    },
+    {
+     "page": 7,
+     "state": "present",
+     "box": [
+      74,
+      400.5,
+      106.5,
+      418
+     ],
+     "confidence": "certain"
+    },
+    {
+     "page": 8,
+     "state": "present",
+     "box": [
+      48,
+      409,
+      81,
+      427
+     ],
+     "confidence": "certain"
+    },
+    {
+     "page": 9,
+     "state": "present",
+     "box": [
+      48.5,
+      409,
+      81,
+      427
+     ],
+     "confidence": "certain"
+    }
+   ]
+  },
+  {
+   "id": "MIL_NE",
+   "type": "straight",
+   "main": false,
+   "cells": [
+    {
+     "page": 6,
+     "state": "present",
+     "box": [
+      139,
+      394.5,
+      151,
+      401.5
+     ],
+     "confidence": "certain"
+    },
+    {
+     "page": 7,
+     "state": "present",
+     "box": [
+      133,
+      400,
+      146,
+      408
+     ],
+     "confidence": "certain"
+    },
+    {
+     "page": 8,
+     "state": "absent",
+     "box": [
+      108.5,
+      408.3,
+      131.7,
+      414.9
+     ],
+     "confidence": "likely"
+    },
+    {
+     "page": 9,
+     "state": "absent",
+     "box": [
+      108.6,
+      408.8,
+      132.2,
+      415.3
+     ],
+     "confidence": "likely"
+    }
+   ]
+  },
+  {
+   "id": "ROY_NW",
+   "type": "straight",
+   "main": false,
+   "cells": [
+    {
+     "page": 6,
+     "state": "present",
+     "box": [
+      279.5,
+      394.5,
+      291.5,
+      401.5
+     ],
+     "confidence": "certain"
+    },
+    {
+     "page": 7,
+     "state": "present",
+     "box": [
+      277,
+      400,
+      291,
+      408
+     ],
+     "confidence": "certain"
+    },
+    {
+     "page": 8,
+     "state": "absent",
+     "box": [
+      260.5,
+      408,
+      275,
+      416.5
+     ],
+     "confidence": "certain"
+    },
+    {
+     "page": 9,
+     "state": "absent",
+     "box": [
+      261,
+      408.5,
+      275.5,
+      417
+     ],
+     "confidence": "certain"
+    }
+   ]
+  },
+  {
+   "id": "ROY_NE",
+   "type": "U",
+   "main": true,
+   "cells": [
+    {
+     "page": 6,
+     "state": "present",
+     "box": [
+      325,
+      394.5,
+      357,
+      411
+     ],
+     "confidence": "certain"
+    },
+    {
+     "page": 7,
+     "state": "present",
+     "box": [
+      322,
+      400.5,
+      353,
+      418
+     ],
+     "confidence": "certain"
+    },
+    {
+     "page": 8,
+     "state": "present",
+     "box": [
+      304,
+      409,
+      338,
+      427
+     ],
+     "confidence": "certain"
+    },
+    {
+     "page": 9,
+     "state": "present",
+     "box": [
+      305,
+      409,
+      338.5,
+      427
+     ],
+     "confidence": "certain"
+    }
+   ]
+  },
+  {
+   "id": "TRO_NW",
+   "type": "U",
+   "main": true,
+   "cells": [
+    {
+     "page": 6,
+     "state": "present",
+     "box": [
+      427,
+      394.5,
+      456,
+      411
+     ],
+     "confidence": "certain"
+    },
+    {
+     "page": 7,
+     "state": "present",
+     "box": [
+      432.5,
+      400.5,
+      465,
+      418
+     ],
+     "confidence": "certain"
+    },
+    {
+     "page": 8,
+     "state": "present",
+     "box": [
+      424,
+      409,
+      457,
+      427
+     ],
+     "confidence": "certain"
+    },
+    {
+     "page": 9,
+     "state": "present",
+     "box": [
+      425,
+      409,
+      458,
+      427
+     ],
+     "confidence": "certain"
+    }
+   ]
+  },
+  {
+   "id": "TRO_NE",
+   "type": "straight",
+   "main": false,
+   "cells": [
+    {
+     "page": 6,
+     "state": "present",
+     "box": [
+      492,
+      395,
+      504,
+      401.5
+     ],
+     "confidence": "certain"
+    },
+    {
+     "page": 7,
+     "state": "present",
+     "box": [
+      493,
+      400,
+      505,
+      408
+     ],
+     "confidence": "certain"
+    },
+    {
+     "page": 8,
+     "state": "absent",
+     "box": [
+      486.5,
+      408,
+      499,
+      416.5
+     ],
+     "confidence": "certain"
+    },
+    {
+     "page": 9,
+     "state": "absent",
+     "box": [
+      487,
+      408.5,
+      500,
+      417
+     ],
+     "confidence": "certain"
+    }
+   ]
+  },
+  {
+   "id": "MIL_ROY_S",
+   "type": "U",
+   "main": true,
+   "cells": [
+    {
+     "page": 6,
+     "state": "present",
+     "box": [
+      202,
+      462,
+      220,
+      494
+     ],
+     "confidence": "certain"
+    },
+    {
+     "page": 7,
+     "state": "present",
+     "box": [
+      197.5,
+      470,
+      216,
+      502
+     ],
+     "confidence": "certain"
+    },
+    {
+     "page": 8,
+     "state": "present",
+     "box": [
+      177.5,
+      482,
+      196,
+      514.5
+     ],
+     "confidence": "certain"
+    },
+    {
+     "page": 9,
+     "state": "present",
+     "box": [
+      177.5,
+      482,
+      196.5,
+      514.5
+     ],
+     "confidence": "certain"
+    }
+   ]
+  },
+  {
+   "id": "TRO_SE",
+   "type": "U",
+   "main": true,
+   "cells": [
+    {
+     "page": 6,
+     "state": "present",
+     "box": [
+      553,
+      462,
+      571,
+      494.5
+     ],
+     "confidence": "certain"
+    },
+    {
+     "page": 7,
+     "state": "present",
+     "box": [
+      557,
+      470,
+      575,
+      502
+     ],
+     "confidence": "certain"
+    },
+    {
+     "page": 8,
+     "state": "present",
+     "box": [
+      554,
+      482,
+      572.5,
+      515
+     ],
+     "confidence": "certain"
+    },
+    {
+     "page": 9,
+     "state": "present",
+     "box": [
+      554.5,
+      482,
+      572.5,
+      515
+     ],
+     "confidence": "certain"
+    }
+   ]
+  },
+  {
+   "id": "SVC_N",
+   "type": "straight",
+   "main": false,
+   "cells": [
+    {
+     "page": 6,
+     "state": "present",
+     "box": [
+      62.5,
+      263.5,
+      71,
+      268
+     ],
+     "confidence": "likely"
+    },
+    {
+     "page": 7,
+     "state": "absent",
+     "box": [
+      55.5,
+      266,
+      64,
+      271
+     ],
+     "confidence": "certain"
+    },
+    {
+     "page": 8,
+     "state": "absent",
+     "box": [
+      28.5,
+      268,
+      37.5,
+      273
+     ],
+     "confidence": "certain"
+    },
+    {
+     "page": 9,
+     "state": "absent",
+     "box": [
+      28.5,
+      268.5,
+      37.5,
+      273.5
+     ],
+     "confidence": "certain"
+    }
+   ]
+  }
+ ],
+ "limits": "PAGES. page = 1-based PDF page number = printed folio. Phase 2 = pages 6, 7, 8, 9 (pymupdf indices 5-8) = 1st, 2nd, 3rd, 4th Floor, known from each page's title text 'Jean Royce Hall – Phase 2: Nth Floor'; page 1 is the cover and pages 2-5 are Phase 1 (other houses). Each Phase 2 page holds one plan: an embedded raster (about 153 dpi on pages 6-7, 222 dpi on pages 8-9) placed at a different scale and offset on each page and cut by a clip rectangle; plan_box is the drawn extent inside that clip. I registered the four pages myself (SIFT + RANSAC similarity on 300-dpi renders; 6->7 scale 1.0221, 6->8 1.0696, 8->9 1.0016; median residual 0.13-0.28 pt) and used it to follow stairs by place and to place absent boxes.\n\nBOXES. PDF points, origin top left, read off 450-1100 dpi renders with 1-pt rulers, about +-1 pt. U-stairs: the enclosure (flights and landings). Straight flights: the tread band of the flight (on page 6 including the part past the break line), without landings or UP/DN text. Absent boxes: where the stair would be, mapped from the nearest page where it is drawn.\n\nCROSSWALK (mine = A = B). CTR_N = CTR_N = A_north_shortliffe_tracy; SHO_SW = SHO_SW = B_shortliffe_sw_junction; SHO_SE = SHO_SE = C_shortliffe_link_flight; TRA_SW = TRA_SW = D_tracy_link_flight; TRA_SE = TRA_SE = E_tracy_se_junction; EAST_EXT = EAST_EXT = F_east_end_exterior; MIL_NW = MIL_NW = G_miller_nw_junction; MIL_NE = MIL_NE = H_miller_link_flight; MIL_ROY_S = MIL_ROY_S = I_miller_roy_south; ROY_NW = ROY_NW = J_roy_link_flight; ROY_NE = ROY_NE = K_roy_ne_junction; TRO_NW = TRO_NW = L_trotter_nw_junction; TRO_NE = TRO_NE = M_trotter_link_flight; TRO_SE = TRO_SE = N_trotter_se; SVC_N = SVC_N = O_service_wing_steps. A's STRIP_MIL_NW, STRIP_SHO_SW, STRIP_ROY_NE, STRIP_TRO_NW, STRIP_TRA_SE = B's Gx, Bx, Kx, Lx, Ex: removed, see (2).\n\nWHERE THEY DISAGREED AND HOW I RULED.\n(1) The labellers gave the same state on every cell; there was no present/absent conflict.\n(2) The five strips on pages 7-9 (both unsure): I ruled that they are not stairs (likely, not certain) and removed them from the list. They are narrow ladder-like strips just outside the outer wall of the five junction U-stairs: p7 [67.5,400.3,72.2,418] (MIL_NW), [247.5,359,252.2,376.5] (SHO_SW), [353.3,400.2,358,418] (ROY_NE), [427,400.2,431.6,418] (TRO_NW), [533,359,537.6,376.5] (TRA_SE); p8 [41,408.5,46,427], [229.5,365,234.5,383.5], [340,408.3,345,427], [417.3,408.3,422.2,427], [528.3,365,533.1,383.4]; p9 [41.5,409,46.5,427.5], [230,365.5,235,384], [340.8,409,345.8,427.5], [418,408.8,423,427.5], [529,365.6,534,384]. Reasons: (a) registered onto page 6, each strip lies exactly over the floor-1 exit landing, where the floor-1 stair enclosure projects about 5 pt beyond the upper-floor wall, so on floors 2-4 it sits over a one-storey roof; (b) it has no door, landing, UP/DN label or break line, and it is identical on floors 2, 3 and 4; (c) its line spacing is about 87% of the tread spacing on every real stair I measured on the same page (MIL_NW, ROY_NE, CTR_N, the MIL_NE flight; p7 1.55 vs 1.78 pt, p8 1.62 vs 1.85-1.90 pt), including the real exterior stair EAST_EXT (1.78 pt on p7), and it equals the spacing of the MIL_NE roof band in (4). It is probably a roof or canopy hatch. A scorer that wants to be lenient can mask these boxes.\n(3) Strip cells on page 6 (A absent likely, B absent certain): no longer needed after (2). Registration puts the strip's floor-1 position inside the floor-1 enclosure of the neighbouring U-stair, as B said, not outside the wall where A put it; nothing but that U-stair's landing is drawn there.\n(4) MIL_NE on pages 8-9 (both unsure): ruled absent, likely. The tread-like band there (p8 [108.5,408.3,131.7,414.9], p9 [108.6,408.8,132.2,415.3]; these are the absent boxes) has lines at 1.62 pt where real treads on the same page are 1.85-1.95 pt, has no label or door, lies outside the building between the link ROOF and Miller's double room, and covers exactly the floor 1-2 flight plus its lower landing (the p7 flight maps to p8 x 109.7-123.3). Page 7 shows no UP flight continuing upward, so it is most likely that compartment's roof. The other four link flights leave no tread-like trace on pages 8-9.\n(5) SVC_N on page 6 (both likely): present, likely. It is three riser lines with a faint UP (same glyph as the other UP labels) inside the north door of the one-storey service block. I kept likely because the feature is tiny. The block is ROOF on page 7. On pages 8-9 its spot is left of the x = 36 clip, so those absent boxes are off the visible plan.\n(6) EAST_EXT on page 7 (both present certain, both flagged): kept present certain because it is drawn there. The link, with its east vestibule, DN label and exterior stair, is drawn identically on pages 6 and 7, so this is one ground-level stair shown on two plans, not a stair serving the 2nd floor.\n(7) Box differences only. A's straight-flight boxes took in the X shaft, landing and UP text (e.g. MIL_NE p6 x 132-158). B's TRO_NE p6 box sat about 3 pt west of the treads. A clamped the off-clip SVC_N boxes. I re-read every box from my own renders.\n\nOTHER NOTES. The straight link flights MIL_NE, ROY_NW, SHO_SE, TRA_SW and TRO_NE are drawn on page 6 with UP and a break line and on page 7 with DN at the same place, so both plans show the same flight; each has one id, present on both pages, and absent on pages 8-9 (rooms, store rooms or roof there). TRO_SE shows DN as well as UP on page 6, so it continues below floor 1 to a level this set does not show. main = true for the eight full-height U-stairs (each house wing has one at each end; CTR_N and MIL_ROY_S are shared by two houses); all others main = false.\n\nEXCLUDED. Lift and X-marked shafts. Ramps (none seen). The UP text with no treads outside TRA_SE's floor-1 exit door (p6 about [543,364,549,368]). A stair tower inside page 6's raster at about x 585-618 that the clip (x <= 574.3) hides, so it is not on the page. Sweeps of all four pages at 250 dpi (corner entry vestibules, courtyards, the link's west end, the service block) found no other treads.",
+ "labeller_limits": {
+  "a": "Page convention: page = 1-based PDF page number = printed folio; Phase 2 = pages 6, 7, 8, 9 = pymupdf indices 5, 6, 7, 8 = 1st, 2nd, 3rd, 4th Floor. Phase 2 is identified from each page's title text 'Jean Royce Hall – Phase 2: Nth Floor' (pages 2-5 are Phase 1, page 1 is a cover). One raster plan per page, placed at a different scale and offset on each page (about 150 dpi on pages 6-7, 220 dpi on pages 8-9), so a stair's box moves between pages; ids are by place. Boxes are page points, origin top left, read off gridded renders, about +-2 pt; U-stair boxes cover the enclosure (flights and landings), straight-flight boxes cover the flight compartment. Absent and unsure boxes give where the stair would be on that page (+-5 pt). STRIP_* entries: narrow strips with cross lines at tread spacing drawn just outside the outer wall of the five spine-junction U-stairs on pages 7-9. No door, landing or UP/DN label reaches them, they repeat identically on each upper floor, and on page 6 an exterior door swings at that spot, so they are probably facade fins or screens, not stairs; recorded as unsure so a checker hit on them can be masked. MIL_NE on pages 8-9: a tread-like strip with no landing, label or door sits on the spine roof over the floor 1-2 flight (maybe a skylight or screen); it is the only one of the five floor 1-2 straight flights that leaves any trace on pages 8-9, so unsure. The straight flights MIL_NE, ROY_NW, SHO_SE, TRA_SW, TRO_NE rise from the spine corridor (UP and break line on page 6) to a landing marked DN on page 7; pages 8-9 show rooms or roof there. EAST_EXT: page 7 repeats page 6's east spine end with the same vestibule, DN label and exterior stair, so it is drawn on both pages, but it may be a repeated drawing rather than a stair serving the 2nd floor. SVC_N: three risers with a faint UP label inside the north door of the one-storey ELEC/MECH service block west of Miller; the block is ROOF on pages 7-9 and its west edge is clipped on pages 8-9, so those absent boxes are rough. Excluded: lift and X-marked shafts; a second stair tower inside page 6's raster east of x 596 that the image clip (x <= 574.3) hides, so it is not on the rendered page. main=true marks the eight full-height U-stairs (each house wing has one at each end; CTR_N and MIL_ROY_S are shared by two houses); all others main=false.",
+  "b": "Phase 2 is PDF pages 6-9: the text layer prints \"Jean Royce Hall - Phase 2: 1st Floor\" on page 6, \"2nd Floor\" on 7, \"3rd Floor\" on 8 and \"4th Floor\" on 9; pages 2-5 are Phase 1 (other houses), page 1 is the cover. Each Phase 2 page holds one plan, an embedded raster (about 150 dpi on pages 6-7, 220 dpi on 8-9) placed at a different scale and offset on each page, so the same stair has different boxes per page. I matched floors by registering the rasters (SIFT, similarity transform, residual about 0.3 pt) and followed each stair by place. Boxes: for U-stairs the enclosure (flights plus landings); for short flights the tread band. Absent cells carry the expected position mapped from the nearest floor where the item is drawn.\nChoices a scorer should know: (1) Eight enclosed U-stairs run through all four floors (A, B, E, G, I, K, L, N); I marked all eight main. B, E, G, K, L sit where each house meets the link; A (Shortliffe/Tracy), I (Miller/Roy) and N (Trotter) are at corridor ends. On floor 1 the junction stairs' enclosures reach further to the outer side (exit door and landing) than on floors 2-4, so their boxes shift about 6 pt between floor 1 and floor 2. (2) Short straight flights C, D, H, J, M at each house/link junction: drawn on floor 1 with UP and on floor 2 with DN at the same spot (the link seems to sit between levels); not drawn on floors 3-4 (store rooms or link roof there). One id per place. (3) F, the exterior flight (DN) outside the link's east doors, is drawn identically on floors 1 and 2 because the link appears on both sheets; it is marked present on floor 2 because it is drawn there, though it is probably the same ground-level stair shown again. (4) Unsure items: narrow tread-like strips with no UP/DN label just outside the outer wall of each junction stair on floors 2-4 (Bx, Ex, Gx, Kx, Lx), sitting over the floor-1 stair's exit landing; they may be exterior stairs or a screen/roof element. Their floor-1 cells are absent, and those floor-1 boxes fall inside the floor-1 enclosures of B, E, G, K and L, so a floor-1 detection of those stairs must not be scored as a false present for a strip id. At H's place on floors 3-4 a longer tread-like band lies on the link roof; also unsure. (5) O: three tread lines with UP in the service-block corridor by its north door, floor 1 only, marked likely. Not counted: the text UP with no treads outside stair E's exit door on floor 1 (page 6 near x 546, y 366); X-boxed shafts (lift or duct). Stair N shows DN and UP on floor 1, so it may continue to a lower level that this set does not show."
+ }
+}
