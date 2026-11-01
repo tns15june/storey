@@ -24,7 +24,7 @@ ASK = {
     4: "Complete the code summary and make its fields agree",
     5: "Make the code summary agree with the floor plans and the adopted code",
     6: "Correct the table arithmetic",
-    7: "Make the plans and the door or window schedule agree",
+    7: "Make the door and window schedules agree with the plans and with themselves",
     8: "Show that the exit capacity covers the printed occupant load",
     9: "Show the stair on this floor, or state how the floor is served",
     10: "Show how the stair reaches the level of exit discharge",
@@ -45,9 +45,9 @@ PROMPT = """You are editing the comments of a building plan check letter. The in
 Each comment is a set of notes: an instruction, the item, what was measured and what is required. Turn the notes into one or two natural sentences addressed to the applicant's designer. Start with the instruction, word for word, and continue from it. State the measured facts and the requirement in plain words. Drop the labels Measured and Required, and fix the capitals of any fragment you merge into a sentence. Write no greetings or thanks.
 
 For example, these notes:
-Make the plans and the door or window schedule agree. Door 7, Office 210. Measured: 48 in double door in door schedule, 36 in swing on plan. Required: One door type for each tag.
+Make the door and window schedules agree with the plans and with themselves. Door 7, Office 210. Measured: 48 in double door in door schedule, 36 in swing on plan. Required: One door type for each tag.
 become:
-Make the plans and the door or window schedule agree for door 7 in Office 210. The door schedule lists a 48 in double door and the plan shows a 36 in swing, and each tag needs one door type.
+Make the door and window schedules agree with the plans and with themselves for door 7 in Office 210. The door schedule lists a 48 in double door and the plan shows a 36 in swing, and each tag needs one door type.
 
 Change the wording only. Keep the instruction and any alternative it offers, each measured value, and what is required. Copy every number, unit, label and name as written, in the same order. Add no number, code section, sheet, name, date or requirement. Do not write a code section at the end. Do not say that anything is approved, acceptable or meets a code, and do not give the plans a status.
 
