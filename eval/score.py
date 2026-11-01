@@ -1,20 +1,24 @@
 """Scores one set in the spec's order: wrong passes, findings judged real, false findings, cost and minutes, with the baseline beside each.
 
 A wrong pass is a stair cell shown Found where truth says the stair is absent or erased, or a second-review comment shown Looks resolved where truth holds it open. Storey has no pass state for any other check, so a missed defect there is a miss, listed by name.
-Generated sets and plants are matched in code. Audit truth, the Richmond record and every baseline need judgement: this writes a match sheet of claims and truth items to data/eval/sheets/<set>.<method>.json and reads the judge's mapping back from eval/matches/<set>.<method>.json. A person or the parent agent judges, never this code.
+Generated sets, plants and stair truth are matched in code. Audit truth, the Richmond record and every baseline need judgement: this writes a match sheet of claims and truth items to data/eval/sheets/<set>.<method>.json and reads the judge's mapping back from eval/matches/<set>.<method>.json. A person or the parent agent judges, never this code.
+A held-out set's stair truth, eval/truth/<set>_stairs.json, gives each stair's box in PDF points on every floor, drawn or absent. It is placed on the review's sheets and scored like a plant with nothing erased. A stair that ends at a floor is no defect, so an absent cell is never a miss.
+Wherever stair presence is scored, a stair row whose place lies within NEAR of no truth stair, drawn or absent, on any sheet is counted apart: each Found cell there is listed as found where truth places no stair, and is no wrong pass, because truth leaves out some stair-like marks on purpose, such as the walk-off grilles on army_bt_bcof.
 
 Mapping file:
     {"set": str, "method": "Storey" or "baseline", "judge": who judged and what they saw, "sheet_sha256": the sha256 the match sheet carries,
      "matches": [{"id": a claim's id, "truth": [ids of the truth items it states, empty when it states none], "note": optional}]}
 Each claim of the match sheet is ruled on exactly once, and every truth id is on the sheet.
 Findings judged real count Fix and Check items. Cannot tell items are not claims, so they are counted apart.
-A plant's truth covers stair presence alone and the Richmond record one examiner's letter, so there a claim that states no truth item is not judged, for either method, rather than false.
+A plant's truth and a stair truth with no audit beside it cover stair presence alone, and the Richmond record one examiner's letter, so there a claim that states no truth item is not judged, for either method, rather than false.
 """
 import hashlib
 import json
 import re
 from collections import Counter
 from pathlib import Path
+
+import pymupdf
 
 from storey.findings import LEGEND, SITE_TITLE
 from storey.pipeline import read_json, write_json
@@ -32,23 +36,31 @@ TOO_FEW = "too few stairs"
 STATES = {**LEGEND, "found": "Found", "not_followed": "Not followed", None: "No stair row at this place"}
 POST_HOC = {"mml_capitol": re.compile(r"^(No site plan|Window \S+ has more than one size|Door \S+ has a material in the swing column|Dimension string)")}   # rules written after this set's audit
 LATE = "Raised only by a rule written after this set's audit, so it counts in the post hoc row."
-PARTIAL = ("plant", "record")   # truth that covers part of what a review may raise
+PARTIAL = ("plant", "record", "stairs")   # truth that covers part of what a review may raise
 HOW = ("For each claim, list the ids of the truth items it states: the same problem at the same place. An empty list means it states none of them. "
        "Write the mapping to eval/matches/<set>.<method>.json in the format eval/score.py describes.")
+COUNTED_FROM_1 = ("queens_royce",)   # its stair truth says its pages are pymupdf indices, but its floor notes and limits count them from 1: page 6 is pymupdf index 5
 
 
-def read_truth(path, name):
-    raw = json.loads(Path(path).read_text())
-    kind = "generated" if "defects" in raw else "plant" if "cells" in raw else "record" if "decision_rule" in raw else "audit"
+def _kind(raw):
+    return "generated" if "defects" in raw else "plant" if "cells" in raw else "record" if "decision_rule" in raw else "stairs" if "stairs" in raw else "audit"
+
+
+def read_truth(paths, name):
+    """A set's truth from all its files. A stair truth beside an audit rides along as "stairs". Alone, it is the set's truth."""
+    raws = [json.loads(Path(p).read_text()) for p in paths]
+    stairs = next((r for r in raws if _kind(r) == "stairs"), None)
+    raw = next((r for r in raws if _kind(r) != "stairs"), stairs)
+    kind = _kind(raw)
     source = {"generated": "swiss_dwellings", "plant": raw.get("source")}.get(kind, name)   # the catalog entry that decides whether eval.json may show this set
-    return {"name": name, "kind": kind, "source": source, "path": str(path), "sha256": run._sha(path), "raw": raw}
+    return {"name": name, "kind": kind, "source": source, "paths": [str(p) for p in paths], "sha256": run.truth_hash(paths), "raw": raw, "stairs": stairs}
 
 
 def load(name):
-    path = run.truth_path(name)
-    if path is None:
+    paths = run.truth_paths(name)
+    if not paths:
         raise ValueError(f"No truth is written for {name}.")
-    return read_truth(path, name)
+    return read_truth(paths, name)
 
 
 def _expected(raw, city):
@@ -82,11 +94,37 @@ def items(truth, city=CITY):
         return [{"id": _cell(c), "sheets": [raw["sheets"][c["index"]]], "statement": f"The stair {c['object']} is erased on floor {c['floor']}, the {c['kind']} plant.", "status": "real"} for c in raw["cells"]]
     if kind == "record":
         return [{"id": c["id"], "sheets": [raw["sheet"]["id"]], "statement": c["text"], "status": "real"} for c in raw["comments"] if c["sheet_only"]]
+    if kind == "stairs":
+        return []   # nothing is erased on the set itself, and a stair that ends at a floor is no defect
     return [{k: t[k] for k in ("id", "sheets", "statement", "status")} for t in raw["items"]]
 
 
 def _cell(c):
     return f"{c['object']} on floor {c['floor']}"
+
+
+def placed(name, stairs, sizes):
+    """A set's stair truth on the sheets of a review of it, whose images are `sizes`, (width, height) px each: the sheets' PDF pages, the floor each holds or None,
+    and each stair's boxes by sheet, where it is drawn and where truth says it is absent. The sheets are the pages run.inputs uploads, in order.
+    A box goes through its page's rotation, from the unrotated frame truth uses to the rendered one, then scales."""
+    (pdf, numbers), = run.inputs(name)   # shortcut: one PDF per set, as SOURCES lists each held-out set, walk every input if a set with stair truth ever uploads several
+    with pymupdf.open(pdf) as doc:
+        index = [n - 1 for n in numbers or range(1, doc.page_count + 1)]   # the pymupdf index of each sheet's page
+        if len(sizes) != len(index):
+            raise ValueError(f"The review holds {len(sizes)} sheets and {name} uploads {len(index)} pages, so it reviewed another set.")
+        first = 1 if name in COUNTED_FROM_1 else 0
+        sheet = {p + first: i for i, p in enumerate(index)}   # the stair truth's page number: sheet
+        out = {"sheets": [f"page {p + 1}" for p in index], "floors": [None] * len(index), "stairs": {}, "absent": {}}
+        for f in stairs["floors"]:
+            out["floors"][sheet[f["page"]]] = f["name"]
+        for s in stairs["stairs"]:
+            for c in s["cells"]:
+                i = sheet[c["page"]]
+                page = doc[index[i]]
+                box = pymupdf.Rect(c["box"]) * page.rotation_matrix
+                kx, ky = sizes[i][0] / page.rect.width, sizes[i][1] / page.rect.height
+                out[{"present": "stairs", "absent": "absent"}[c["state"]]].setdefault(s["id"], {})[str(i)] = [round(box.x0 * kx, 1), round(box.y0 * ky, 1), round(box.x1 * kx, 1), round(box.y1 * ky, 1)]
+    return out
 
 
 def _near(review, i, box):
@@ -97,7 +135,8 @@ def _near(review, i, box):
 
 
 def _nearest(stairs, i, point):
-    """The stair truth draws on sheet `i` nearest `point`, if one lies within NEAR. The nearest wins, because on habs_stelizabeths_center exterior stairs touch the main ones."""
+    """The stair whose truth box on sheet `i` lies nearest `point`, if one lies within NEAR. The nearest wins, because on habs_stelizabeths_center exterior stairs touch the main ones.
+    Callers pass the boxes of absent stairs too, so a Found where truth says a stair is absent goes to that stair, not to one drawn beside it: on queens_royce EAST_EXT's absent box is 30 px from TRA_SE."""
     gaps = {name: max(b[0] - point[0], point[0] - b[2], b[1] - point[1], point[1] - b[3], 0) for name, boxes in stairs.items() if (b := boxes.get(i))}
     name = min(gaps, key=gaps.get, default=None)
     return name if name is not None and gaps[name] <= NEAR else None
@@ -157,30 +196,49 @@ def comments(raw, review, parent, parent_raw):
     return rows, [r for r in rows if r["wanted"] == "Still open" and "Looks resolved" in r["got"]]
 
 
-def _planted(raw, review):
-    """A stair row's cell on each sheet belongs to the stair truth draws nearest its place there. Found where that stair was erased, or on a floor where the row's stair is not drawn at all, is a wrong pass.
-    A stair finding on an erased cell's row and sheet raises it. Truth holds stair presence alone, so no finding is judged false."""
-    stairs, erased = raw["stairs"], {(c["object"], str(c["index"])): c for c in raw["cells"]}
-    seen, wrong = {key: [] for key in erased}, []   # each erased cell's (row, cell) pairs
+def _state(pairs):
+    """The state a truth cell is shown in: Found if any row there shows it, else the first row's state, or None with no row there."""
+    shown = [cell["state"] for _, cell in pairs]
+    return "found" if "found" in shown else shown[0] if shown else None
+
+
+def _presence(raw, review):
+    """(stair presence against truth, each truth cell's (row, cell) pairs). A row's cell on each sheet belongs to the stair whose truth box, drawn or absent, lies nearest its place there.
+    Found where that stair is absent or was erased, or on a floor where the row's stair is not drawn at all, is a wrong pass, counted once per cell. The cells truth says are drawn are counted by the state shown."""
+    drawn, absent = raw["stairs"], raw.get("absent", {})
+    erased = {(c["object"], str(c["index"])): c for c in raw["cells"]}
+    places = {name: drawn.get(name, {}) | absent.get(name, {}) for name in [*drawn, *absent]}   # a list, so ties go the same way on every run
+    seen, wrong, stray = {}, {}, []
     for row in review.get("verticals") or ():
-        near = {i: _nearest(stairs, i, cell["point"]) for i, cell in row["floors"].items() if cell.get("point")}
+        near = {i: _nearest(places, i, cell["point"]) for i, cell in row["floors"].items() if cell.get("point")}
         own = Counter(name for name in near.values() if name).most_common(1)
-        if not own:
-            continue   # truth draws no stair at this row's place on any floor
+        if not own:   # truth places no stair here on any floor, drawn or absent, so each Found cell is counted apart, outside the absent and erased cells
+            stray += [{"item": f"{row['id']} on {raw['sheets'][int(i)] if raw['floors'][int(i)] is None else f'floor {raw['floors'][int(i)]}'}", "sheet": raw["sheets"][int(i)], "stair": row["id"],
+                       "state": "Found", "truth": "no stair at this place on any floor"} for i, cell in row["floors"].items() if cell["state"] == "found"]
+            continue
         stair = own[0][0]
         for i, name in near.items():
             cell = row["floors"][i]
-            if (name, i) in erased:
-                seen[name, i].append((row, cell))
-            if cell["state"] == "found" and ((name, i) in erased or (name is None and i not in stairs[stair])):
-                wrong.append({"item": _cell(erased[name, i]) if name else f"{stair} on floor {raw['floors'][int(i)]}", "sheet": raw["sheets"][int(i)], "stair": row["id"], "state": "Found",
-                              "truth": "erased" if name else "not drawn on this floor"})
+            seen.setdefault((name, i), []).append((row, cell))
+            truth = ("erased" if (name, i) in erased else "absent" if i in absent.get(name, {})
+                     else "not drawn on this floor" if name is None and i not in drawn.get(stair, {}) else None)
+            if cell["state"] == "found" and truth:
+                floor, sheet = raw["floors"][int(i)], raw["sheets"][int(i)]
+                wrong.setdefault((name or stair, i), {"item": f"{name or stair} on {sheet if floor is None else f'floor {floor}'}", "sheet": sheet, "stair": row["id"], "state": "Found", "truth": truth})
+    present = [(name, i) for name, boxes in drawn.items() for i in boxes if (name, i) not in erased]
+    return {"wrong passes": len(wrong), "absent cells": sum(map(len, absent.values())), "erased cells": len(erased), "present cells": len(present),
+            "present shown": dict(Counter(STATES.get(s, s) for s in (_state(seen.get(key, ())) for key in present))), "wrong pass list": list(wrong.values()),
+            "found where truth places no stair": len(stray), "no stair list": stray}, seen
+
+
+def _planted(raw, review):
+    """Stair presence, and each erased cell as a truth item. A stair finding on an erased cell's row and sheet raises it. Truth holds stair presence alone, so no finding is judged false."""
+    out, seen = _presence(raw, review)
     claims, states, misses, real = _claims(review), Counter(), [], set()
     for c in raw["cells"]:
         i = str(c["index"])
-        pairs = seen[c["object"], i]
-        shown = [cell["state"] for _, cell in pairs]
-        state = "found" if "found" in shown else shown[0] if shown else None
+        pairs = seen.get((c["object"], i), ())
+        state = _state(pairs)
         states[STATES.get(state, state)] += 1
         hits = {f["id"] for f in review["findings"] if f["check"] in STAIR_CHECKS and f["sheet"] == i and f["severity"] != "unknown" and f.get("vertical") in {row["id"] for row, _ in pairs}}
         real |= hits
@@ -188,8 +246,8 @@ def _planted(raw, review):
             why = "The stair's top floor, where an erasure reads like a stair that ends, the stated limit." if c["expected"] is None else f"It reads {STATES.get(state, state)}, and no finding names it."
             misses.append({"item": _cell(c), "statement": f"The stair {c['object']} is erased on floor {c['floor']}, the {c['kind']} plant.", "why": why})
     counted = [x for x in claims if x["severity"] != "unknown"]
-    return {"wrong passes": len(wrong), "findings judged real": len(real), "false findings": None, "not judged": len(counted) - len(real), "truth items found": len(raw["cells"]) - len(misses),
-            "out of": len(raw["cells"]), "cannot tell": len(claims) - len(counted), "states": dict(states), "wrong pass list": wrong, "misses": misses}
+    return out | {"findings judged real": len(real), "false findings": None, "not judged": len(counted) - len(real), "truth items found": len(raw["cells"]) - len(misses),
+                  "out of": len(raw["cells"]), "cannot tell": len(claims) - len(counted), "states": dict(states), "misses": misses}
 
 
 def match_sheet(name, method, claims, truth_items):
@@ -220,9 +278,9 @@ def _judged(truth, method, claims, truth_items):
     SHEETS.mkdir(parents=True, exist_ok=True)
     write_json(SHEETS / f"{name}.{method}.json", sheet)
     path = MATCHES / f"{name}.{method}.json"
-    if claims and not path.exists():
+    if claims and truth_items and not path.exists():
         return {"waiting": f"A judge's mapping at {path}, for the match sheet at {SHEETS / f'{name}.{method}.json'}."}
-    matches = read_matches(path, sheet) if claims else {}   # nothing listed leaves nothing to judge
+    matches = read_matches(path, sheet) if claims and truth_items else {c["id"]: [] for c in claims}   # nothing listed, or no truth item to state, leaves nothing to judge
     good = {t["id"]: t for t in truth_items if t["status"] in REAL}
     counted = [c for c in claims if c.get("severity") != "unknown"]
     late = [c for c in counted if method == "Storey" and name in POST_HOC and POST_HOC[name].search(c["statement"])]
@@ -242,6 +300,11 @@ def _judged(truth, method, claims, truth_items):
     return out
 
 
+def _on_sheets(truth, review):
+    """The set's stair truth on the review's 2000 px sheets, in the shape a plant's truth has, with nothing erased."""
+    return placed(truth["name"], truth["stairs"], [(s["w"], s["h"]) for s in sorted(review["sheets"], key=lambda s: int(s["id"]))]) | {"cells": []}
+
+
 def storey(truth, review_dir):
     """Storey's score on one set from its review folder, whose review.json is what the screen showed."""
     review_dir = Path(review_dir)
@@ -259,8 +322,10 @@ def storey(truth, review_dir):
             out |= {"comments": rows, "wrong passes": out["wrong passes"] + len(wrong), "wrong pass list": out["wrong pass list"] + wrong}
     elif kind == "plant":
         out = _planted(raw, review)
+    elif kind == "stairs":
+        out = _planted(_on_sheets(truth, review), review)
     else:
-        out = _judged(truth, "Storey", _claims(review), items(truth)) | {"wrong passes": None}   # this truth holds no stair presence and no comment states
+        out = _judged(truth, "Storey", _claims(review), items(truth)) | (_presence(_on_sheets(truth, review), review)[0] if truth["stairs"] else {"wrong passes": None})   # without stair truth, this truth holds no stair presence and no comment states
     record = read_json(review_dir / "eval_run.json")
     fresh = record.get("fresh") is True   # a run eval.run began in a new folder on a cold cache. Any other spent less than a first run would, or left a retried stage's earlier spend out
     return out | {"cost USD": record["usd"] if fresh else None, "minutes": record["minutes"] if fresh else None}

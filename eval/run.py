@@ -5,6 +5,8 @@
 
 The data folder holds the reviews, their ledger and a model cache for each set, which a second review shares with its first, as on the server. eval_run.json says whether the run began in a new folder on a cold cache, and only such a run's cost and minutes are published.
 A held-out set runs only when the code under storey/, the scoring files and the set's truth hash to the values in eval/frozen.json, and only once: a later call may resume its folder and nothing else.
+A set's truth is every file written for it: a blind audit <set>.json and a stair truth <set>_stairs.json in eval/truth, either or both, and frozen.json pins one hash per set over them.
+A plant of a held-out set is held out too, whatever HELD_OUT lists. When a plant's truth records the sha256 of each of its images, as eval.plant writes it, a run refuses an image changed after the plant was made.
 Freeze once the product code is final, never before. A hash frozen.json holds never changes, so code tuned on held-out output cannot be frozen again.
 """
 import argparse
@@ -22,15 +24,14 @@ from storey.ingest import ingest
 from storey.meta import Meter
 from storey.pipeline import read_json, write_json
 
-from .plant import OUT as PLANTS
-
 ROOT = Path(__file__).resolve().parent.parent
 STOREY = ROOT / "storey"
 FROZEN = ROOT / "eval/frozen.json"
 TRUTH = ROOT / "eval/truth"
 GENERATED = ROOT / "data/generated"
+PLANTS = ROOT / "data/eval/plants"
 RUNS = ROOT / "data/eval/runs.json"
-HELD_OUT = ("army_bt_bcof", "queens_royce")
+HELD_OUT = ("army_bt_bcof", "queens_royce", "army_bt_bcof_plant", "queens_royce_plant")
 EVAL = ("run.py", "score.py", "baseline.py")   # which pages are sent, how a run is scored and what the baseline is asked: none may change once held-out output is seen
 CAP_USD = 2.0
 RICHMOND = "va_trb_richmond"
@@ -38,7 +39,7 @@ RICHMOND_TRUTH = ROOT / "data/lab/realsets/va_trb/richmond_truth.json"
 PACKET = ROOT / "data/plans/va_trb/agendas-trb-agenda-06-12-2026.pdf"
 PACKET_PAGE = 107                  # counted from 1, as printed on the packet: the sheet as submitted, before anyone marked it
 REFUSED = (84, 86, 87, 101, 176)   # the examiner's and the appellant's marks, which hold the answers
-# Pages counted from 1. shortcut: queens_royce Phase 2 is the catalog's floor pages 5 to 8 counted from 0, take the truth's own page list once its truth is written.
+# Pages counted from 1. queens_royce is its Phase 2, the four pages its stair truth lists.
 SOURCES = {"mml_capitol": (ROOT / "data/plans/mml_capitol/THE-CAPITOL.pdf", None), "army_bt_bcof": (ROOT / "data/plans/army_cos/bt_bcof_sample.pdf", None),
            "queens_royce": (ROOT / "data/plans/queens_royce/jean_royce_hall.pdf", [6, 7, 8, 9])}
 
@@ -64,12 +65,24 @@ def pinned(frozen, name):
     return {"storey": frozen.get("storey"), "eval": frozen.get("eval"), "truth": frozen.get("truth", {}).get(name)}
 
 
-def truth_path(name):
-    """The file holding a set's truth, or None: a generated set's, a plant's, a blind audit, or the Richmond record."""
-    for path in (GENERATED / name / "truth.json", PLANTS / name / "truth.json", TRUTH / f"{name}.json"):
+def held_out(name):
+    """Whether a set is held out: HELD_OUT lists it, or it is a plant of a set HELD_OUT lists, whatever the list says of the plant."""
+    return name in HELD_OUT or read_json(PLANTS / name / "truth.json").get("source") in HELD_OUT
+
+
+def truth_paths(name):
+    """Every file holding a set's truth, empty when none is written: a generated set's or a plant's, the Richmond record, or a blind audit and a stair truth, either or both."""
+    for path in (GENERATED / name / "truth.json", PLANTS / name / "truth.json"):
         if path.exists():
-            return path
-    return RICHMOND_TRUTH if name == RICHMOND and RICHMOND_TRUTH.exists() else None
+            return [path]
+    if name == RICHMOND:
+        return [RICHMOND_TRUTH] if RICHMOND_TRUTH.exists() else []
+    return [path for path in (TRUTH / f"{name}.json", TRUTH / f"{name}_stairs.json") if path.exists()]
+
+
+def truth_hash(paths):
+    """One sha256 over all of a set's truth files, or None when it has none."""
+    return hashlib.sha256(json.dumps({Path(p).name: _sha(p) for p in paths}, sort_keys=True).encode()).hexdigest() if paths else None
 
 
 def inputs(name):
@@ -109,26 +122,30 @@ def _upload(source, numbers, target):
 def run(name, data, cap=CAP_USD):
     """Runs one set in `data`/<name> and returns that folder. A held-out set on code, scoring or truth that is not frozen raises ValueError before anything is read or spent, and so does a second held-out run of a set."""
     digest, files = code_hash()
-    truth = truth_path(name)
-    truth_sha = truth and _sha(truth)
+    truth = truth_paths(name)
+    truth_sha = truth_hash(truth)
     frozen = read_json(FROZEN)
-    if name in HELD_OUT and not (truth_sha and pinned(frozen, name) == {"storey": digest, "eval": eval_hash(), "truth": truth_sha}):
+    held = held_out(name)
+    if held and not (truth_sha and pinned(frozen, name) == {"storey": digest, "eval": eval_hash(), "truth": truth_sha}):
         raise ValueError(f"{name} is held out, so it runs only on the code, scoring and truth recorded in {FROZEN.name}. Freeze them with python -m eval.run --freeze once the product code is final.")
     path = Path(data).resolve() / name
     if (path / "eval_run.json").exists():
         raise ValueError(f"{path} holds a finished run. Use a new data folder.")
     first = frozen.get("runs", {}).get(name)
-    if name in HELD_OUT and first not in (None, str(path)):
+    if held and first not in (None, str(path)):
         raise ValueError(f"{name} had its held-out run in {first}, and a held-out set runs once, so its number cannot be the best of several. Resume that folder if it did not finish.")
     sources = inputs(name)
-    parent = (read_json(truth) if truth else {}).get("parent")
+    own = read_json(truth[0]) if truth else {}   # a second review's generated truth and a plant's are each one file
+    if "png_sha256" in own and own["png_sha256"] != {p.name: _sha(p) for p, _ in sources}:
+        raise ValueError(f"The images of {name} are not the ones its truth records, so they changed after the plant was made. Make the plant again.")
+    parent = own.get("parent")
     cache = path.parent / "cache" / (parent or name)
     # shortcut: a second review run again after its folder was deleted finds its own replies in the shared cache and reads fresh, use a new data folder for a published rerun.
     fresh = not (path / "sheets.json").exists() and (parent is not None or not cache.exists())
     sent = hashlib.sha256(json.dumps([[_sha(p), n] for p, n in sources]).encode()).hexdigest()
     if (path / "sheets.json").exists() and read_json(path / "stage_upload.json").get("inputs") != sent:
         raise ValueError(f"{path} holds another upload of {name}, and a rerun would score that one. Use a new data folder.")
-    if name in HELD_OUT and first is None:
+    if held and first is None:
         write_json(FROZEN, frozen | {"runs": frozen.get("runs", {}) | {name: str(path)}})
     if not (path / "sheets.json").exists():
         (path / "upload").mkdir(parents=True, exist_ok=True)
@@ -147,7 +164,7 @@ def run(name, data, cap=CAP_USD):
         pipeline.Meter, meta.CACHE = live, old
     costs = read_json(path / "cost.json")
     write_json(path / "eval_run.json", {
-        "set": name, "review": str(path), "fresh": fresh, "storey_sha256": digest, "files": files, "eval": eval_hash(), "frozen": pinned(frozen, name), "truth": truth and str(truth), "truth_sha256": truth_sha,
+        "set": name, "review": str(path), "fresh": fresh, "storey_sha256": digest, "files": files, "eval": eval_hash(), "frozen": pinned(frozen, name), "truth": [str(p) for p in truth], "truth_sha256": truth_sha,
         "cap_usd": cap, "usd": round(sum(c["usd"] for c in costs.values()), 4), "minutes": round(sum(c["seconds"] for c in costs.values()) / 60, 2),
         "stages": {stage: {"usd": c["usd"], "minutes": round(c["seconds"] / 60, 2)} for stage, c in costs.items()}})
     RUNS.parent.mkdir(parents=True, exist_ok=True)
@@ -159,10 +176,10 @@ def freeze():
     """Records the code, scoring and truth hashes in eval/frozen.json. Run it once the product code is final and every held-out truth is written, before any held-out run.
     A recorded code, scoring or held-out truth hash never changes. A held-out truth written later may join, and any other truth's hash is brought up to date."""
     old = read_json(FROZEN)
-    names = {p.stem for p in TRUTH.glob("*.json")} | set(HELD_OUT)
-    truth = {name: _sha(path) for name in sorted(names) if (path := truth_path(name))}
+    names = {p.stem.removesuffix("_stairs") for p in TRUTH.glob("*.json")} | set(HELD_OUT) | {p.parent.name for p in PLANTS.glob("*/truth.json") if held_out(p.parent.name)}   # sets, so a stair truth joins its set's hash
+    truth = {name: sha for name in sorted(names) if (sha := truth_hash(truth_paths(name)))}
     new = {"storey": code_hash()[0], "eval": eval_hash()}
-    moved = [key for key in new if old.get(key) not in (None, new[key])] + [name for name in HELD_OUT if old.get("truth", {}).get(name) not in (None, truth.get(name))]
+    moved = [key for key in new if old.get(key) not in (None, new[key])] + [name for name in sorted(names) if held_out(name) and old.get("truth", {}).get(name) not in (None, truth.get(name))]
     if moved:
         raise ValueError(f"{FROZEN.name} already holds other hashes for {', '.join(moved)}. A held-out number must come from the code, scoring and truth frozen before its output was seen.")
     write_json(FROZEN, old | new | {"truth": old.get("truth", {}) | truth, "frozen": old.get("frozen") or time.strftime("%Y-%m-%d %H:%M %z")})

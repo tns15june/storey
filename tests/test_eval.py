@@ -9,8 +9,8 @@ import pymupdf
 import pytest
 
 from eval import baseline, plant, report, run, score
-from storey import meta, pipeline
-from storey.floors import ink
+from storey import ingest, meta, pipeline
+from storey.floors import WORK_PX, _resized, ink
 
 NUMBERS = ["G0.1", "A1.1", "A1.2", "A1.3"]
 STAIR = [400.0, 300.0, 600.0, 400.0]   # sheet points, 1 px per point on the review sheet here
@@ -31,6 +31,7 @@ def offline(tmp_path, monkeypatch):
     monkeypatch.setattr(baseline, "OUT", tmp_path / "baseline")
     monkeypatch.setattr(run, "RUNS", tmp_path / "runs.json")
     monkeypatch.setattr(run, "FROZEN", tmp_path / "frozen.json")
+    monkeypatch.setattr(run, "PLANTS", tmp_path / "plants")   # freeze reads every plant folder, so a test never reads the real ones
     meta.set_transport(refuse)
     yield
     meta.set_transport(None)
@@ -71,7 +72,7 @@ def stored(tmp_path, name, rev):
 
 
 def truth_of(tmp_path, obj, name="gen"):
-    return score.read_truth(write(tmp_path / f"truth_{name}.json", obj), name)
+    return score.read_truth([write(tmp_path / f"truth_{name}.json", obj)], name)
 
 
 def judge(truth, method, matches):
@@ -109,7 +110,8 @@ def test_baseline_beside_each_score(tmp_path):
     rows = [r for r in full["scores"] if r["set"] == "gen"]
     assert [r["score"] for r in rows] == list(report.SCORES)
     assert all(list(r)[list(r).index("Storey") + 1] == "baseline" for r in rows)
-    assert {r["score"]: r["baseline"] for r in rows} == {"wrong passes": None, "findings judged real": 1, "false findings": 1, "not judged": None, "cannot tell": 0, "truth items found": 1, "cost USD": 0.08, "minutes": 0.5}
+    assert {r["score"]: r["baseline"] for r in rows} == {"wrong passes": None, "found where truth places no stair": None, "findings judged real": 1, "false findings": 1, "not judged": None, "cannot tell": 0, "truth items found": 1, "present cells": None,
+                                                        "cost USD": 0.08, "minutes": 0.5}
     found = next(r for r in rows if r["score"] == "truth items found")
     assert (found["out of"], found["baseline out of"]) == (4, 4)
 
@@ -183,7 +185,7 @@ def test_looks_resolved_on_a_comment_truth_holds_open_is_a_wrong_pass():
 
 def test_a_new_change_counts_when_a_listed_change_overlaps_it_and_is_a_miss_by_name_otherwise(tmp_path, monkeypatch):
     first = write(tmp_path / "first.json", generated())
-    monkeypatch.setattr(run, "truth_path", lambda name: first)
+    monkeypatch.setattr(run, "truth_paths", lambda name: [first])
     partition = {"kind": "partition", "check": 15, "sheet": "A1.3", "box": [100.0, 200.0, 300.0, 207.0], "state": "New change", "wording": "A partition now crosses room 518, and no cloud marks it."}
     t = truth_of(tmp_path, generated() | {"parent": "first", "comments": [partition]}, "second")
     stored(tmp_path, "first", review())
@@ -380,7 +382,7 @@ def test_each_set_runs_on_a_cache_of_its_own_and_only_a_new_folder_on_a_cold_cac
     source = pdf(tmp_path / "set.pdf", [1])
     monkeypatch.setattr(run, "inputs", lambda name: [(source, None)])
     parents = {"second": "first"}
-    monkeypatch.setattr(run, "truth_path", lambda name: write(tmp_path / f"{name}_truth.json", {"items": [], "parent": parents.get(name)}))
+    monkeypatch.setattr(run, "truth_paths", lambda name: [write(tmp_path / f"{name}_truth.json", {"items": [], "parent": parents.get(name)})])
     caches = []
 
     def pipeline_run(path, **_):
@@ -406,13 +408,13 @@ def test_each_set_runs_on_a_cache_of_its_own_and_only_a_new_folder_on_a_cold_cac
 
 def test_a_held_out_set_runs_only_on_frozen_code_scoring_and_truth(tmp_path, monkeypatch, code):
     truth = write(tmp_path / "army.json", {"items": []})
-    monkeypatch.setattr(run, "truth_path", lambda name: truth)
+    monkeypatch.setattr(run, "truth_paths", lambda name: [truth])
     monkeypatch.setattr(run, "inputs", lambda name: [(pdf(tmp_path / "set.pdf", [1]), None)])
     monkeypatch.setattr(pipeline, "run", lambda path, **_: pytest.fail("the pipeline ran"))
     data = tmp_path / "reviews"
     with pytest.raises(ValueError):
         run.run("army_bt_bcof", data)   # nothing frozen yet
-    write(run.FROZEN, {"storey": "0" * 64, "eval": run.eval_hash(), "truth": {"army_bt_bcof": run._sha(truth)}})
+    write(run.FROZEN, {"storey": "0" * 64, "eval": run.eval_hash(), "truth": {"army_bt_bcof": run.truth_hash([truth])}})
     with pytest.raises(ValueError):
         run.run("army_bt_bcof", data)   # other code
     run.FROZEN.unlink()
@@ -431,13 +433,13 @@ def test_a_held_out_set_runs_only_on_frozen_code_scoring_and_truth(tmp_path, mon
     monkeypatch.setattr(pipeline, "run", lambda path, **_: None)
     path = run.run("army_bt_bcof", data)
     record = json.loads((path / "eval_run.json").read_text())
-    assert report.status("army_bt_bcof", record, run._sha(truth), json.loads(run.FROZEN.read_text())) == "frozen, held-out"
+    assert report.status("army_bt_bcof", record, run.truth_hash([truth]), json.loads(run.FROZEN.read_text())) == "frozen, held-out"
 
 
 def test_a_held_out_set_runs_once_and_a_frozen_hash_never_changes(tmp_path, monkeypatch, code):
     truths = {"army_bt_bcof": write(tmp_path / "army.json", {"items": []})}
     source = pdf(tmp_path / "set.pdf", [1])
-    monkeypatch.setattr(run, "truth_path", truths.get)
+    monkeypatch.setattr(run, "truth_paths", lambda name: [truths[name]] if name in truths else [])
     monkeypatch.setattr(run, "inputs", lambda name: [(source, None)])
     monkeypatch.setattr(pipeline, "run", lambda path, **_: None)
     run.freeze()
@@ -531,11 +533,11 @@ NORTH = [1000.0, 900.0, 1100.0, 1000.0]
 BESIDE = [400.0, 405.0, 600.0, 445.0]   # touches the stair at STAIR, as exterior stairs touch the main ones on habs_stelizabeths_center
 
 
-def planted(tmp_path):
+def planted(tmp_path, **more):
     """S erased on floor 1 and T on floor 2. N is drawn on floor 1 alone, and E on floor 1 beside S."""
     cells = [{"object": "S", "floor": 1, "index": 1, "kind": "middle", "expected": 9, "box": STAIR}, {"object": "T", "floor": 2, "index": 2, "kind": "top", "expected": None, "box": TOP}]
     stairs = {"S": {str(i): STAIR for i in range(3)}, "T": {str(i): TOP for i in range(3)}, "N": {"1": NORTH}, "E": {"1": BESIDE}}
-    return truth_of(tmp_path, {"source": "tb", "sheets": ["000.png", "001.png", "002.png"], "floors": [0, 1, 2], "stairs": stairs, "cells": cells}, "tb_plant")
+    return truth_of(tmp_path, {"source": "tb", "sheets": ["000.png", "001.png", "002.png"], "floors": [0, 1, 2], "stairs": stairs, "cells": cells} | more, "tb_plant")
 
 
 def plant_review(findings):
@@ -555,6 +557,8 @@ def test_a_stair_shown_found_where_truth_draws_none_or_erased_it_is_a_wrong_pass
     assert (s["wrong passes"], s["findings judged real"], s["truth items found"], s["out of"], s["cannot tell"]) == (2, 1, 1, 2, 1)
     assert s["states"] == {"Check": 1, "Found": 1}   # D, Found on the stair beside the erased one, is not counted for it
     assert t["source"] == "tb"
+    # X stands where truth places no stair on any floor: each Found cell is counted apart, outside the wrong passes
+    assert (s["found where truth places no stair"], [w["item"] for w in s["no stair list"]]) == (3, ["X on floor 0", "X on floor 1", "X on floor 2"])
 
 
 def test_a_plant_judges_storey_and_the_baseline_by_one_rule(tmp_path):
@@ -570,6 +574,290 @@ def test_a_plant_judges_storey_and_the_baseline_by_one_rule(tmp_path):
     b = score.baseline(t, record)
     keys = ("findings judged real", "false findings", "not judged", "truth items found", "out of")
     assert [s[k] for k in keys] == [b[k] for k in keys] == [1, None, 2, 1, 2]
+
+
+def test_a_found_where_truth_says_absent_is_not_credited_to_the_drawn_stair_beside_it(tmp_path):
+    t = planted(tmp_path, absent={"E": {"2": BESIDE}})   # E's place on floor 2 lies 5 px from S, which is drawn there
+    rev = plant_review([])
+    rev["verticals"].append({"id": "F", "established": True, "floors": {str(i): {"state": "found", "point": [500, 440]} for i in (1, 2)}})
+    s = score.storey(t, stored(tmp_path, "tb_plant", rev))
+    assert ("E on floor 2", "F", "absent") in [(w["item"], w["stair"], w["truth"]) for w in s["wrong pass list"]]
+    assert (s["absent cells"], s["erased cells"]) == (1, 2)
+
+
+# Held-out stair truth
+
+
+S1, T1, S2, T2 = [40.0, 60.0, 70.0, 90.0], [120.0, 60.0, 150.0, 90.0], [200.0, 120.0, 260.0, 150.0], [130.0, 40.0, 160.0, 70.0]   # pt in the unrotated frame
+SIZES = [(2000, 1333), (2000, 1333), (1333, 2000)]   # the review's sheets: two upright pages, then the page turned with /Rotate 270
+
+
+def drawn_pdf(path, pages, draw):
+    """One 300 x 200 pt page per entry of `pages`, with `draw` applied to each of its boxes. The last page is turned with /Rotate 270 once drawn, as every army_bt_bcof page is, so its boxes stay in the unrotated frame its truth uses."""
+    doc = pymupdf.open()
+    for boxes in pages:
+        page = doc.new_page(width=300, height=200)
+        for box in boxes:
+            draw(page, box)
+    doc[-1].set_rotation(270)
+    doc.save(path)
+    return path
+
+
+def block(page, box):
+    page.draw_rect(box, color=None, fill=(0, 0, 0))   # no stroke, so the ink ends at the box
+
+
+def flight(page, box):
+    """Walls 1.5 pt thick round the box and treads 0.3 pt thin inside it: about 10 and 2 px on a 2000 px copy of a 300 pt page, the sizes the removal keeps and takes."""
+    page.draw_rect(box, color=(0, 0, 0), width=1.5)
+    for y in np.arange(box[1] + 3, box[3] - 2, 2.5):
+        page.draw_line((box[0] + 3, y), (box[2] - 3, y), color=(0, 0, 0), width=0.3)
+
+
+def stair_truth(base=0):
+    """FIRST and SECOND on the test PDF's second and third pages, counted from `base`. S is drawn on both. T is drawn on FIRST and absent from SECOND, with a box where it would be."""
+    def cell(page, state, box):
+        return {"page": page + base, "state": state, "box": box, "confidence": "certain"}
+    return {"floors": [{"page": 1 + base, "name": "FIRST"}, {"page": 2 + base, "name": "SECOND"}],
+            "stairs": [{"id": "S", "cells": [cell(1, "present", S1), cell(2, "present", S2)]}, {"id": "T", "cells": [cell(1, "present", T1), cell(2, "absent", T2)]}]}
+
+
+def inked(img, box, pad=10):
+    """The box round the dark pixels within `pad` of `box`. It raises when there are none, so a box placed off its drawing fails."""
+    x1, y1, x2, y2 = (int(v) for v in box)
+    ys, xs = np.nonzero(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)[y1 - pad:y2 + pad, x1 - pad:x2 + pad] < 128)
+    return [xs.min() + x1 - pad, ys.min() + y1 - pad, xs.max() + 1 + x1 - pad, ys.max() + 1 + y1 - pad]
+
+
+def centre(box):
+    return [(box[0] + box[2]) / 2, (box[1] + box[3]) / 2]
+
+
+def army_set(tmp_path, monkeypatch, draw, pages=([], [S1, T1], [S2]), base=0):
+    """army_bt_bcof drawn small from `pages` with `draw`, listed as the set's drawings, with its stair truth written, pages counted from `base`. Returns the PDF."""
+    pdf = drawn_pdf(tmp_path / "army.pdf", pages, draw)
+    monkeypatch.setitem(run.SOURCES, "army_bt_bcof", (pdf, None))
+    monkeypatch.setattr(run, "TRUTH", tmp_path / "truth")
+    monkeypatch.setattr(run, "GENERATED", tmp_path / "generated")
+    write(run.TRUTH / "army_bt_bcof_stairs.json", stair_truth(base))
+    return pdf
+
+
+@pytest.fixture
+def army(tmp_path, monkeypatch):
+    """army_bt_bcof drawn small: the first page holds no plan, the second FIRST and the third SECOND, turned with /Rotate 270. Returns its stair truth placed on SIZES."""
+    army_set(tmp_path, monkeypatch, block)
+    return score.placed("army_bt_bcof", stair_truth(), SIZES)
+
+
+def stair_review(placed, findings=()):
+    """A review whose row A shows S Found on both floors, B shows T Missing on FIRST and Found where truth says it is absent, and C shows that absent cell Found again."""
+    s, t = placed["stairs"], placed["absent"]["T"]["2"]
+    rows = [{"id": "A", "established": True, "floors": {"1": {"state": "found", "point": centre(s["S"]["1"])}, "2": {"state": "found", "point": centre(s["S"]["2"])}}},
+            {"id": "B", "established": True, "floors": {"1": {"state": "missing", "point": centre(s["T"]["1"])}, "2": {"state": "found", "point": centre(t)}}},
+            {"id": "C", "established": True, "floors": {"2": {"state": "found", "point": centre(t)}}}]
+    return {"project": {"jurisdiction": "houston"}, "sheets": [{"id": str(i), "number": n, "w": w, "h": h} for i, (n, (w, h)) in enumerate(zip(("A-201", "A-101", "A-102"), SIZES))],
+            "verticals": rows, "findings": list(findings)}
+
+
+def test_stair_truth_lands_on_each_sheet_through_its_pages_rotation(tmp_path, monkeypatch):
+    pdf = drawn_pdf(tmp_path / "set.pdf", [[], [S1, T1], [S2]], block)
+    for name, numbers, base in (("queens_royce", [2, 3], 1), ("army_bt_bcof", None, 0)):   # queens uploads pages listed from 1 and its truth counts from 1, army uploads the whole file and its truth counts from 0
+        monkeypatch.setattr(run, "inputs", lambda n, numbers=numbers: [(pdf, numbers)])
+        folder = tmp_path / name
+        (folder / "upload").mkdir(parents=True)
+        run._upload(pdf, numbers, folder / "upload" / "0000.pdf")
+        copies = [_resized(cv2.imread(str(folder / s.image)), WORK_PX) for s in ingest.ingest([folder / "upload" / "0000.pdf"], folder)]   # the 2000 px copies the review draws on
+        placed = score.placed(name, stair_truth(base), [(c.shape[1], c.shape[0]) for c in copies])
+        assert placed["floors"] == [None] * (len(copies) - 2) + ["FIRST", "SECOND"] and set(placed["absent"]) == {"T"}
+        for stair, boxes in placed["stairs"].items():
+            for i, box in boxes.items():
+                assert np.allclose(inked(copies[int(i)], box), box, atol=2), (name, stair, i)
+    with pytest.raises(ValueError):
+        score.placed("army_bt_bcof", stair_truth(), SIZES[:2])   # a review of another set
+
+
+def test_stair_truth_goes_on_each_sheet_by_its_id_whatever_order_the_review_lists_them(tmp_path, army):
+    rev = stair_review(army)
+    rev["sheets"].reverse()   # the turned page's size listed first
+    s = score.storey(score.load("army_bt_bcof"), stored(tmp_path, "army_bt_bcof", rev))
+    assert [(w["item"], w["truth"]) for w in s["wrong pass list"]] == [("T on floor SECOND", "absent")] and s["present shown"] == {"Found": 2, "Missing": 1}
+
+
+def test_found_on_two_sheets_that_hold_no_floor_is_a_wrong_pass_on_each(tmp_path, monkeypatch):
+    army_set(tmp_path, monkeypatch, block, [[], [], [S1, T1], [S2]], base=1)   # FIRST and SECOND on the third and fourth pages, after two that hold no plan
+    sizes = [(2000, 1333)] * 3 + [(1333, 2000)]
+    s = score.placed("army_bt_bcof", stair_truth(1), sizes)["stairs"]["S"]
+    row = {"id": "A", "established": True, "floors": {i: {"state": "found", "point": centre(s.get(i, s["2"]))} for i in "0123"}}
+    rev = {"project": {"jurisdiction": "houston"}, "sheets": [{"id": str(i), "number": f"A-{i}", "w": w, "h": h} for i, (w, h) in enumerate(sizes)], "verticals": [row], "findings": []}
+    out = score.storey(score.load("army_bt_bcof"), stored(tmp_path, "army_bt_bcof", rev))
+    assert [(w["item"], w["sheet"], w["truth"]) for w in out["wrong pass list"]] == [("S on page 1", "page 1", "not drawn on this floor"), ("S on page 2", "page 2", "not drawn on this floor")]
+
+
+def test_found_where_stair_truth_says_absent_is_a_wrong_pass_and_never_a_miss(tmp_path, army):
+    t = score.load("army_bt_bcof")
+    assert t["kind"] == "stairs" and t["source"] == "army_bt_bcof"
+    s = score.storey(t, stored(tmp_path, "army_bt_bcof", stair_review(army)))
+    assert [(w["item"], w["stair"], w["truth"]) for w in s["wrong pass list"]] == [("T on floor SECOND", "B", "absent")]   # once for the cell, though B and C both show it
+    assert (s["wrong passes"], s["absent cells"], s["erased cells"], s["present cells"], s["present shown"]) == (1, 1, 0, 3, {"Found": 2, "Missing": 1})
+    assert (s["misses"], s["truth items found"], s["out of"], s["false findings"]) == ([], 0, 0, None)   # a stair that ends at a floor is no defect, and truth judges no finding
+
+
+def test_an_audit_set_with_stair_truth_holds_both_its_judged_findings_and_stair_presence(tmp_path, army):
+    write(run.TRUTH / "army_bt_bcof.json", {"items": [{"id": "T01", "sheets": ["A-101"], "statement": "Room 115 has no tag.", "status": "real"}]})
+    t = score.load("army_bt_bcof")
+    assert (t["kind"], t["sha256"]) == ("audit", run.truth_hash([run.TRUTH / "army_bt_bcof.json", run.TRUTH / "army_bt_bcof_stairs.json"]))
+    folder = stored(tmp_path, "army_bt_bcof", stair_review(army, [finding("A-01", 4, "check", "1", "Room 115 has no tag"), finding("A-02", 3, "check", "1", "Floor name differs")]))
+    assert score.storey(t, folder)["waiting"]
+    judge(t, "Storey", {"A-01": ["T01"], "A-02": []})
+    s = score.storey(t, folder)
+    assert (s["findings judged real"], s["false findings"], s["truth items found"], s["out of"]) == (1, 1, 1, 1)
+    assert (s["wrong passes"], s["absent cells"], s["present cells"]) == (1, 1, 3)
+    assert score.baseline(t, {"problems": [], "usd": 0.05, "minutes": 0.4})["wrong passes"] is None
+
+
+def test_a_stair_truth_alone_leaves_the_baselines_claims_unjudged_with_no_judge_to_wait_for(tmp_path, army):
+    b = score.baseline(score.load("army_bt_bcof"), {"problems": [{"id": "B01", "sheet": "A-102", "statement": "Stair T is not shown on the second floor."}], "usd": 0.05, "minutes": 0.4})
+    assert (b["findings judged real"], b["false findings"], b["not judged"], b["truth items found"], b["out of"]) == (0, None, 1, 0, 0)
+
+
+def test_a_sets_truth_is_every_file_of_it_and_freeze_pins_one_hash_per_set(tmp_path, monkeypatch, code):
+    truth = tmp_path / "truth"
+    monkeypatch.setattr(run, "TRUTH", truth)
+    monkeypatch.setattr(run, "GENERATED", tmp_path / "generated")
+    monkeypatch.setattr(run, "PLANTS", tmp_path / "plants")
+    audit, stairs, queens = (write(truth / f"{n}.json", {"items": []} if n == "army_bt_bcof" else stair_truth()) for n in ("army_bt_bcof", "army_bt_bcof_stairs", "queens_royce_stairs"))
+    write(truth / "mml_capitol.json", {"items": []})
+    assert (run.truth_paths("army_bt_bcof"), run.truth_paths("queens_royce"), run.truth_paths("nothing")) == ([audit, stairs], [queens], [])
+    monkeypatch.setattr(run, "inputs", lambda name: [(pdf(tmp_path / "set.pdf", [1]), None)])
+    monkeypatch.setattr(pipeline, "run", lambda path, **_: None)
+    data = tmp_path / "reviews"
+    with pytest.raises(ValueError):
+        run.run("queens_royce", data)   # nothing frozen yet
+    run.freeze()
+    assert json.loads(run.FROZEN.read_text())["truth"] == {"army_bt_bcof": run.truth_hash([audit, stairs]), "queens_royce": run.truth_hash([queens]), "mml_capitol": run.truth_hash([truth / "mml_capitol.json"])}   # sets, not file stems
+    path = run.run("queens_royce", data)   # its stair truth alone lets it run
+    record = json.loads((path / "eval_run.json").read_text())
+    assert report.status("queens_royce", record, score.load("queens_royce")["sha256"], json.loads(run.FROZEN.read_text())) == "frozen, held-out"
+    stairs.write_text(json.dumps(stair_truth() | {"edited": True}))
+    with pytest.raises(ValueError):
+        run.run("army_bt_bcof", data)   # its stair truth changed after freezing
+    with pytest.raises(ValueError):
+        run.freeze()
+    with pytest.raises(ValueError):
+        run.run("queens_royce_plant", data)   # a plant of a held-out set is held out too, and runs only once frozen
+
+
+def test_the_held_out_plants_erase_the_cells_one_rule_picks_from_the_stair_truth():
+    def cell(page, state="present", confidence="certain"):
+        return {"page": page, "state": state, "box": [0, 0, 1, 1], "confidence": confidence}
+    stairs = {"floors": [{"page": p, "name": f"F{p}"} for p in (1, 2, 3, 4)],
+              "stairs": [{"id": "D", "cells": [cell(1, "absent"), cell(2), cell(3), cell(4)]}, {"id": "A", "cells": [cell(1), cell(2), cell(3), cell(4)]},
+                         {"id": "B", "cells": [cell(1), cell(2, confidence="likely"), cell(3), cell(4, "absent")]}, {"id": "C", "cells": [cell(1), cell(2), cell(3, "absent"), cell(4, "absent")]}]}
+    # A first in id order. On F2 A is taken, B is only likely and C is not on F3. On F3 every stair present above is taken. F4 is the top.
+    assert plant.erasures(stairs) == [("discharge", "A", "F1"), ("middle", "D", "F2")]
+    real = {name: plant.erasures(json.loads((run.TRUTH / f"{name}_stairs.json").read_text())) for name in ("queens_royce", "army_bt_bcof")}
+    assert real == {"queens_royce": [("discharge", "CTR_N", "Phase 2: 1st Floor"), ("middle", "MIL_NW", "Phase 2: 2nd Floor"), ("middle", "MIL_ROY_S", "Phase 2: 3rd Floor")],
+                    "army_bt_bcof": [("discharge", "C_stair_1", "FIRST FLOOR")]}
+
+
+def test_a_held_out_plant_is_drawn_as_ingest_draws_the_pdf_with_the_picked_cell_erased(tmp_path, monkeypatch):
+    pdf = army_set(tmp_path, monkeypatch, flight)
+    folder = plant.held_out("army_bt_bcof", run.PLANTS)
+    sheets = [cv2.imread(str(tmp_path / "ingested" / s.image)) for s in ingest.ingest([pdf], tmp_path / "ingested")]   # an upload of the PDF
+    pngs = [cv2.imread(str(folder / f"{i:03d}.png")) for i in range(3)]
+    assert sorted(p.name for p in folder.iterdir()) == ["000.png", "001.png", "002.png", "check.jpg", "truth.json"]
+    assert np.array_equal(pngs[0], sheets[0]) and np.array_equal(pngs[2], sheets[2]) and pngs[1].shape == sheets[1].shape
+    truth = json.loads((folder / "truth.json").read_text())
+    assert [(c["object"], c["floor"], c["index"], c["kind"], c["expected"]) for c in truth["cells"]] == [("S", "FIRST", 1, "discharge", 10)]
+    small = [(round(w * WORK_PX / max(w, h)), round(h * WORK_PX / max(w, h))) for w, h in ((p.shape[1], p.shape[0]) for p in pngs)]
+    assert {k: truth[k] for k in ("sheets", "floors", "stairs", "absent")} == score.placed("army_bt_bcof", stair_truth(), small) and truth["source"] == "army_bt_bcof"
+    x1, y1, x2, y2 = (int(v) for v in score.placed("army_bt_bcof", stair_truth(), [(p.shape[1], p.shape[0]) for p in pngs])["stairs"]["S"]["1"])
+    before, after = ink(sheets[1]), ink(pngs[1])
+    assert after[y1 + 8:y2 - 8, x1 + 10:x2 - 10].sum() < 0.1 * before[y1 + 8:y2 - 8, x1 + 10:x2 - 10].sum()   # treads gone
+    assert after[y1 + 8:y2 - 8, x1 - 1:x1 + 2].mean() > 0.5 * before[y1 + 8:y2 - 8, x1 - 1:x1 + 2].mean()   # the wall stays
+    moved = np.argwhere((pngs[1] != sheets[1]).any(axis=2))
+    assert moved.size and (moved.min(axis=0) >= [y1 - 4, x1 - 4]).all() and (moved.max(axis=0) <= [y2 + 4, x2 + 4]).all()   # nothing outside the cell
+    assert truth["cells"][0]["ink_after"] < truth["cells"][0]["ink_before"]
+
+
+def stuck(page, box):
+    """Treads as thick as the walls they meet, and walls that run on past the box, so the removal reads the whole flight as walls and leaves it, as it left a flight of MIL_NW on queens_royce."""
+    for x in (box[0], box[2]):
+        page.draw_line((x, box[1] - 20), (x, box[3] + 20), color=(0, 0, 0), width=1.5)
+    for y in np.arange(box[1] + 2, box[3] - 1, 2.5):
+        page.draw_line((box[0], y), (box[2], y), color=(0, 0, 0), width=0.8)
+
+
+def grey(page, box):
+    """Grey treads on a grey floor that runs on past the box, as on queens_royce's colour-filled raster, where the ink map sees no treads, so no erasure there can be checked."""
+    page.draw_rect([box[0] - 20, box[1] - 10, box[2] + 20, box[3] + 10], color=None, fill=(0.8, 0.8, 0.8))
+    for y in np.arange(box[1] + 3, box[3] - 2, 2.5):
+        page.draw_line((box[0] + 3, y), (box[2] - 3, y), color=(0.55, 0.55, 0.55), width=0.3)
+
+
+@pytest.mark.parametrize("draw", [stuck, grey])
+def test_a_held_out_plant_whose_erasure_leaves_the_stair_or_cannot_be_checked_is_refused(tmp_path, monkeypatch, draw):
+    army_set(tmp_path, monkeypatch, draw)
+    with pytest.raises(ValueError, match="S on FIRST"):
+        plant.held_out("army_bt_bcof", run.PLANTS)
+    assert not (run.PLANTS / "army_bt_bcof_plant").exists()   # no folder a run could pick up
+
+
+@pytest.fixture
+def held_plant(tmp_path, monkeypatch, code):
+    """The held-out plant of army_bt_bcof drawn small, with a pipeline that does nothing."""
+    army_set(tmp_path, monkeypatch, flight)
+    monkeypatch.setattr(pipeline, "run", lambda path, **_: None)
+    return plant.held_out("army_bt_bcof", run.PLANTS)
+
+
+def test_a_plant_image_changed_after_the_freeze_is_refused(tmp_path, held_plant):
+    run.freeze()
+    image = held_plant / "001.png"
+    kept = image.read_bytes()
+    edited = cv2.imread(str(image))
+    edited[:20, :20] = 0
+    cv2.imwrite(str(image), edited)
+    data = tmp_path / "reviews"
+    with pytest.raises(ValueError, match="images"):
+        run.run("army_bt_bcof_plant", data)
+    assert not data.exists() and "runs" not in json.loads(run.FROZEN.read_text())   # refused before anything was sent or recorded
+    image.write_bytes(kept)
+    assert (run.run("army_bt_bcof_plant", data) / "eval_run.json").exists()
+
+
+def test_a_plant_of_a_held_out_set_is_held_out_whatever_the_list_says(tmp_path, monkeypatch, held_plant):
+    monkeypatch.setattr(run, "HELD_OUT", ("army_bt_bcof", "queens_royce"))   # the plants taken off the list
+    data = tmp_path / "reviews"
+    with pytest.raises(ValueError):
+        run.run("army_bt_bcof_plant", data)   # nothing frozen yet
+    run.freeze()
+    sha = score.load("army_bt_bcof_plant")["sha256"]
+    assert json.loads(run.FROZEN.read_text())["truth"]["army_bt_bcof_plant"] == sha
+    path = run.run("army_bt_bcof_plant", data)
+    assert report.status("army_bt_bcof_plant", json.loads((path / "eval_run.json").read_text()), sha, json.loads(run.FROZEN.read_text())) == "frozen, held-out"
+    with pytest.raises(ValueError):
+        run.run("army_bt_bcof_plant", tmp_path / "again")   # it runs once
+    truth = held_plant / "truth.json"
+    truth.write_text(truth.read_text().replace('"discharge"', '"middle"'))
+    with pytest.raises(ValueError):
+        run.freeze()   # its frozen hash never changes
+
+
+def test_held_out_sets_and_their_plants_report_counts_and_lists_only_where_the_catalog_allows():
+    def scored(item):
+        return {"wrong passes": 1, "absent cells": 15, "erased cells": 3, "present cells": 45, "present shown": {"Found": 40, "Check": 5}, "out of": 3,
+                "wrong pass list": [{"item": item, "sheet": "page 8", "stair": "B", "state": "Found", "truth": "absent"}]}
+    entries = [entry(name, source, scored(f"{name} wrong pass"), status="frozen, held-out")
+               for name, source in (("queens_royce", "queens_royce"), ("queens_royce_plant", "queens_royce"), ("army_bt_bcof", "army_bt_bcof"), ("army_bt_bcof_plant", "army_bt_bcof"))]
+    full, public = report.build(entries, CATALOG | {"army_bt_bcof": {"public_demo": "yes"}})
+    rows = {(r["set"], r["score"]): r for r in public["scores"]}
+    for e in entries:
+        wrong, present = rows[e["set"], "wrong passes"], rows[e["set"], "present cells"]
+        assert (wrong["Storey"], wrong["absent cells"], wrong["erased cells"], present["Storey"], present["shown"]) == (1, 15, 3, 45, {"Found": 40, "Check": 5})
+    assert {r["set"] for r in public["wrong passes"]} == {"army_bt_bcof", "army_bt_bcof_plant"} and len(full["wrong passes"]) == 4
 
 
 # Baseline
@@ -628,7 +916,7 @@ def test_a_baseline_with_no_record_is_asked_again_when_its_reply_is_cached(tmp_p
 
 
 def test_a_baseline_asked_on_other_drawings_waits(tmp_path, monkeypatch, sheets_folder):
-    monkeypatch.setattr(run, "truth_path", lambda name: write(tmp_path / "gen_truth.json", generated()))
+    monkeypatch.setattr(run, "truth_paths", lambda name: [write(tmp_path / "gen_truth.json", generated())])
     write(sheets_folder / "review.json", review())
     record = {"problems": [], "usd": 0.05, "minutes": 0.4}
     write(baseline.OUT / "gen.json", record | {"request": "0" * 64})   # asked before the set was drawn again
