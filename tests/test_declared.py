@@ -14,6 +14,7 @@ import pytest
 from storey import declared, meta
 from storey.declared import (agree, code_fields, cover_index, declared_stage, drawing_labels, exit_sheet, page_lines, plan_rooms, row_strips, schedules, select, shape_tags,
                              table_boxes, text_reads, text_tables, tiles, title_blocks, width_mm)
+from storey.declared import room_same
 from storey.meta import Meter
 from storey.pipeline import Context, write_json
 
@@ -237,6 +238,19 @@ def test_schedule_rows_keep_each_cell_under_its_column():
     assert (got["kind"], got["cols"]) == ("door", ["MARK", "SIZE", "SWING"])
     assert [r["MARK"] for r in got["rows"]] == ["1", "2", "3"]
     assert got["rows"][2]["SWING"] == "BIFOLD"
+
+
+def test_schedule_cell_stays_under_the_text_cap_however_many_lines_share_it():
+    stacked = [line("W" * 400, 240, 255 + 0.1 * n, 9.6, width=30) for n in range(50)]   # all on door 1's row, under SWING
+    cells = [v for r in schedules(DOORS + stacked)[0]["rows"] for v in r.values() if isinstance(v, str)]
+    assert max(map(len, cells)) == declared.MAX_TEXT
+
+
+def test_room_compare_stays_under_the_text_cap(monkeypatch):
+    seen, real = [], declared.difflib.SequenceMatcher
+    monkeypatch.setattr(declared.difflib, "SequenceMatcher", lambda junk, a, b: seen.append(max(len(a), len(b))) or real(junk, a, b))
+    room_same("a b " * 100000, "c d " * 100000)
+    assert seen and max(seen) <= declared.MAX_TEXT
 
 
 def test_schedule_with_no_header_row_is_not_read():

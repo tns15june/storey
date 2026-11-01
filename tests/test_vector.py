@@ -1,5 +1,4 @@
 import json
-import os
 import sys
 import time
 from pathlib import Path
@@ -12,7 +11,6 @@ from storey import pipeline, vector
 from storey.meta import Meter
 from storey.pipeline import Context
 
-FIXTURE = Path(__file__).parent / "fixtures/vector_room.pdf"
 QUARTER = "1/4\" = 1'-0\""
 PT_PER_IN = 1.5   # at 1/4 in = 1 ft
 K = 0.5523        # control point distance for a quarter circle drawn as one Bezier
@@ -93,12 +91,7 @@ def write_fixture():
     draw_notched(doc.new_page(width=WIDTH, height=HEIGHT))                                           # 12 a U-shaped building
     half = doc.new_page(width=WIDTH, height=HEIGHT)                                                  # 13 page 4 at half size, as a life safety sheet at another scale
     half.show_pdf_page(pymupdf.Rect(HALF_X, HALF_Y, HALF_X + WIDTH / 2, HALF_Y + HEIGHT / 2), pymupdf.open("pdf", doc.tobytes()), 4)
-    data = doc.tobytes(garbage=4, deflate=True, no_new_id=True)
-    FIXTURE.parent.mkdir(exist_ok=True)
-    tmp = FIXTURE.with_name(f"{FIXTURE.name}.{os.getpid()}.tmp")
-    tmp.write_bytes(data)
-    tmp.replace(FIXTURE)   # other test sessions can run at the same time, so one must never see half a file
-    return data
+    return doc.tobytes(garbage=4, deflate=True, no_new_id=True)
 
 
 def draw_hall(page, right=((189, 531),), oc=0):

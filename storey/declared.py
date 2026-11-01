@@ -189,7 +189,7 @@ def title_same(a, b):
 
 def room_same(a, b):
     """Room names match, allowing a typo, a shortened word or one name inside the other. A name on one side only is a difference."""
-    na, nb = norm(a), norm(b)
+    na, nb = norm(a)[:MAX_TEXT], norm(b)[:MAX_TEXT]   # read from the upload, and SequenceMatcher is quadratic
     if not na or not nb:
         return na == nb
     if na == nb or na in nb or nb in na or difflib.SequenceMatcher(None, na, nb).ratio() >= 0.6:
@@ -426,7 +426,7 @@ def schedules(lines):
                 row = {}
                 for c in r:
                     name = min(cols, key=lambda k: abs(k[1] - (c["x0"] + c["x1"]) / 2))[0]
-                    row[name] = (row.get(name, "") + " " + c["t"]).strip()
+                    row[name] = (row.get(name, "") + " " + c["t"]).strip()[:MAX_TEXT]
                 key = cols[0][0]
                 if key in row and re.fullmatch(r"[A-Z0-9.\-]{1,8}", row[key]):
                     row["_box"] = bounds(r)
