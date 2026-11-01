@@ -65,15 +65,16 @@ NUMBER_WORDS = frozenset("""zero one two three four five six seven eight nine te
 # Words a rewrite may lose. No and not stay out of this list. The last two are the template's labels, which the prompt tells the model to drop.
 STOP_WORDS = frozenset("a an the is are was were be of for in on at to by with and or as that which this these those it its there has have had each per from measured required".split())
 NEGATION = re.compile(r"\b(?:no|not|never|none|nor|neither|without)\b|n['\u2019]t\b")
-# Words a rewrite may add beyond STOP_WORDS. Each comes from a kept rewrite of a real comment, and anything else costs that comment its rewording, never the comment.
-LINK_WORDS = frozenset("need needs needed show shows list lists match continue within where while against measures include reach differing".split())
+# Words a rewrite may add beyond STOP_WORDS. Each comes from a kept rewrite of a real comment, and anything else costs that comment its rewording, never the comment. Words that state a result, such as within and match, stay out. Against stays in, because it sets two values side by side and says neither is enough.
+LINK_WORDS = frozenset("need needs needed show shows list lists continue where while against measures include differing".split())
 MAX_GROWTH = 1.5   # kept rewrites ran 0.93 to 1.36 times the template on 43 real comments
 SHEET_NUMBER = re.compile(r"(?=.*\d)[A-Za-z0-9][A-Za-z0-9./-]{0,15}")   # as printed. Anything else in this field is drawing text
 
 
 def plain(text: str) -> str:
-    """Text as a reader sees it, with zero-width characters gone and full-width letters folded, because a status word can hide in either."""
-    return "".join(c for c in unicodedata.normalize("NFKC", text) if unicodedata.category(c) != "Cf")
+    """Text as a reader sees it, for searching only: a status word can hide behind invisible characters, full-width letters or accents."""
+    # shortcut: a Cyrillic letter that looks Latin still passes, add a confusables table if a drawing shows one. A rewrite cannot use it, because _closed counts it as an added word.
+    return "".join(c for c in unicodedata.normalize("NFKD", text) if unicodedata.category(c) not in ("Cf", "Mn") and c not in "\u115f\u1160\u3164\uffa0")
 
 
 def _codes(text):
@@ -83,7 +84,7 @@ def _codes(text):
 
 
 def _words(text):
-    return set(re.findall(r"[a-z]+", text.lower()))
+    return set(re.findall(r"[^\W\d_]+", plain(text).lower()))
 
 
 def _facts(text):
@@ -127,7 +128,10 @@ def _same_words(text, body):
 
 def _closed(text, body):
     """Only connecting words are added and the length stays close, so text on a drawing cannot steer a rewrite into a sentence of its own."""
-    return len(text) <= MAX_GROWTH * len(body) and _words(text) - _words(body) <= STOP_WORDS | LINK_WORDS
+    def stems(words):
+        return {word[:5] for word in words}   # first 5 letters, as _same_words compares, so reaches may read reach
+
+    return len(text) <= MAX_GROWTH * len(body) and stems(_words(text)) - stems(_words(body)) <= stems(STOP_WORDS | LINK_WORDS)
 
 
 def _numbers(project):
