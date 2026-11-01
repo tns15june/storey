@@ -1,7 +1,7 @@
 """The second review: each earlier comment at its place on the new set, and what changed that no comment covers.
 
-Code sets every state from a registered pixel difference and the checks' own result on the new set. Spark only lists revision clouds, as a draft for the examiner, so a cloud never decides a state, and SAM takes no part.
-Sheets are compared on their 2000 px copies, the size the threshold was measured on, whatever size ingest wrote."""
+Code sets every state from a registered pixel difference and the checks' own result on the new set. Spark only lists revision clouds and deltas, as a draft for the examiner that tells the changes the applicant marked from new ones, so a cloud never decides a state, and SAM takes no part.
+Sheets are compared on their 2000 px copies, the size the threshold was measured on, whatever size ingest wrote, and each comment's box again at the sheet's own size."""
 import itertools
 import logging
 import time
@@ -29,6 +29,14 @@ FAINT = 2.0        # ink in a place with almost none, where one speck would be m
 JOIN = 30          # px, so the treads of one stair make one change and not one per tread
 EDGE = 9           # px of the frame the new sheet does not reach for certain: a rescan pushes the border off the page, which gave 50 false regions on those 27 sheets without this
 MAX_CHANGES = 40   # per sheet, because a redrawn sheet gives hundreds, and a list that long reads as one fact
+# Set after seeing data, so Task 14 tests them again. On the 27 unchanged real sheets above, 2333 boxes of text-layer words and scan notes gave 0 changed boxes through the rescan, stretch and keystone.
+# A one-digit swap on Capitol A2.1 to A2.3 reached GONE on 34 of 36, rescanned as well, and the smallest correction on the planned revision set gave 10. Without the half-strength rule, blur and JPEG gave 19 boxes over GONE.
+NEAR = 3           # px at the sheet's own size, the side of the square round an old stroke that must hold no new ink
+SLACK = 6          # px a box may shift to line up with the new sheet, which takes up what the sheet's fit leaves: with no shift the keystone gave 912 false boxes and the stretch 225, and with 2 px the keystone gave 235
+AROUND = 100       # px of the sheet round a box that the shift lines up, so a box is not moved onto its own correction
+GONE = 5           # px of old ink in a box that lost over half its strength
+MIDDLE = 1 / 3     # share of each side of a stair's box, round its centre, where ink added counts. Set after seeing data, so Task 14 tests it again: on 710 A1.3 a cloud drawn round the stair put 4244 px of new ink in the box and none in this middle, where the stairs drawn back put 3453 there, and 4519 on St Elizabeths
+MARK_MAX = 0.05   # share of the sheet a listed cloud or delta may cover and still mark a change. The largest of the lab's 20 real clouds covers 1.9%, and a model's box over a whole tile, a tenth of the sheet, would hide every change under it
 WORKERS = 6
 GRID = (4, 3)      # tiles along the long and the short edge, 12 in all
 TILE_OVERLAP = 0.1
@@ -38,16 +46,15 @@ DELTA_MAX = 12     # characters
 CLOUDS_DRAFT = "The revision cloud list is a draft read by a model, and a sheet with no cloud listed can still have changed."
 NOT_COMPARED = "The last review's checks did not finish, so no comment was compared."
 AGAIN = "The checks raised this comment again."
-NO_PLACE = "This comment has no place on a sheet to compare, and the checks did not raise it."
 NO_MATCH = "This sheet has no match in the new set."
 NOT_LINED_UP = "This sheet could not be lined up with the new set."
-STILL = "This place did not change."
-STILL_GONE = "This place did not change, although the checks no longer raise this comment."
-MOVED_GONE = "This place changed, and the checks no longer raise this comment."
-NOT_TOLD = "This place changed, but the checks could not tell on the new set whether this comment still applies."
+STILL = "This {} did not change."   # place, or for a comment with no box its sheet, or the whole set if it names no sheet
+STILL_GONE = "This {} did not change, although the checks no longer raise this comment."
+MOVED_GONE = "This {} changed, and the checks no longer raise this comment."
+NOT_TOLD = "This {} changed, but the checks could not tell on the new set whether this comment still applies."
 NEW_CHANGE = "Changed since the last set, and no comment covers it."
 AT_COMMENT = "Changed since the last set, around comment {}."
-IN_CLOUD = " A revision cloud on the draft list covers it."
+MARKED = " A revision cloud or delta on the draft list marks it, so the applicant flagged this change."
 
 RAISED_BY = {1: ("required sheets", "sheets not read", "plans outside the floor order"), 2: ("sheet index",), 3: ("sheet titles",), 4: ("code summary",), 5: ("stories against floor plans", "code edition"), 6: ("table arithmetic",),
              7: ("door and window tags", "door type against its swing", "window sizes", "swing column"), 8: ("exit capacity",), 9: ("stair continuity",), 10: ("stairs at the discharge level",), 11: ("exits per floor",), 13: ("travel distance",),
@@ -80,6 +87,24 @@ def _changed(a, b, box):
         return False
     ink = p.mean() + q.mean()
     return bool(ink > FAINT and np.abs(p - q).mean() > CHANGED * ink)
+
+
+def _gone(old, new, H, box, middle=1.0):
+    """Pixels of old ink in a box, in old sheet px, that lost over half its strength with no new ink within a pixel, read at the sheet's own size, where the 2000 px copy blurs one digit into another.
+    The box and the sheet round it take the shift that leaves least ink unmatched, nearest first. A stroke only dimmed by blur or JPEG keeps over half its ink, and a cloud drawn round the place adds ink and takes none away, so neither counts.
+    Read with the sheets swapped, it counts ink added, a cloud's as well. Only the `middle` share of each side, round the box's centre, is counted."""
+    # shortcut: no box measured lay within 60 px of the sheet's edge, where a rescan can push ink off the page, mask the new sheet's reach as `_fit` does if a comment there reads changed.
+    x1, y1, x2, y2 = (int(v) for v in box)
+    m = AROUND + SLACK
+    w, h = x2 - x1 + 2 * m, y2 - y1 + 2 * m
+    at = np.array([[1, 0, m - x1], [0, 1, m - y1], [0, 0, 1.0]])
+    a = _soft_ink(cv2.warpPerspective(old, at, (w, h), borderValue=(255, 255, 255)))[SLACK:h - SLACK, SLACK:w - SLACK]
+    b = cv2.dilate(_soft_ink(cv2.warpPerspective(new, at @ H, (w, h), borderValue=(255, 255, 255))), np.ones((NEAR, NEAR), np.uint8))
+    cut = np.maximum(STROKE, a / 2)
+    shifts = sorted(itertools.product(range(-SLACK, SLACK + 1), repeat=2), key=lambda s: s[0] ** 2 + s[1] ** 2)
+    left = min((a - b[SLACK + dy:h - SLACK + dy, SLACK + dx:w - SLACK + dx] > cut for dx, dy in shifts), key=np.count_nonzero)
+    ox, oy = int((x2 - x1) * (1 - middle) / 2), int((y2 - y1) * (1 - middle) / 2)
+    return np.count_nonzero(left[AROUND + oy:AROUND + y2 - y1 - oy, AROUND + ox:AROUND + x2 - x1 - ox])
 
 
 def _fit(old, new, deadline):
@@ -125,8 +150,10 @@ def _row(f, state, why, old_crop=None, new_crop=None):
     return {"comment_id": f["comment_id"], "title": f["title"], "state": state, "old_crop": old_crop, "new_crop": new_crop, "why": why}
 
 
-def _unplaced(f, raised):
-    return _row(f, "open", AGAIN) if f["comment_id"] in raised else _row(f, "unknown", NO_PLACE)
+def _unplaced(f, again, proven, changed, where):
+    """A comment with no box, read as one whose place is its sheet, or the whole set (`where`), so the checks dropping it while nothing changed still reads Still open."""
+    # shortcut: a sheet whose only change is a drawn cloud counts as changed here, so such a comment can read Looks resolved once the checks drop it, give its finding a box if a real set shows this.
+    return _row(f, "open", AGAIN) if again else _row(f, *_verdict(changed, False, proven, where))
 
 
 def _checked(f, sheet, stored, evaluated):
@@ -146,13 +173,15 @@ def _checked(f, sheet, stored, evaluated):
     return not any(g["check"] == f["check"] and g["severity"] == "unknown" and g["sheet"] in (None, sheet) for g in evaluated["findings"])   # a corridor that could not be measured leaves its comment unraised, under a key of its own
 
 
-def _verdict(moved, again, proven):
+def _verdict(moved, again, proven, where="place"):
     """A changed place reads resolved only if the checks ran and agree. Each disagreement goes to Still open, the side where an examiner looks again, and a changed place with no proof goes to Cannot tell."""
     if again:
-        return "open", MOVED_AGAIN if moved else STILL
-    if not proven:
-        return ("unknown", NOT_TOLD) if moved else ("open", STILL)
-    return ("resolved_looks", MOVED_GONE) if moved else ("open", STILL_GONE)
+        state, why = "open", MOVED_AGAIN if moved else STILL
+    elif not proven:
+        state, why = ("unknown", NOT_TOLD) if moved else ("open", STILL)
+    else:
+        state, why = ("resolved_looks", MOVED_GONE) if moved else ("open", STILL_GONE)
+    return state, why.format(where)
 
 
 def _saved(image, box, path):
@@ -162,27 +191,29 @@ def _saved(image, box, path):
 def _compare(ctx, comments, raised, proven, old, new, fit, sheet):
     """(comment rows, new change rows, whether the sheet changed at all) for one matched pair. `proven` holds the comments `_checked` passed. `fit` is None for sheets with identical bytes, which hold no change."""
     H, a, b = fit or (np.eye(3), None, None)
+    back = np.linalg.inv(H)
     kx, ky = (a.shape[1] / old.shape[1], a.shape[0] / old.shape[0]) if a is not None else (1, 1)
     regions = _regions(a, b) if a is not None else []
-    rows, placed = [], {}
+    rows, placed, held = [], {}, []
     for f in comments:
         if not f["box"]:
-            rows.append(_unplaced(f, raised))
+            rows.append(_unplaced(f, f["comment_id"] in raised, f["comment_id"] in proven, bool(regions), "sheet"))
             continue
         name, (x1, y1, x2, y2) = f["comment_id"], f["box"]
         placed[name] = box = [int(x1 * kx), int(y1 * ky), int(x2 * kx) + 1, int(y2 * ky) + 1]
-        # A region that touches the box counts as well as the ratio, because `CHANGED` was measured on erased and moved items. A word replaced in place keeps most of its ink, 0.03 to 0.17 on the planned revision set, and the ink that changes is the cloud round it.
-        # shortcut: a word replaced in place with no cloud round it stays Still open, because neither test finds it, compare the text layers if a real set shows it.
-        moved = a is not None and (_changed(a, b, box) or any(_touch(r, box) for r in regions))
-        rows.append(_row(f, *_verdict(moved, name in raised, name in proven), _saved(old, f["box"], ctx.dir / f"old_{name}.jpg"), _saved(new, _mapped(np.linalg.inv(H), f["box"]), ctx.dir / f"new_{name}.jpg")))
+        # `CHANGED` was measured on erased and moved items, and a word replaced in place keeps most of its ink, 0.03 to 0.17 on the planned revision set, so ink gone at the sheet's own size counts too.
+        # A stair drawn back adds ink and takes none away, so a stair's place also reads the new sheet against the old. Only there, because a cloud drawn round any item adds ink too: on 710 A1.2 a cloud alone put 2595 px of new ink in the floor name's box.
+        # shortcut: a cloud round a stair narrower than the middle third of its box runs inside that third and counts, so a stair comment the checks drop with no stair drawn can read Looks resolved, tell scallops from treads if a real set shows it.
+        moved = a is not None and (_changed(a, b, box) or _gone(old, new, H, f["box"]) >= GONE or f["check"] in STAIR_CHECKS and _gone(new, old, back, _mapped(back, f["box"]), MIDDLE) >= GONE)
+        if moved:
+            held.append(box)
+        rows.append(_row(f, *_verdict(moved, name in raised, name in proven), _saved(old, f["box"], ctx.dir / f"old_{name}.jpg"), _saved(new, _mapped(back, f["box"]), ctx.dir / f"new_{name}.jpg")))
     changes = []
     for region in regions:
-        if not any(_mostly_inside(region, box) for box in placed.values()):
+        if not any(_mostly_inside(region, box) for box in held):   # a changed place's row accounts for what it holds, and every other region stays listed, so no change found is lost
             names = [name for name, box in placed.items() if _touch(region, box)]
             changes.append((region, AT_COMMENT.format(", ".join(names)) if names else NEW_CHANGE))
-    if len(changes) > MAX_CHANGES:
-        changes = [(_union(r for r, _ in changes), f"Changed in {len(changes)} places since the last set, shown as one box.")]
-    to_new = np.linalg.inv(H) @ np.diag([1 / kx, 1 / ky, 1.0])
+    to_new = back @ np.diag([1 / kx, 1 / ky, 1.0])
     return rows, [{"sheet": sheet, "box": _mapped(to_new, r), "note": note, "state": "new_change"} for r, note in changes], bool(regions)
 
 
@@ -193,16 +224,19 @@ def _tiles(w, h):
     return [(float(x), float(y), float(x + tw), float(y + th)) for x in np.linspace(0, w - tw, cols) for y in np.linspace(0, h - th, rows)]
 
 
-def _clouds_in(reply, tile):
-    """One tile's clouds in sheet pixels. A reply is untrusted, so a wrong shape raises and the tile counts as unread."""
+def _boxes(items, tile):
+    """(item, box in sheet pixels) for each item on the tile's 0-1000 grid, leaving out boxes that enclose nothing."""
     left, top, right, bottom = tile
-    rows = []
-    for cloud in reply["clouds"][:MAX_CLOUDS]:
-        x1, y1, x2, y2 = (min(max(int(cloud[k]), 0), 1000) / 1000 for k in ("x1", "y1", "x2", "y2"))
+    for item in items[:MAX_CLOUDS]:
+        x1, y1, x2, y2 = (min(max(int(item[k]), 0), 1000) / 1000 for k in ("x1", "y1", "x2", "y2"))
         if x1 < x2 and y1 < y2:
-            box = [left + x1 * (right - left), top + y1 * (bottom - top), left + x2 * (right - left), top + y2 * (bottom - top)]
-            rows.append({"box": [round(v, 1) for v in box], "delta": str(cloud["delta"]).strip()[:DELTA_MAX] or None})
-    return rows
+            yield item, [round(v, 1) for v in (left + x1 * (right - left), top + y1 * (bottom - top), left + x2 * (right - left), top + y2 * (bottom - top))]
+
+
+def _clouds_in(reply, tile):
+    """One tile's (clouds, delta boxes) in sheet pixels. A reply is untrusted, so a wrong shape raises and the tile counts as unread."""
+    clouds = [{"box": box, "delta": str(cloud["delta"]).strip()[:DELTA_MAX] or None} for cloud, box in _boxes(reply["clouds"], tile)]
+    return clouds, [box for _, box in _boxes(reply["deltas"], tile)]
 
 
 def _touch(a, b):
@@ -226,8 +260,9 @@ def _merged(rows):
 
 
 def _read_clouds(ctx, sheets):
-    """(cloud rows, lines for what was not read). A budget stop or a bad reply costs tiles and never the comment states, which are already set. One image at a time, because a set can hold many 6000 px sheets."""
-    rows, unread, total, stop = [], 0, 0, None
+    """(cloud rows, marks, lines for what was not read). Marks are the clouds and deltas small enough to say the applicant flagged a change there.
+    A budget stop or a bad reply costs tiles and never the comment states, which are already set. One image at a time, because a set can hold many 6000 px sheets."""
+    rows, marks, unread, total, stop = [], [], 0, 0, None
 
     def one(image, tile):
         nonlocal stop
@@ -247,9 +282,12 @@ def _read_clouds(ctx, sheets):
             found = list(pool.map(lambda tile: one(image, tile), tiles))
         total += len(tiles)
         unread += sum(r is None for r in found)
-        rows += [c | {"sheet": sheet["index"]} for c in _merged(c for r in found if r for c in r)]
+        clouds = _merged(c for r in found if r for c in r[0])
+        rows += [c | {"sheet": sheet["index"]} for c in clouds]
+        boxes = [c["box"] for c in clouds] + [box for r in found if r for box in r[1]]
+        marks += [{"sheet": sheet["index"], "box": box} for box in boxes if (box[2] - box[0]) * (box[3] - box[1]) <= MARK_MAX * sheet["width"] * sheet["height"]]
     lines = [f"{stop} The revision cloud list stopped there, and no comment state depends on it."] if stop else []
-    return rows, lines + ([f"Revision clouds were not read on {unread} of {total} tiles, so the cloud list is not complete."] if unread else [])
+    return rows, marks, lines + ([f"Revision clouds were not read on {unread} of {total} tiles, so the cloud list is not complete."] if unread else [])
 
 
 def _numbered(rows):
@@ -259,7 +297,8 @@ def _numbered(rows):
 
 
 def recheck_stage(ctx) -> dict:
-    """{} on a first review. Otherwise `comments`, `changes` and `clouds`, each with a `sheet` and `box` in the new sheet's pixels where it has one, `unmatched_sheets`, and `not_checked` lines. Crops are file names in the review folder, and None with no place to cut."""
+    """{} on a first review. Otherwise `comments`, `changes` and `clouds`, each with a `sheet` and `box` in the new sheet's pixels where it has one, `unmatched_sheets`, and `not_checked` lines. Crops are file names in the review folder, and None with no place to cut.
+    A change reads `new_change`, or has no state where a listed cloud or delta marks it as the applicant's own."""
     # shortcut: compares with the parent only, so a comment that left the findings in cycle 2 has no row in cycle 3, carry the parent's rows forward if a third cycle matters.
     # shortcut: `raised` is read under the first run's choices, so a later change of jurisdiction does not reset a state, recompute it in assemble if an examiner relies on that.
     from .pipeline import read_json   # here, because pipeline imports this module to register the stage
@@ -308,11 +347,16 @@ def recheck_stage(ctx) -> dict:
         if differs:
             to_read.append(new_sheets[n["index"]])
     for sheet, here in by_sheet.items():
-        for f in here:
-            rows[f["comment_id"]] = _unplaced(f, raised) if sheet is None else _row(f, "unknown", NO_MATCH)
-    clouds, lines = _read_clouds(ctx, to_read)
+        for f in here:   # the set changed if a sheet came, went, could not be lined up or differs, and each of those is in `to_read` or `unmatched`
+            rows[f["comment_id"]] = _unplaced(f, f["comment_id"] in raised, _checked(f, None, stored, latest), bool(to_read or unmatched), "set") if sheet is None else _row(f, "unknown", NO_MATCH)
+    clouds, marks, lines = _read_clouds(ctx, to_read)
+    marks = [m for m in marks if any(c["sheet"] == m["sheet"] and _mostly_inside(m["box"], c["box"]) for c in changes)]   # this revision's marks are new ink, and a cloud or delta left from an earlier one is on both sets, so no change holds it
     for change in changes:
-        if any(_touch(change["box"], c["box"]) for c in clouds if c["sheet"] == change["sheet"]):
-            change["note"] += IN_CLOUD
+        if any(m["sheet"] == change["sheet"] and _touch(change["box"], m["box"]) for m in marks):
+            change |= {"note": change["note"] + MARKED, "state": None}
+    for sheet in {c["sheet"] for c in changes}:   # after marking, so a redrawn sheet's one box never reads as flagged by the applicant
+        many = [c for c in changes if c["sheet"] == sheet and c["state"]]
+        if len(many) > MAX_CHANGES:
+            changes = [c for c in changes if c not in many] + [{"sheet": sheet, "box": _union(c["box"] for c in many), "note": f"Changed in {len(many)} places since the last set, shown as one box.", "state": "new_change"}]
     return {"comments": [rows[f["comment_id"]] for f in comments], "changes": changes, "clouds": clouds, "unmatched_sheets": list(dict.fromkeys(unmatched)),
             "not_checked": [CLOUDS_DRAFT, *lines, *([] if "findings" in evaluated else [NOT_COMPARED])]}

@@ -481,7 +481,7 @@ function renderSecond() {
     ...(c.old_crop || c.new_crop ? [el('div', { className: 'pair' }, crop(c.old_crop, 'Earlier', c.comment_id), crop(c.new_crop, 'Resubmittal', c.comment_id))] : [])))
   const summary = ['resolved_looks', 'open', 'unknown'].map(name => `${RECHECK[name]}: ${recheck.comments.filter(c => c.state === name).length}`).join('  ·  ')
   const changes = recheck.changes.map(c => el('li', {}, el('button', { className: 'row', onclick: () => { $('#second').close(); focusItem(c) } },
-    el('span', { className: 'title' }, pill(RECHECK.new_change, 'recheck new_change'), ` ${c.note}`), el('span', { className: 'facts', textContent: sheetName(c.sheet) }))))
+    el('span', { className: 'title' }, ...(c.state ? [pill(RECHECK[c.state], `recheck ${c.state}`)] : []), ` ${c.note}`), el('span', { className: 'facts', textContent: sheetName(c.sheet) }))))
   const clouds = recheck.clouds.map(c => el('li', { textContent: `${sheetName(c.sheet)}${c.delta ? `, delta ${c.delta}` : ', no delta read'}` }))
   const unmatched = recheck.unmatched_sheets.map(name => el('li', { textContent: name }))
   body.replaceChildren(link, el('p', { className: 'summary', textContent: summary }), ...(comments.length ? comments : [el('p', { className: 'note', textContent: 'No comment was compared. See Not checked.' })]),
