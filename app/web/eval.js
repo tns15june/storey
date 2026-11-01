@@ -49,12 +49,14 @@ function headline(data) {
   const wrongHeld = total(rows, 'wrong passes', held), wrongDev = total(rows, 'wrong passes', dev)
   const planted = total(rows, 'truth items found', r => generated(r) && dev(r))
   const noCause = total(rows, 'false findings', r => generated(r) && dev(r))
+  const real = total(rows, 'truth items found', r => !generated(r) && !/_plant$/.test(r.set) && r.status !== 'post hoc')   // hand audits and the examiner's letter
   const cost = median(rows.filter(r => r.score === 'cost USD').map(r => r.Storey)), minutes = median(rows.filter(r => r.score === 'minutes').map(r => r.Storey))
   const cards = [
     card('Wrong passes, held-out sets', wrongHeld.storeyKnown ? String(wrongHeld.storey) : 'Not run', wrongHeld.sets ? `on ${wrongHeld.cells} stair cells truth says are absent or erased` : ''),
-    card('Wrong passes, development sets', wrongDev.storeyKnown ? String(wrongDev.storey) : 'Not run', wrongDev.sets ? `on ${wrongDev.cells} absent or erased stair cells and generated stair defects` : ''),
-    card('Planted defects raised', planted.outOf ? `${planted.storey} of ${planted.outOf}` : 'Not run', planted.baselineKnown ? `Spark asked directly: ${planted.baseline} of ${planted.baselineOutOf}` : ''),
-    card('Findings with no planted cause', noCause.storeyKnown ? String(noCause.storey) : 'Not run', noCause.baselineKnown ? `Spark asked directly: ${noCause.baseline}` : ''),
+    card('Wrong passes, development sets', wrongDev.storeyKnown ? String(wrongDev.storey) : 'Not run', wrongDev.sets ? `on ${wrongDev.cells} stair erasures in real buildings and the stair defects planted in generated sets` : ''),
+    card('Generated sets, items raised', planted.outOf ? `${planted.storey} of ${planted.outOf}` : 'Not run', planted.baselineKnown ? `planted defects and rule items. Spark asked directly: ${planted.baseline} of ${planted.baselineOutOf}` : ''),
+    card('Generated sets, findings with no cause', noCause.storeyKnown ? String(noCause.storey) : 'Not run', noCause.baselineKnown ? `Spark asked directly: ${noCause.baseline}` : ''),
+    card('Real sets, items raised', real.outOf ? `${real.storey} of ${real.outOf}` : 'Not run', real.baselineKnown ? `hand audits and an examiner's letter. Spark asked directly: ${real.baseline} of ${real.baselineOutOf}. Most audit items are kinds no Storey check covers.` : ''),
     card('Cost of one review', cost == null ? 'Not run' : `${cost.toFixed(2)} USD`, minutes == null ? '' : `median, ${minutes.toFixed(1)} minutes, cold cache`),
   ]
   return [el('section', { className: 'stats', 'aria-label': 'Headline numbers' }, ...cards),

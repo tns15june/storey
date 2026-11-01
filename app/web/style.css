@@ -257,7 +257,7 @@ body:not([data-mode="live"]) .columns { grid-template-columns: minmax(0, 640px);
 .reviewlist strong { font-weight: 600; }
 .reviewlist span { font-size: 13px; color: var(--muted); }
 .results { display: grid; gap: 16px; min-width: 0; }
-.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 10px; }
 .stat { display: grid; gap: 4px; align-content: start; padding: 12px 14px; background: var(--pane); border: 1px solid var(--line); border-top: 3px solid var(--ink); }
 .stat .label { font: 500 11px/1.2 var(--narrow); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
 .stat strong { font: 600 32px/1.1 var(--narrow); font-variant-numeric: tabular-nums; }
