@@ -1,4 +1,5 @@
 """Web server: accepts a drawing set, runs the review in the background, serves the result and the review screen."""
+import contextlib
 import hmac
 import json
 import os
@@ -39,7 +40,13 @@ RUN_KEY = secrets.token_urlsafe(24)   # used when no key is configured, and show
 CSP = ("default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; "
        "img-src 'self' data: blob:; object-src 'none'; base-uri 'none'; frame-ancestors 'none'")
 
-app = FastAPI(title="Storey")
+@contextlib.asynccontextmanager
+async def _lifespan(app):
+    close_interrupted()   # defined below; runs once the server starts
+    yield
+
+
+app = FastAPI(title="Storey", lifespan=_lifespan)
 workers = ThreadPoolExecutor(max_workers=2)
 waiting = threading.BoundedSemaphore(MAX_WAITING)
 edits = threading.Lock()   # a selector change and a Keep click rewrite the same files, and two at once must not lose either
@@ -133,6 +140,14 @@ def _finished(review_id):
 
 def _status(path, **fields):
     pipeline.write_json(path / "status.json", pipeline.read_json(path / "status.json") | fields)
+
+
+def close_interrupted():
+    """A review left running has no worker after a restart, and would otherwise show as running for good."""
+    for status in DATA.glob("*/status.json"):
+        if pipeline.read_json(status).get("state") in ("queued", "running"):
+            _status(status.parent, state="failed", step="Stopped", message="The server restarted before this review finished")
+
 
 
 def _ingest(path, uploads):

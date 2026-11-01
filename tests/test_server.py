@@ -125,6 +125,17 @@ def test_same_origin_browser_post_is_allowed(client):
     assert r.status_code == 200
 
 
+@pytest.mark.parametrize("state, after", [("queued", "failed"), ("running", "failed"), ("done", "done")])
+def test_a_restart_closes_reviews_left_running(client, tmp_path, state, after):
+    from storey import pipeline, server
+    path = tmp_path / ("a" * 32)
+    path.mkdir()
+    pipeline.write_json(path / "status.json", {"state": state, "stages": []})
+    server.close_interrupted()
+    got = client.get(f"/api/reviews/{path.name}").json()
+    assert got["state"] == after and ("restarted" in got.get("message", "")) == (after == "failed")
+
+
 def test_a_hung_reader_is_killed_and_frees_its_slot(client, monkeypatch):
     import sys
     from storey import server
