@@ -291,17 +291,11 @@ def test_rewrite_that_adds_a_sentence_keeps_the_template(tmp_path, text):
     assert letter_stage(make(tmp_path, stored(finding())))["items"][0]["text"] == template(finding())[0]
 
 
-@pytest.mark.parametrize("extra", ["\u0441\u043e\u043e\u0442\u0432\u0435\u0442\u0441\u0442\u0432\u0443\u0435\u0442.", "It is within.", "It is a match.", "It is a reach."], ids=["cyrillic", "within", "match", "reach"])
+@pytest.mark.parametrize("extra", ["\u0441\u043e\u043e\u0442\u0432\u0435\u0442\u0441\u0442\u0432\u0443\u0435\u0442.", "It is within.", "It is a match.", "It is a reach.", "It is included.", "It is continuous.", "It is \u0430pproved."],
+                         ids=["cyrillic", "within", "match", "reach", "included", "continuous", "homoglyph"])
 def test_rewrite_that_adds_a_claim_in_allowed_or_unread_letters_keeps_the_template(tmp_path, extra):
     always(reply(f"{REWRITE} {extra}"))
     assert letter_stage(make(tmp_path, stored(finding())))["items"][0]["text"] == template(finding())[0]
-
-
-def test_rewrite_may_inflect_a_word_of_the_template(tmp_path):
-    f = finding(title="Stair A stops above FIRST FLOOR", required="A stair reaches the level of exit discharge", measured="Found on SECOND FLOOR", rule="", check=10)
-    text = f"{ASK[10]} for Stair A, which stops above FIRST FLOOR. It is found on SECOND FLOOR, and a stair needs to reach the level of exit discharge."
-    always(reply(text))
-    assert letter_stage(make(tmp_path, stored(f)))["items"][0]["text"] == text
 
 
 def test_rewrite_made_long_with_allowed_words_keeps_the_template(tmp_path):
@@ -310,8 +304,8 @@ def test_rewrite_made_long_with_allowed_words_keeps_the_template(tmp_path):
     assert letter_stage(make(tmp_path, stored(finding())))["items"][0]["text"] == body
 
 
-@pytest.mark.parametrize("text", ["App\u200broved.", "\uff21\uff30\uff30\uff32\uff2f\uff36\uff25\uff24.", "Co\u00admpliant.", "App\u034froved.", "App\ufe0froved.", "App\u3164roved.", "Appr\u00f3ved."],
-                         ids=["zero-width", "full-width", "soft-hyphen", "grapheme-joiner", "variation-selector", "hangul-filler", "accent"])
+@pytest.mark.parametrize("text", ["App\u200broved.", "\uff21\uff30\uff30\uff32\uff2f\uff36\uff25\uff24.", "Co\u00admpliant.", "App\u034froved.", "App\ufe0froved.", "App\u3164roved.", "Appr\u00f3ved.", "App\u2800roved.", "App\U000e0001roved.", "App\u0488roved."],
+                         ids=["zero-width", "full-width", "soft-hyphen", "grapheme-joiner", "variation-selector", "hangul-filler", "accent", "braille-blank", "tag", "enclosing-mark"])
 def test_status_word_hidden_in_unicode_is_rejected(text):
     assert not no_new_facts(text, WIDTH)
 

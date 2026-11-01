@@ -74,7 +74,7 @@ SHEET_NUMBER = re.compile(r"(?=.*\d)[A-Za-z0-9][A-Za-z0-9./-]{0,15}")   # as pri
 def plain(text: str) -> str:
     """Text as a reader sees it, for searching only: a status word can hide behind invisible characters, full-width letters or accents."""
     # shortcut: a Cyrillic letter that looks Latin still passes, add a confusables table if a drawing shows one. A rewrite cannot use it, because _closed counts it as an added word.
-    return "".join(c for c in unicodedata.normalize("NFKD", text) if unicodedata.category(c) not in ("Cf", "Mn") and c not in "\u115f\u1160\u3164\uffa0")
+    return "".join(c for c in unicodedata.normalize("NFKD", text) if (unicodedata.category(c)[0] in "LNPS" or c.isspace()) and c not in "\u115f\u1160\u3164\uffa0\u2800")
 
 
 def _codes(text):
@@ -128,10 +128,7 @@ def _same_words(text, body):
 
 def _closed(text, body):
     """Only connecting words are added and the length stays close, so text on a drawing cannot steer a rewrite into a sentence of its own."""
-    def stems(words):
-        return {word[:5] for word in words}   # first 5 letters, as _same_words compares, so reaches may read reach
-
-    return len(text) <= MAX_GROWTH * len(body) and stems(_words(text)) - stems(_words(body)) <= stems(STOP_WORDS | LINK_WORDS)
+    return len(text) <= MAX_GROWTH * len(body) and _words(text) - _words(body) <= STOP_WORDS | LINK_WORDS
 
 
 def _numbers(project):
