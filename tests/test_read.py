@@ -10,15 +10,17 @@ import openai
 import pytest
 
 from storey import meta
-from storey.meta import BudgetReached, Meter
+from storey.findings import evaluate
+from storey.meta import SAM_IMAGE_USD, BudgetReached, Meter
 from storey.pipeline import Context
-from storey.read import read_stage
+from storey.read import CLASSES, read_stage
 
 GOOD = {"sheet_class": "floor_plan", "sheet_number": "A2.1", "sheet_title": "MAIN FLOOR PLAN", "level": "GROUND FLOOR", "scale": "1/4\" = 1'-0\"",
         "plan_box": {"x1": 100, "y1": 200, "x2": 900, "y2": 800}}
 BLANK = {"sheet_class": "other", "sheet_number": "", "sheet_title": "", "level": "", "scale": "", "plan_box": {"x1": 0, "y1": 0, "x2": 0, "y2": 0}}
 REPLY = {"text": json.dumps(GOOD), "input": 1000, "cached": 0, "output": 100, "finish": "stop"}
-UNREAD = {"number": "", "title": "", "cls": "other", "level": "", "scale": "", "read_ok": False}
+UNREAD = {"number": "", "title": "", "cls": "other", "level": "", "scale": "", "viewports": [], "read_ok": False}
+REPLY_USD = (1000 * 1.25 + 100 * 4.25) / 1e6
 
 
 def reply(**fields):
@@ -76,10 +78,39 @@ def sheet_of(request):
     return int(sent_image(request)[0, 0, 0])
 
 
-def always(answer):
-    calls = []
-    meta.set_transport(lambda kind, **request: calls.append(request) or answer)
+def both(chat, sam):
+    """Chat calls get `chat`, and SAM calls get `sam`, which is the output text or an exception to raise. Returns each kind's requests."""
+    calls = {"chat": [], "sam": []}
+
+    def transport(kind, **request):
+        calls[kind].append(request)
+        if kind == "chat":
+            return chat
+        if isinstance(sam, Exception):
+            raise sam
+        return sam
+    meta.set_transport(transport)
     return calls
+
+
+def always(answer):
+    return both(answer, "")["chat"]
+
+
+def sam_text(*boxes, size=(2000, 1500)):
+    """SAM's output for these boxes. x2 and y2 are inclusive in a record, and meta returns them one higher."""
+    return "".join(f"<0f>{n}<|box;x1={x1};y1={y1};x2={x2 - 1};y2={y2 - 1};w={size[0]};h={size[1]};c=0.7|><|mask;x=0;y=0;c=0.7;data=2,3,!!!!!&^:o6z|>\n" for n, (x1, y1, x2, y2) in enumerate(boxes))
+
+
+def sam_image_of(request):
+    url = request["input"][0]["content"][1]["image_url"]
+    return cv2.imdecode(np.frombuffer(base64.b64decode(url.split(",", 1)[1]), np.uint8), cv2.IMREAD_COLOR)
+
+
+def viewports(tmp_path, *boxes, sheet=(2000, 1500), size=(2000, 1500)):
+    """The viewports of one floor plan sheet on which SAM finds `boxes`."""
+    both(REPLY, sam_text(*boxes, size=size))
+    return read_stage(make(tmp_path, [sheet]))["sheets"][0]["viewports"]
 
 
 def api_error(cls, code):
@@ -131,13 +162,13 @@ def test_row_carries_each_field_of_the_interface(tmp_path):
     always(reply(sheet_number=" A2.1\n", sheet_title=" MAIN FLOOR PLAN "))
     assert read_stage(make(tmp_path, [(1000, 500)])) == {"sheets": [{
         "index": 0, "number": "A2.1", "title": "MAIN FLOOR PLAN", "cls": "floor_plan", "level": "GROUND FLOOR", "scale": "1/4\" = 1'-0\"",
-        "plan_box": [100, 100, 900, 400], "read_ok": True,
+        "plan_box": [100, 100, 900, 400], "viewports": [], "read_ok": True,
     }]}
 
 
 @pytest.mark.parametrize("bad", BAD.values(), ids=BAD)
 def test_empty_or_bad_reply_marks_sheet_unread(tmp_path, bad):
-    meta.set_transport(lambda kind, **request: {**REPLY, **bad} if sheet_of(request) == 1 else REPLY)
+    meta.set_transport(lambda kind, **request: "" if kind == "sam" else {**REPLY, **bad} if sheet_of(request) == 1 else REPLY)
     rows = read_stage(make(tmp_path, [(40, 30), (40, 30), (40, 30)]))["sheets"]
     assert rows[1] == UNREAD | {"index": 1, "plan_box": [0, 0, 40, 30]}
     assert [r["read_ok"] for r in rows] == [True, False, True]
@@ -170,6 +201,8 @@ def test_parallel_calls_keep_sheet_order(tmp_path):
     running, peak = [], []
 
     def transport(kind, **request):
+        if kind == "sam":
+            return ""
         i = sheet_of(request)
         with lock:
             running.append(i)
@@ -190,6 +223,8 @@ def test_sheet_the_api_refuses_is_unread_and_the_others_proceed(tmp_path):
     calls = []
 
     def transport(kind, **request):
+        if kind == "sam":
+            return ""
         calls.append(request)
         if sheet_of(request) == 1:
             raise api_error(openai.BadRequestError, 400)
@@ -239,3 +274,144 @@ def test_progress_counts_the_sheets(tmp_path):
     read_stage(ctx)
     assert ctx.status["stages"] == [{"state": "running", "done": 3, "total": 3}]
     assert ctx.status["step"] == "Reading sheet 3 of 3"
+
+
+def test_sam_sees_the_2000px_copy_of_a_floor_plan_with_the_concept_prompt(tmp_path):
+    calls = both(REPLY, "")
+    read_stage(make(tmp_path, [(4000, 3000)]))
+    assert len(calls["sam"]) == 1
+    assert calls["sam"][0]["input"][0]["content"][0]["text"] == "floor plan"
+    assert sam_image_of(calls["sam"][0]).shape == (1500, 2000, 3)
+
+
+def test_viewports_are_in_sheet_pixels(tmp_path):
+    found = viewports(tmp_path, (100, 200, 700, 800), (1200, 200, 1800, 800), sheet=(4000, 3000))
+    assert found == [[200, 400, 1400, 1600], [2400, 400, 3600, 1600]]
+
+
+def test_viewports_on_a_sheet_smaller_than_the_copy_stay_as_they_are(tmp_path):
+    assert viewports(tmp_path, (100, 100, 300, 300), sheet=(800, 600), size=(800, 600)) == [[100, 100, 300, 300]]
+
+
+def test_plan_box_stays_as_spark_gives_it(tmp_path):
+    both(REPLY, sam_text((0, 0, 1000, 1000)))
+    assert read_stage(make(tmp_path, [(2000, 1500)]))["sheets"][0]["plan_box"] == [200, 300, 1800, 1200]
+
+
+@pytest.mark.parametrize("cls", [c for c in CLASSES if c != "floor_plan"])
+def test_only_a_floor_plan_goes_to_sam(tmp_path, cls):
+    calls = both(reply(sheet_class=cls), sam_text((0, 0, 1000, 1000)))
+    assert read_stage(make(tmp_path, [(40, 30)]))["sheets"][0]["viewports"] == []
+    assert calls["sam"] == []
+
+
+def test_unread_sheet_does_not_go_to_sam(tmp_path):
+    calls = both({"text": "not json"}, sam_text((0, 0, 1000, 1000)))
+    assert read_stage(make(tmp_path, [(40, 30)]))["sheets"][0] == UNREAD | {"index": 0, "plan_box": [0, 0, 40, 30]}
+    assert calls["sam"] == []
+
+
+SAM_FAILS = {
+    "zero-matches": "",
+    "not-sam-output": "no records here",
+    "refusal": RuntimeError("SAM response.refusal.done: {}"),
+    "stream-cut": RuntimeError("The SAM stream ended before it completed"),
+    "bad-request": api_error(openai.BadRequestError, 400),
+    "rate-limit": api_error(openai.RateLimitError, 429),
+    "server-error": api_error(openai.InternalServerError, 500),
+    "gateway-timeout": api_error(openai.APIStatusError, 504),
+    "no-connection": openai.APIConnectionError(request=httpx.Request("POST", "http://x")),
+}
+
+
+@pytest.mark.parametrize("sam", SAM_FAILS.values(), ids=SAM_FAILS)
+def test_sam_failure_leaves_viewports_empty_and_costs_nothing_else(tmp_path, monkeypatch, sam):
+    monkeypatch.setattr(meta.time, "sleep", lambda s: None)
+    both(REPLY, sam)
+    row = read_stage(make(tmp_path, [(1000, 500)]))["sheets"][0]
+    assert row == {"index": 0, "number": "A2.1", "title": "MAIN FLOOR PLAN", "cls": "floor_plan", "level": "GROUND FLOOR", "scale": "1/4\" = 1'-0\"",
+                   "plan_box": [100, 100, 900, 400], "viewports": [], "read_ok": True}
+
+
+def test_sam_failure_on_one_sheet_leaves_the_other_sheets_their_viewports(tmp_path):
+    def transport(kind, **request):
+        if kind == "chat":
+            return REPLY
+        if sam_image_of(request)[0, 0, 0] == 1:
+            raise RuntimeError("SAM response.failed: {}")
+        return sam_text((0, 0, 1000, 1000))
+    meta.set_transport(transport)
+    rows = read_stage(make(tmp_path, [(2000, 1500)] * 3))["sheets"]
+    assert [r["viewports"] for r in rows] == [[[0, 0, 1000, 1000]], [], [[0, 0, 1000, 1000]]]
+    assert [r["read_ok"] for r in rows] == [True, True, True]
+
+
+def test_budget_stop_at_sam_fails_the_stage_like_a_stop_at_spark(tmp_path):
+    calls = both(REPLY, sam_text((0, 0, 1000, 1000)))
+    with pytest.raises(BudgetReached):
+        read_stage(make(tmp_path, [(40, 30)], cap_usd=REPLY_USD / 2))
+    assert (len(calls["chat"]), len(calls["sam"])) == (1, 0)
+
+
+def test_each_floor_plan_adds_one_sam_image_to_the_spend(tmp_path):
+    ctx = make(tmp_path, [(40, 30), (40, 30)])
+    both(REPLY, "")
+    read_stage(ctx)
+    assert ctx.meter.spent == pytest.approx(2 * (REPLY_USD + SAM_IMAGE_USD))
+
+
+def test_a_fresh_run_asks_spark_again_and_keeps_sam_s_cached_answer(tmp_path):
+    ctx = make(tmp_path, [(2000, 1500)])
+    calls = both(REPLY, sam_text((0, 0, 1000, 1000)))
+    first = read_stage(ctx)
+    ctx.fresh = True
+    assert read_stage(ctx) == first
+    assert (len(calls["chat"]), len(calls["sam"])) == (2, 1)
+
+
+# Boxes SAM gave on real sheets, on the 2000 by 1333 copy. Baxter and USC come from the 0-1000 grid in data/lab/samtricks/item1.json.
+REAL = {
+    "abbot-a2.0-main-upper-and-a-small-kitchen": ([(1217, 779, 1624, 1227), (1050, 127, 1477, 550), (1616, 153, 1773, 487)], 2),
+    "abbot-e2.1-the-closest-storey-stays": ([(894, 775, 1256, 1221), (245, 187, 633, 551), (891, 203, 1255, 538)], 3),
+    "baxter-a2.1-the-closest-layouts-go": ([(1212, 136, 1721, 821), (65, 31, 532, 542), (540, 31, 1005, 542)], 1),
+    "capitol-a2.1-plan-and-two-layouts": ([(1258, 100, 1643, 993), (544, 30, 994, 329), (71, 30, 458, 328)], 1),
+    "capitol-a2.2-plan-and-a-layout": ([(1300, 96, 1651, 993), (542, 63, 914, 503)], 1),
+    "capitol-p1.1-four-storeys": ([(1070, 235, 1297, 1070), (681, 236, 906, 1069), (293, 236, 517, 1068), (1462, 239, 1682, 1065)], 4),
+    "usc-g003-plan-and-a-key-plan": ([(196, 136, 1313, 947), (1501, 1201, 1806, 1279)], 1),
+}
+
+
+@pytest.mark.parametrize("boxes, plans", REAL.values(), ids=REAL)
+def test_real_sam_boxes_count_the_plans_on_the_sheet(tmp_path, boxes, plans):
+    assert len(viewports(tmp_path, *boxes, sheet=(2000, 1333), size=(2000, 1333))) == plans
+
+
+@pytest.mark.parametrize("x2, kept", [(1800, 2), (1799, 1)], ids=["at-the-minimum", "just-under-it"])
+def test_a_box_must_reach_the_minimum_share_of_the_largest_box(tmp_path, x2, kept):
+    assert len(viewports(tmp_path, (0, 0, 1000, 1000), (1100, 0, x2, 1000))) == kept
+
+
+def test_a_box_mostly_inside_a_kept_box_counts_once_and_the_larger_stays(tmp_path):
+    assert viewports(tmp_path, (0, 200, 900, 1100), (0, 0, 1000, 1000)) == [[0, 0, 1000, 1000]]
+
+
+def test_boxes_that_share_half_of_the_smaller_or_less_both_count(tmp_path):
+    assert viewports(tmp_path, (0, 0, 1000, 1000), (0, 500, 1000, 1500)) == [[0, 0, 1000, 1000], [0, 500, 1000, 1500]]
+
+
+def test_boxes_apart_on_both_axes_both_count(tmp_path):
+    assert viewports(tmp_path, (0, 0, 400, 400), (1600, 1100, 2000, 1500)) == [[0, 0, 400, 400], [1600, 1100, 2000, 1500]]
+
+
+def test_a_box_past_the_image_sent_does_not_count(tmp_path):
+    assert viewports(tmp_path, (0, 0, 1000, 1000), (1100, 0, 2600, 1000), size=(4000, 3000)) == [[0, 0, 1000, 1000]]
+
+
+def test_a_box_past_the_bottom_of_the_image_sent_does_not_count(tmp_path):
+    assert viewports(tmp_path, (0, 0, 1000, 1000), (0, 100, 1000, 1700), size=(4000, 3000)) == [[0, 0, 1000, 1000]]
+
+
+def test_two_viewports_from_the_read_reach_not_checked(tmp_path):
+    both(REPLY, sam_text((100, 100, 900, 1400), (1100, 100, 1900, 1400)))
+    lines = evaluate({"read": read_stage(make(tmp_path, [(2000, 1500)]))}, "houston", None, None)["not_checked"]
+    assert any(line.startswith("A2.1 holds several floor plans") for line in lines)

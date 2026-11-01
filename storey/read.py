@@ -1,11 +1,11 @@
-"""Reads each sheet once: number, title, class, floor, scale, and where the main floor plan sits."""
+"""Reads each sheet once: number, title, class, floor, scale, where the main floor plan sits, and the separate floor plans SAM finds on a plan sheet."""
 import logging
 from concurrent.futures import ThreadPoolExecutor
 
 import cv2
 from openai import BadRequestError
 
-from .meta import spark
+from .meta import BudgetReached, sam_image, spark
 
 log = logging.getLogger(__name__)
 
@@ -14,6 +14,9 @@ WORKERS = 8
 CLASSES = ["floor_plan", "site_plan", "elevation", "section", "schedule", "code_summary", "cover", "detail", "other"]
 TEXT_FIELDS = ("sheet_number", "sheet_title", "level", "scale")
 CORNERS = ("x1", "y1", "x2", "y2")
+# Both set after seeing data: 86 boxes from SAM "floor plan" on 50 real sheets of 10 sets.
+VIEWPORT_MIN = 0.7       # of the largest box on the sheet, and the only size rule: storeys on one sheet reached down to 0.755 and enlarged room layouts up to 0.683, so the margin is thin. A share of the sheet cannot do this, because a layout ran 6.1% of a sheet and a real plan 3.0%
+VIEWPORT_OVERLAP = 0.5   # of the box being tested. None of the 86 boxes overlapped another, so nothing has exercised this value, and it only stops one plan counting twice
 SCHEMA = {
     "type": "object",
     "additionalProperties": False,
@@ -64,7 +67,41 @@ def _row(sheet, reply):
     if cls == "other" and not (number or title or level or scale):
         raise ValueError("The reply is blank")   # under strict decoding, an empty answer can only arrive as blank fields
     return {"index": sheet["index"], "number": number, "title": title, "cls": cls, "level": level, "scale": scale,
-            "plan_box": _box(grid, sheet["width"], sheet["height"]), "read_ok": True}
+            "plan_box": _box(grid, sheet["width"], sheet["height"]), "viewports": [], "read_ok": True}
+
+
+def _area(box):
+    return max(box[2] - box[0], 0) * max(box[3] - box[1], 0)
+
+
+def _shared(a, b):
+    return _area([max(a[0], b[0]), max(a[1], b[1]), min(a[2], b[2]), min(a[3], b[3])])
+
+
+def _separate(boxes):
+    """The boxes that are floor plans of their own, largest first. The small ones SAM also returns are key plans, alternate layouts and enlarged rooms."""
+    # shortcut: boxes are compared only with each other, so a render or detail larger than the plans hides them (af2, Abbot B2.0) and two small boxes alone count as two plans, read each view's printed title if a real set does this.
+    boxes = sorted(boxes, key=_area, reverse=True)
+    kept = []
+    for box in boxes:
+        if _area(box) >= VIEWPORT_MIN * _area(boxes[0]) and not any(_shared(box, k) > VIEWPORT_OVERLAP * _area(box) for k in kept):
+            kept.append(box)
+    return kept
+
+
+def _viewports(ctx, small, sheet):
+    """The separate floor plans SAM boxes on the copy `small`, in sheet pixels. An empty list means not known and never one plan, because on some sheets SAM misses with no error on every call (n161)."""
+    try:
+        found = sam_image("floor plan", small, meter=ctx.meter)
+    except BudgetReached:
+        raise
+    except Exception as e:   # viewports only add a note, so nothing SAM does may cost the sheet its read
+        log.warning("Sheet %d has no viewports: %s", sheet["index"], type(e).__name__)
+        return []
+    h, w = small.shape[:2]
+    kx, ky = sheet["width"] / w, sheet["height"] / h
+    boxes = (f["box"] for f in found if f["box"][2] <= w and f["box"][3] <= h)   # the parser checks a box against the size the reply states, not the image sent
+    return _separate([[round(x1 * kx), round(y1 * ky), round(x2 * kx), round(y2 * ky)] for x1, y1, x2, y2 in boxes])
 
 
 def _read(ctx, sheet):
@@ -76,15 +113,19 @@ def _read(ctx, sheet):
         image = cv2.imread(str(ctx.dir / sheet["image"]))
         if image is None:
             raise ValueError("The sheet image could not be opened")
-        return _row(sheet, spark(PROMPT, [_small(image)], meter=ctx.meter, schema=SCHEMA, effort="low", fresh=ctx.fresh))
+        small = _small(image)
+        row = _row(sheet, spark(PROMPT, [small], meter=ctx.meter, schema=SCHEMA, effort="low", fresh=ctx.fresh))
     except (ValueError, KeyError, TypeError, BadRequestError) as e:
         log.warning("Sheet %d was not read: %s", sheet["index"], type(e).__name__)   # the exception text can quote the reply
         return {"index": sheet["index"], "number": "", "title": "", "cls": "other", "level": "", "scale": "",
-                "plan_box": [0, 0, sheet["width"], sheet["height"]], "read_ok": False}
+                "plan_box": [0, 0, sheet["width"], sheet["height"]], "viewports": [], "read_ok": False}
+    if row["cls"] == "floor_plan":
+        row["viewports"] = _viewports(ctx, small, sheet)
+    return row
 
 
 def read_stage(ctx) -> dict:
-    """One row per sheet in sheet order. `plan_box` is in sheet pixels. A sheet with read_ok False holds no read values."""
+    """One row per sheet in sheet order. `plan_box` and `viewports` are in sheet pixels, and an empty `viewports` means not known. A sheet with read_ok False holds no read values."""
     rows, total = [], len(ctx.sheets)
     with ThreadPoolExecutor(WORKERS) as pool:
         for row in pool.map(lambda sheet: _read(ctx, sheet), ctx.sheets):
