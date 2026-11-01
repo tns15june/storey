@@ -63,7 +63,24 @@ On the sample sets a review cost 0.42 to 0.53 USD of model calls and took 2.3 to
 
 The evaluation runs the same pipeline the server runs, from `eval/`. Truth was written by labellers who saw no Storey output: two independent passes and an adjudicator for every disagreement. Two real sets were held out from all development and run once, on code frozen by hash in `eval/frozen.json`. The baseline is Spark asked directly, with every sheet in one call and a plain prompt.
 
-Numbers are added here after the evaluation run.
+33 sets ran once each on the frozen code (1 November 2026), and every claim that needed judgement was mapped to truth by two judges blind to which method made it, with an adjudicator on the 11 of 382 claims they split. The full report, misses included, is on the How well it works page (`app/web/eval.html`).
+
+| | Storey | Spark asked directly |
+|---|---|---|
+| Wrong passes on held-out sets: stairs shown Found on cells truth says are absent or erased | 1 of 16 cells | shows no stair matrix |
+| Wrong passes on development sets: 18 stair erasures in 6 real buildings, and the stair defects planted in 22 generated sets | 1 | shows no stair matrix |
+| Generated sets: planted defects and rule items raised | 184 of 184 | 81 of 177 |
+| Generated sets: findings with no planted cause | 15 | 161 |
+| Real stair erasures raised (6 buildings) | 12 of 18 | 0 of 18 |
+| Real sets: items of two hand audits and one examiner's letter raised | 6 of 121 | 15 of 121 |
+| Median cost and time of one review | 0.51 USD, 3.3 minutes | 0.08 USD, one call |
+
+What the numbers say:
+
+- On the checks Storey makes, it is nearly complete and rarely wrong: every planted defect on the generated sets was raised, with a tenth of the baseline's false findings.
+- The two wrong passes are both stairs. On the held-out Queen's set, a striped strip on a roof band that the truth labellers marked absent (likely) was shown Found: Spark's three runs, the ink test and the blind crop all read it as a stair. On the development set Huffman, an erased top-floor stair kept faint ghost lines, and the crop said yes to them.
+- The six real erasures not raised are all on a stair's top floor, where an erased stair looks like a stair that ends. That is the first limit below.
+- On real sets audited by hand, Storey raised few items. Most audit items are kinds no Storey check covers, such as section callouts that point at sheets missing from the set. Spark asked directly finds more of those, with no evidence attached and far more false findings on the generated sets.
 
 ## Run it
 
