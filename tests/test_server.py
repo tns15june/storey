@@ -1,3 +1,4 @@
+import threading
 import time
 
 import cv2
@@ -18,7 +19,10 @@ def client(tmp_path, monkeypatch):
     monkeypatch.setattr(pipeline, "STAGES", [])   # these tests are about the server, and the stages would call the model
     monkeypatch.setattr(meta, "_client", lambda: pytest.fail("a test reached the real client"))
     monkeypatch.setenv("STOREY_ACCESS_KEY", "test-key")
-    return TestClient(server.app, base_url="http://127.0.0.1", headers=KEY)
+    yield TestClient(server.app, base_url="http://127.0.0.1", headers=KEY)
+    idle = threading.Barrier(server.workers._max_workers)   # every worker free, so no upload outlives the stubs above and reaches the real stages
+    for done in [server.workers.submit(idle.wait) for _ in range(idle.parties)]:
+        done.result(timeout=60)
 
 
 def _pdf_bytes():
