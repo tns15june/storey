@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Demo · Storey</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app page">
+  <header class="titleblock">
+    <a class="cell brand" href="start.html">Storey</a>
+    <div class="cell project"><span class="label">Page</span><span class="value">Demo</span></div>
+    <div class="cell status"><span class="label">Status</span><span class="value">Draft for examiner. Not an approval.</span></div>
+    <div class="actions"><a class="ghost" href="eval.html">How well it works</a></div>
+  </header>
+  <main class="sheetmain">
+    <section class="intro">
+      <h1>Storey in two and a half minutes</h1>
+      <p>AI plan review for city building departments. Storey reads a permit drawing set, follows every stair from floor to floor, checks what the set declares against what it draws, and drafts the correction letter. It never approves a plan: an examiner makes every decision.</p>
+    </section>
+    <video class="demo-video" src="video/storey.mp4" poster="video/poster.jpg" controls preload="metadata" playsinline aria-label="Storey demo video, with captions burned in"></video>
+    <p class="note">Captions are in the picture. The upload and the stair removal are real runs, sped up, on Meta's Muse Spark 1.3 and SAM 3.1.</p>
+    <section class="card">
+      <h2>Try it yourself</h2>
+      <p>These are finished reviews, made by the same code the video shows. Open one, switch the city, click a stair or a finding.</p>
+      <ul class="reviewlist">
+        <li><a href="index.html?sample=habs_stelizabeths_center"><strong>St. Elizabeths Hospital, Center Building</strong><span>Five floors of survey drawings. Click Walk the floors.</span></a></li>
+        <li><a href="index.html?sample=mml_capitol"><strong>The Capitol, a pattern-book duplex</strong><span>A 22-sheet CAD set with real drafting errors. Click a finding.</span></a></li>
+        <li><a href="index.html?sample=generated_710"><strong>Mason Green, a generated five-storey block</strong><span>Switch Houston to Seattle and watch two stair items go.</span></a></li>
+        <li><a href="index.html?sample=generated_710_second"><strong>Mason Green, cycle 2</strong><span>Open Second review to see each earlier comment checked again.</span></a></li>
+        <li><a href="eval.html"><strong>How well it works</strong><span>33 sets, two held out until the code was frozen, misses included.</span></a></li>
+      </ul>
+    </section>
+    <p class="note">Code: <a href="https://github.com/tns15june/storey">github.com/tns15june/storey</a></p>
+  </main>
+</div>
+</body>
+</html>

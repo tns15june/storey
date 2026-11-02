@@ -11,7 +11,7 @@ Paste-ready answers for the hackathon form. Numbers come from `app/web/eval.json
 **Links**
 - Code: https://github.com/tns15june/storey
 - Live demo (no key needed): https://tns15june.github.io/storey/
-- Video: (add the upload link)
+- Video: https://tns15june.github.io/storey/demo.html (2:33, plays in the browser with no login; the file itself is https://tns15june.github.io/storey/video/storey.mp4)
 
 **What it does**
 

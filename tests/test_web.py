@@ -7,7 +7,7 @@ from fastapi.testclient import TestClient
 
 WEB = Path(__file__).resolve().parent.parent / "app/web"
 STATUS_LINE = "Draft for examiner. Not an approval."
-PAGES = ["index.html", "start.html", "eval.html"]
+PAGES = ["index.html", "start.html", "eval.html", "demo.html"]
 CODE = [*PAGES, "common.js", "app.js", "start.js", "eval.js", "style.css"]
 RECHECK_STATES = ("resolved_looks", "open", "unknown", "new_change")
 
@@ -105,7 +105,7 @@ def test_session_key_leaves_the_address_bar_before_it_is_sent():
     assert common.index("history.replaceState") < common.index("/api/session")
 
 
-@pytest.mark.parametrize("path", ["/", "/start.html", "/eval.html", "/style.css", "/common.js", "/app.js", "/start.js", "/eval.js"])
+@pytest.mark.parametrize("path", ["/", "/start.html", "/eval.html", "/demo.html", "/video/storey.mp4", "/style.css", "/common.js", "/app.js", "/start.js", "/eval.js"])
 def test_screens_are_served_with_no_key(path):
     from storey import server
     response = TestClient(server.app, base_url="http://127.0.0.1").get(path)
