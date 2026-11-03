@@ -1,0 +1,27 @@
+Storey video: voiceover script
+
+Read the lines in this order, in one recording.
+Leave about 2 seconds of silence between lines, so each line can be cut out and placed on its own scene.
+Re-read a line straight away if you stumble; the last take of each line is used.
+
+ 1. Storey. First-pass plan review for city building departments, built on Meta's Muse Spark and SAM 3.1.
+ 2. In Portland, eight in ten permit plans needed corrections. Seattle's own AI pilot passed six point four percent of the checks a human examiner sent back. Storey has no pass state at all.
+ 3. Upload a permit set. This is The Capitol, a 22-sheet duplex from a public pattern book.
+ 4. Muse Spark reads every sheet, orders the floors and follows each stair. This real run, sped up 16 times, took 3.3 minutes and cost 0.39 USD.
+ 5. The result: a draft correction list, with the evidence for every item.
+ 6. Every stair followed floor to floor. SAM 3.1 tracks each one through the stack and draws it.
+ 7. No model decides alone. Spark is asked three times, then ink at the place and a blind crop question must agree.
+ 8. Found means: 3 of 3 runs, ink at the place, and the crop said yes.
+ 9. Test it live: remove the central stair from the second floor of a copy.
+10. Storey runs the stair stage again on the copy. Sped up 20 times.
+11. Must fix: Stair C is missing on the second floor. 0 of 3 runs, the crop said no, no ink at the place.
+12. Real drafting errors in a published set: this title block names the wrong floor.
+13. Each item names the sheet, the place, what was read, what is needed, and why.
+14. What Storey could not check is listed too. An unread item never becomes a pass.
+15. Houston: one stair cannot serve the fourth and fifth floors of this block.
+16. Switch to Seattle. The rules run again in a moment, with no model call, and its single-exit rule removes both items.
+17. The resubmittal: each earlier comment is checked again at its place on the new set.
+18. Looks resolved, Still open or Cannot tell, with the earlier and new drawing side by side.
+19. The comment letter, drafted in the format cities already send. The examiner edits it and decides.
+20. Measured on thirty-three sets, two held out until the code was frozen. Storey raised all one hundred and eighty-four generated items, Spark asked directly eighty-one, with ten times the false findings. One wrong pass in sixteen held-out stair cells. And real audits show the next step: more checks.
+21. Storey drafts. The examiner decides.

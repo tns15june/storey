@@ -1,6 +1,35 @@
-# Submission text
+# Submission
 
-Paste-ready answers for the hackathon form. Numbers come from `app/web/eval.json` (frozen run, 1 November 2026).
+Deadline: Wed 4 Nov 2026, 9:00 PM ET, which is 07:30 IST on Thu 5 Nov. Aim for 22:30 IST on Wed 4 Nov.
+
+## Checklist
+
+- [x] Product: upload a drawing set, read the sheets, follow the stairs, run the checks, draft the letter; second review; Houston, Philadelphia and Seattle
+- [x] Evaluation: 33 sets on code frozen by hash (`eval/frozen.json`), two held out until after the freeze, judged blind (`eval/judge/`)
+- [x] Repository public, MIT licence, README with "Built during the hackathon" and "Pre-existing assets"
+- [x] No keys in the repository history
+- [x] Tests: 1,905 passed at the freeze
+- [x] Live demo with no key: https://tns15june.github.io/storey/
+- [x] Demo video, 2:33, plays with no login: https://tns15june.github.io/storey/demo.html (how it was made: `tools/video/`)
+- [x] Every runtime model is Meta's: Muse Spark 1.3 and SAM 3.1 through `https://api.meta.ai/v1`, one client in `storey/meta.py`
+- [ ] Submit the form (below)
+- [ ] After submitting, push nothing to this repository until judging ends, or it may count as late
+
+## How to submit
+
+1. Open https://cerebralvalley.ai/e/meta-ai-developer-hackathon and log in with the email used to apply.
+2. Choose Submit project.
+3. Copy each answer below into the matching field. Track: Indie. Team: one person. Theme, if asked: Build for Your World.
+4. Video: https://tns15june.github.io/storey/demo.html. If the form only takes YouTube, upload `app/web/video/storey.mp4` at studio.youtube.com as Unlisted and use that link.
+5. Submit, and keep a screenshot of the confirmation.
+
+Optional, after submitting: share the demo for the Community Vote and Most Viral prizes, for example:
+
+> Built Storey for the Meta AI hackathon: AI plan review for city building departments. It reads a permit drawing set, follows every stair floor to floor and drafts the correction letter, on Muse Spark + SAM 3.1. It never approves. Demo: https://tns15june.github.io/storey/demo.html
+
+## Form answers
+
+Numbers come from `app/web/eval.json` (frozen run, 1 November 2026).
 
 **Project name:** Storey
 

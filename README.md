@@ -101,6 +101,19 @@ The server prints a link that carries this run's access key. Open it, upload a P
 
 Tests make no network call: `.venv/bin/pytest`.
 
+## Repository map
+
+| Folder | What is in it |
+|---|---|
+| `storey/` | The product: ingest, stages, checks, letter, second review, server |
+| `app/web/` | The screens, the four sample reviews, the evaluation page and the demo video |
+| `eval/` | The evaluation harness, truth files, frozen hashes, judge mappings and the driver that ran it (`run_all.py`) |
+| `eval/judge/` | How claims were judged blind against truth |
+| `lab/` | The experiments that set the design, with their results in `docs/research/build-log.md` |
+| `tools/video/` | How the demo video was recorded and cut |
+| `tests/` | The test suite, which makes no network call |
+| `docs/` | Design, plan, build log and the submission text |
+
 ## Limits
 
 - A stair that ends on its top floor looks the same as one erased from that floor. It is listed for the examiner, not passed.

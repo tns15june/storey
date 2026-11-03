@@ -1,0 +1,114 @@
+{
+ "cards": [
+  {
+   "id": "title",
+   "brand": "Storey",
+   "lines": [
+    {
+     "text": "First-pass plan review for city building departments.",
+     "kind": "big"
+    },
+    {
+     "text": "It reads a permit drawing set, follows every stair floor to floor, and drafts the correction letter. It never approves a plan."
+    },
+    {
+     "text": "Built on Meta's Muse Spark 1.3 and SAM 3.1",
+     "kind": "mono"
+    }
+   ]
+  },
+  {
+   "id": "problem",
+   "title": "The error that matters",
+   "lines": [
+    {
+     "text": "More than 80% of standard permit plans in Portland needed corrections.",
+     "kind": "big"
+    },
+    {
+     "text": "Portland City Auditor, 2021",
+     "kind": "source"
+    },
+    {
+     "text": "Seattle's AI plan-check pilot passed 6.4% of the checks a human examiner sent back.",
+     "kind": "big"
+    },
+    {
+     "text": "Seattle CivCheck evaluation, 2026",
+     "kind": "source"
+    },
+    {
+     "text": "Nobody looks again at what was passed. Storey has no pass state at all.",
+     "kind": "red"
+    }
+   ]
+  },
+  {
+   "id": "numbers",
+   "title": "Measured on 33 sets, two held out until the code was frozen",
+   "lines": [
+    {
+     "text": "Generated sets: 184 of 184 planted and rule items raised. Spark asked directly: 81 of 177.",
+     "kind": "big"
+    },
+    {
+     "text": "Findings with no cause: 15, against 161 for Spark asked directly."
+    },
+    {
+     "text": "Wrong passes on held-out stair cells: 1 of 16."
+    },
+    {
+     "text": "Real sets audited by hand: 6 of 121 items. Most are kinds no Storey check covers yet."
+    },
+    {
+     "text": "0.51 USD and 3.3 minutes per review",
+     "kind": "mono"
+    }
+   ]
+  },
+  {
+   "id": "close",
+   "brand": "Storey",
+   "lines": [
+    {
+     "text": "Storey drafts. The examiner decides.",
+     "kind": "big"
+    },
+    {
+     "text": "Draft for examiner. Not an approval.",
+     "kind": "red"
+    },
+    {
+     "text": "github.com/tns15june/storey",
+     "kind": "mono"
+    }
+   ]
+  }
+ ],
+ "captions": {
+  "up1": "Upload a permit set. This is The Capitol, a 22-sheet duplex from a public pattern book.",
+  "up2": "Muse Spark reads every sheet, orders the floors and follows each stair. This real run, sped up 16 times, took 3.3 minutes and cost 0.39 USD.",
+  "up3": "The result: a draft correction list, with the evidence for every item.",
+  "st1": "Every stair followed floor to floor. SAM 3.1 tracks each one through the stack and draws it.",
+  "st2": "No model decides alone. Spark is asked three times, then ink at the place and a blind crop question must agree.",
+  "st3": "Found means: 3 of 3 runs, ink at the place, and the crop said yes.",
+  "te1": "Test it live: remove the central stair from the second floor of a copy.",
+  "te2": "Storey runs the stair stage again on the copy. Sped up 20 times.",
+  "te3": "Must fix: Stair C is missing on the second floor. 0 of 3 runs, the crop said no, no ink at the place.",
+  "fi1": "Each item names the sheet, the place, what was read, what is needed, and why.",
+  "fi2": "Real drafting errors in a published set: this title block names the wrong floor.",
+  "fi3": "What Storey could not check is listed too. An unread item never becomes a pass.",
+  "ci1": "Houston: one stair cannot serve the fourth and fifth floors of this block.",
+  "ci2": "Switch to Seattle. The rules run again in a moment, with no model call, and its single-exit rule removes both items.",
+  "se1": "The resubmittal: each earlier comment is checked again at its place on the new set.",
+  "se2": "Looks resolved, Still open or Cannot tell, with the earlier and new drawing side by side.",
+  "le1": "The comment letter, drafted in the format cities already send. The examiner edits it and decides.",
+  "ev1": "The evaluation is published with its misses, both wrong passes included."
+ },
+ "voice": {
+  "card_title": "Storey. First-pass plan review for city building departments, built on Meta's Muse Spark and SAM 3.1.",
+  "card_problem": "In Portland, eight in ten permit plans needed corrections. Seattle's own AI pilot passed six point four percent of the checks a human examiner sent back. Storey has no pass state at all.",
+  "card_numbers": "Measured on thirty-three sets, two held out until the code was frozen. Storey raised all one hundred and eighty-four generated items, Spark asked directly eighty-one, with ten times the false findings. One wrong pass in sixteen held-out stair cells. And real audits show the next step: more checks.",
+  "card_close": "Storey drafts. The examiner decides."
+ }
+}

@@ -160,3 +160,25 @@ All replays below cost 0 USD: stored model replies only, with any new call refus
 - Measuring. A hollow double-line wall no longer leaves rooms unreachable (3370 drawn without hatch: routes on 5 of 5 floors, from 0). A hall between two thick walls is no longer bridged as a door. The width beside a stair standing in a hall is measured across the stair: 710 went from 96.8 in (wall to wall) to 49.4 in, against 49.3 in in the generator's geometry. A sheet keeps its scale when a few strings disagree only if the slope over all strings still holds; the widest scale error kept is 0.5%, as before. No Fix or Check changed on any set.
 - Planted erasures for the evaluation. bme_k is left out: its truth boxes are tighter than two of its three stairs, so those erasures left most treads (check.jpg). The Queens held-out plant is refused by the erasure gate: its colour fills defeat the erasure, so Queens runs unplanted on its 15 absent cells. The Army plant erases Stair 1 at the discharge floor cleanly.
 - Limit kept: a dimension string excused by the scale rule is listed in the vector stage's output but not yet shown to the examiner.
+
+## Evaluation and demo, 1 to 2 Nov
+
+- 23:06 IST, 1 Nov. Code, scoring and truth frozen by hash in `eval/frozen.json`, before any held-out run. Nothing under `storey/` changed after this.
+- 33 sets ran once each through `eval/run_all.py`, four at a time, each followed by the baseline (Spark asked directly, every sheet in one call). 33 runs and 33 baselines finished with no failure. Storey spent 16.23 USD and the baseline 2.35 USD.
+- Judging: 382 claims on 35 match sheets went to two blind Claude judges, who agreed on 371; an adjudicator ruled on 11 (`eval/judge/`).
+
+| | Storey | Spark asked directly |
+|---|---|---|
+| Generated sets (22): planted defects and rule items raised | 184 of 184 | 81 of 177 |
+| Generated sets: findings with no planted cause | 15 | 161 |
+| Real stair erasures, 6 buildings, development | 12 of 18 raised, 1 wrong pass | 0 of 18 |
+| Held-out stair cells absent or erased (Queens, Army plant) | 1 wrong pass of 16 | no stair matrix |
+| Army held-out audit, real or likely items | 0 of 35 | 8 of 35 |
+| Capitol audit | 4 of 76, plus 4 from post hoc rules | 2 of 76 |
+| Richmond examiner's letter, sheet-only comments | 2 of 10 | 5 of 10 |
+| Median review | 0.51 USD, 3.3 minutes | 0.08 USD |
+
+- The two wrong passes. Queens 4th floor, MIL_NE: a striped strip on a roof band, which truth marks absent with confidence likely; Spark's three runs, the ink test and the crop all called it a stair. Huffman 4th floor, the top-floor plant: the erasure left faint ghost lines and the crop said yes. Both are stairs; no comment state was a wrong pass.
+- The six real erasures not raised are all top-floor plants, the stated limit. On the Army plant the erased Stair 1 at discharge shows no stair row at that place, so it is a miss, not a wrong pass.
+- Real audits: most items are kinds no Storey check covers, such as section callouts that point at sheets missing from the set. That is the next work, and the report says so.
+- Demo: four sample reviews made on the frozen code (St. Elizabeths, The Capitol, the generated 710 set and its cycle 2) are on https://tns15june.github.io/storey/ with the evaluation page. The video (2:33, `tools/video/`) records two live runs on the frozen code: The Capitol uploaded from scratch (3.3 minutes, 0.39 USD) and Stair C removed from the second floor of a St. Elizabeths copy, which raised "Stair C is missing on SECOND FLOOR" (0.35 USD).
