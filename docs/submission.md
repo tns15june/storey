@@ -13,6 +13,7 @@ Deadline: Wed 4 Nov 2026, 9:00 PM ET, which is 07:30 IST on Thu 5 Nov. Aim for 2
 - [x] Live demo with no key: https://tns15june.github.io/storey/
 - [x] Demo video, 2:52, narrated in the author's voice, plays with no login: https://tns15june.github.io/storey/demo.html (how it was made: `tools/video/`)
 - [x] Every runtime model is Meta's: Muse Spark 1.3 and SAM 3.1 through `https://api.meta.ai/v1`, one client in `storey/meta.py`
+- [ ] Optional: post on X first, and paste the post's link in the form's Most Viral field
 - [ ] Submit the form (below)
 - [ ] After submitting, push nothing to this repository until judging ends, or it may count as late
 
@@ -22,11 +23,21 @@ Deadline: Wed 4 Nov 2026, 9:00 PM ET, which is 07:30 IST on Thu 5 Nov. Aim for 2
 2. Choose Submit project.
 3. Copy each answer below into the matching field. Track: Indie. Team: one person. Theme, if asked: Build for Your World.
 4. Video: the form's video field shows a YouTube placeholder, so upload `app/web/video/storey.mp4` at studio.youtube.com as Unlisted and paste that link. If you skip YouTube, https://tns15june.github.io/storey/demo.html plays it in any browser.
-5. Submit, and keep a screenshot of the confirmation.
+5. Optional, for the Most Viral prize: post on X before you submit (below), because the form asks for the post's link.
+6. Submit, and keep a screenshot of the confirmation.
 
-Optional, after submitting: share the demo for the Community Vote and Most Viral prizes, for example:
+The X post. X takes at most 2:20 of video without Premium, so attach the 1:41 cut: the published video up to the stair test, then the closing card. Check that @AIatMeta autocompletes to Meta's account before you post.
 
-> Built Storey for the Meta AI hackathon: AI plan review for city building departments. It reads a permit drawing set, follows every stair floor to floor and drafts the correction letter, on Muse Spark + SAM 3.1. It never approves. Demo: https://tns15june.github.io/storey/demo.html
+> 8 in 10 permit plans in Portland needed corrections. An examiner checks each set by hand.
+>
+> I built Storey for the @AIatMeta hackathon with @cerebral_valley. It follows every stair floor to floor with Muse Spark and SAM 3.1 and drafts the correction letter. It never approves.
+
+Then reply to it with the links:
+
+> Demo, no login: https://tns15june.github.io/storey/
+> Code and evaluation: https://github.com/tns15june/storey
+>
+> On code frozen first: 184 of 184 planted items raised on generated sets, vs 81 of 177 for Muse Spark asked directly. Real sets audited by hand: 6 of 121 found, Spark 15. More checks are next.
 
 ## Form answers
 
@@ -40,7 +51,7 @@ These are the questions on the Cerebral Valley form, in its order. Numbers come 
 
 **Which problem statement did you build towards?** Build for Your World
 
-**Most Viral Track, X post link (optional):** only if you post on X. The post text is under How to submit.
+**Most Viral Track, X post link (optional):** the link of your X post. Post it before you submit; the text is under How to submit.
 
 **Project Description**
 
