@@ -9,8 +9,8 @@ import pytest
 from fastapi.testclient import TestClient
 from PIL import Image
 
-from storey import meta, pipeline, server
-from storey.assemble import _carried, ALL_DROPPED, CROP_MAX, CROP_PAD, OTHER_TRADE, assemble
+from storey import meta, pipeline, server, vector
+from storey.assemble import _carried, _vector, ALL_DROPPED, CROP_MAX, CROP_PAD, OTHER_TRADE, assemble
 from storey.letter import NOT_EVALUATED
 from storey.pipeline import read_json, run, write_json
 
@@ -414,6 +414,99 @@ def test_the_assemble_stage_keeps_the_stored_choices(review):
     run(review, stages=pipeline.STAGES[-1:])
     project = stored(review)["project"]
     assert (project["jurisdiction"], project["sprinklers"], project["discharge_level"]) == ("seattle", "no", "1")
+
+
+def to_stair(feet):
+    return {"path": [[100, 100], [100, 900]], "length_ft": feet, "from_room": "Office", "to_exit": "Stair A", "end_source": "matrix", "label": MINIMUM}
+
+
+# What the vector stage writes with FIRST FLOOR as the level of exit discharge: a stair ends a route on every other floor and none on that one. 180 ft is over three quarters of the 200 ft limit.
+TRACED = {"sheets": {"0": VECTOR["sheets"]["0"] | {"routes": [], "skipped": "No exit markers were read for the discharge level, where a stair does not end a route."},
+                     "1": VECTOR["sheets"]["0"] | {"routes": [to_stair(180.0)]}, "2": VECTOR["sheets"]["0"] | {"routes": [to_stair(170.0)]}}}
+EVERY_FLOOR = {"verticals": [VERTICALS["verticals"][0] | {"floors": {str(i): found(i) for i in range(3)}}]}
+
+
+def travel(r):
+    return [f for f in r["findings"] if f["check"] == 13]
+
+
+def test_a_route_traced_for_one_discharge_level_is_not_used_under_another(tmp_path):
+    path = build(tmp_path / "reviews" / RID, FACTS | {"verticals": EVERY_FLOOR, "vector": TRACED})
+    run(path, stages=LATER)
+    before = stored(path)
+    assert [r["sheet"] for r in before["routes"]] == ["1", "2"] and one(before["findings"], check=13, sheet="1")["title"] == "Travel distance from Office to Stair A"
+    moved = assemble(path, discharge=1)
+    assert moved["routes"] == before["routes"][1:]   # THIRD FLOOR is another floor under both levels, so its route stands
+    assert [f["sheet"] for f in travel(moved) if f["severity"] != "unknown"] == ["2"]
+    unknown = one(travel(moved), severity="unknown")
+    assert unknown["title"] == "Travel distance on 2 floors could not be measured"
+    assert unknown["measured"] == ("The level of exit discharge was changed from FIRST FLOOR to SECOND FLOOR after routes were traced, and where a route on this floor can end depends on that level. "
+                                   "Floors: FIRST FLOOR, SECOND FLOOR.")
+    back = assemble(path)
+    assert back["routes"] == before["routes"] and travel(back) == travel(before)
+
+
+def unmeasured(r):
+    return {f["sheet"]: f["measured"] for f in travel(r) if f["title"].endswith("could not be measured")}
+
+
+def test_a_level_chosen_where_none_was_settled_keeps_the_routes_whose_ends_it_does_not_move(tmp_path):
+    # a floor's ends are the same with no level and as the level, and a marker on another floor ends at the stair it names. A scan has no route under any level.
+    marker = to_stair(160.0) | {"to_exit": "Exit, 915 mm, 180 people", "end_source": "life_safety"}
+    scan = {"scale_in_per_pt": None, "scale_checked": 0, "doors": [], "routes": [], "corridors": [], "skipped": "Scanned sheet, so nothing can be measured from it."}
+    traced = {"sheets": {"0": scan, "1": TRACED["sheets"]["2"] | {"routes": [marker]}, "2": TRACED["sheets"]["0"] | {"skipped": "No exit markers were read, and with no discharge level a stair cannot end a route."}}}
+    path = build(tmp_path / "reviews" / RID, FACTS | {"floors": FLOORS | {"discharge": None}, "verticals": EVERY_FLOOR, "vector": traced})
+    run(path, stages=LATER)
+    drawn = stored(path)["routes"]
+    assert [r["sheet"] for r in drawn] == ["1"]
+    second = assemble(path, discharge=1)
+    assert second["routes"] == drawn and one(travel(second), sheet="1")["title"] == "Travel distance from Office to Exit, 915 mm, 180 people"
+    assert unmeasured(second) == {"0": scan["skipped"], "2": "The level of exit discharge was changed from none to SECOND FLOOR after routes were traced, and where a route on this floor can end depends on that level."}
+    third = assemble(path, discharge=2)
+    assert third["routes"] == [] and not any(f["sheet"] == "1" and f["severity"] != "unknown" for f in travel(third))
+    assert unmeasured(third) == {"0": scan["skipped"], "1": "The level of exit discharge was changed from none to THIRD FLOOR after routes were traced, and where a route on this floor can end depends on that level.",
+                                 "2": "No exit markers were read for the discharge level, where a stair does not end a route."}
+
+
+def test_a_level_chosen_on_a_one_floor_order_moves_no_route_and_gives_its_reason():
+    stages = {"vector": {"sheets": {"1": TRACED["sheets"]["0"] | {"skipped": vector.NO_LEVEL}}}, "floors": FLOORS | {"order": [1], "discharge": None}, "read": READ}
+    assert _vector(stages.get, 1)["sheets"]["1"]["skipped"] == vector.AT_LEVEL
+
+
+def test_a_test_copy_that_keeps_another_discharge_level_uses_no_route_traced_for_the_first(tmp_path):
+    facts = FACTS | {"verticals": EVERY_FLOOR, "vector": TRACED}
+    source = build(tmp_path / "reviews" / RID, facts)
+    run(source, stages=LATER)
+    assemble(source, discharge=1)
+    copy = build(tmp_path / "reviews" / CHILD, facts)   # the test tool reuses the vector stage, and evaluate keeps the source's level
+    write_json(copy / "stage_upload.json", {"name": "Test copy", "parent": None, "source": RID})
+    run(copy, stages=LATER)
+    r = stored(copy)
+    assert r["project"]["discharge_level"] == "1"
+    assert [route["sheet"] for route in r["routes"]] == ["2"] and [f["sheet"] for f in travel(r) if f["severity"] != "unknown"] == ["2"]
+
+
+def test_a_looks_resolved_reads_cannot_tell_where_a_new_discharge_level_leaves_its_check_unmeasured(tmp_path):
+    parent = build(tmp_path / "reviews" / RID, FACTS | {"verticals": EVERY_FLOOR, "vector": TRACED})   # travel is raised on SECOND and THIRD FLOOR, and door 8's row on the schedule
+    run(parent, stages=LATER)
+    scan = {"scale_in_per_pt": None, "scale_checked": 0, "doors": [], "routes": [], "corridors": [], "skipped": "Scanned sheet, so nothing can be measured from it."}
+    shorter = {"sheets": {"0": scan, **{i: TRACED["sheets"][i] | {"routes": [to_stair(100.0)]} for i in ("1", "2")}}}
+    child = second_review(parent, FACTS | {"verticals": EVERY_FLOOR, "vector": shorter, "declared": TAGGED})
+    earlier = {(f["check"], f["sheet"]): f for f in read_json(parent / "stage_evaluate.json")["findings"] if f["severity"] != "unknown" and f["check"] in (7, 13)}
+    assert set(earlier) == {(13, 1), (13, 2), (7, 3), (7, 1)}
+    # the rows the stage writes when each place changed and its checks raised none of these, each with its comment on the new set, which here is laid out as the last one
+    write_json(child / "stage_recheck.json", {"comments": [{"comment_id": f["comment_id"], "title": f["title"], "state": "resolved_looks", "old_crop": None, "new_crop": None,
+                                                            "why": "This place changed, and the checks no longer raise this comment.", "comment": f} for f in map(earlier.get, [(13, 1), (13, 2), (7, 3)])],
+                                              "changes": [], "clouds": [], "unmatched_sheets": [], "not_checked": []})
+
+    def state(r, place):
+        return next((c["state"], c["why"]) for c in r["recheck"]["comments"] if c["comment_id"] == earlier[place]["comment_id"])
+
+    assert {state(assemble(child), place)[0] for place in [(13, 1), (13, 2), (7, 3)]} == {"resolved_looks"}
+    moved = assemble(child, discharge=1)   # SECOND FLOOR's route was traced to its stair, which on the level of exit discharge ends no route
+    assert state(moved, (13, 1)) == ("unknown", "This place changed, but under the jurisdiction, sprinkler status or discharge level chosen after this comparison, the checks could not tell whether this comment still applies.")
+    assert state(moved, (13, 2))[0] == state(moved, (7, 3))[0] == "resolved_looks"   # THIRD FLOOR's route stands and was measured again, and the door row rests on no route
+    assert {state(assemble(child), place)[0] for place in [(13, 1), (13, 2), (7, 3)]} == {"resolved_looks"}
 
 
 # The routes

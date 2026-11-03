@@ -11,6 +11,7 @@ from .findings import STAGES as FACT_STAGES, Review, _left_out, _masked, assign_
 from .floors import WORK_PX, _resized
 from .letter import draft
 from .rules import JURISDICTIONS
+from .vector import AT_LEVEL, NO_LEVEL
 
 JURISDICTION = "houston"
 JPEG = [cv2.IMWRITE_JPEG_QUALITY, 92]
@@ -23,11 +24,39 @@ OTHER_TRADE = "Not an architectural sheet, so only its number and title were rea
 LEFT_OUT = "This plan is outside the floor order, so its stairs, travel distance and corridor width were not checked."
 ALL_DROPPED = "The examiner dropped every comment, so this letter lists none."
 MOVED_AGAIN = "This place changed, but the checks raised this comment again."
+NOT_TOLD_NOW = "This place changed, but under the jurisdiction, sprinkler status or discharge level chosen after this comparison, the checks could not tell whether this comment still applies."
+LEVEL_CHANGED = "The level of exit discharge was changed from {} to {} after routes were traced, and where a route on this floor can end depends on that level."
+
+
+def _vector(stored, discharge):
+    """The vector stage under this discharge choice, where the stage traced with the floors stage's level. route_ends gives a floor the same ends whether no level is known or it is the level, and others when another floor is,
+    so a floor the choice moves to or from another floor has no route and says why, and every other floor keeps its routes and the reason route_ends gives under the choice. A floor whose route step never ran keeps its own reason."""
+    # shortcut: travel on a moved floor reads Cannot tell, not a new measurement, trace each floor both as the level and as another floor in the vector stage if examiners change the level often.
+    vector, floors = stored("vector"), stored("floors")
+    order, traced = floors.get("order") or [], floors.get("discharge")
+    chosen = traced if discharge is None else discharge
+    chosen = chosen if chosen in order else None   # as the checks read it, so this and check 10 name one level
+    if chosen == traced or "sheets" not in vector:
+        return vector
+    another = lambda level, i: level is not None and level != i
+    moved = {str(i) for i in order if another(traced, i) != another(chosen, i)}
+    levels = {r["index"]: r.get("level") for r in stored("read").get("sheets", ())}
+    name = lambda level: "none" if level is None else levels.get(level) or f"page {level + 1}"
+    why = LEVEL_CHANGED.format(name(traced), name(chosen))
+
+    def now(i, entry):
+        if i in moved and entry.get("scale_in_per_pt") is not None:
+            return entry | {"routes": [], "skipped": why}
+        if entry.get("skipped") in (NO_LEVEL, AT_LEVEL):   # no marker was read and nothing else stopped the route
+            return entry | {"skipped": NO_LEVEL if chosen is None else AT_LEVEL}
+        return entry
+
+    return vector | {"sheets": {i: now(i, entry) for i, entry in vector["sheets"].items()}}
 
 
 def _evaluated(stored, choices, previous):
     """findings.evaluate's result with comment ids, and what it ran under. `ids` keeps every id issued, so a finding that leaves under one jurisdiction takes its old id when it comes back."""
-    result = evaluate({name: stored(name) for name in FACT_STAGES}, **choices)
+    result = evaluate({name: stored(name) for name in FACT_STAGES} | {"vector": _vector(stored, choices["discharge"])}, **choices)
     assign_ids(result["findings"], previous)
     return result | {"choices": choices, "ids": previous | {f["key"]: f["comment_id"] for f in result["findings"]}}
 
@@ -125,17 +154,31 @@ def _lost(stored, evaluated):
     return [f"The {name} stage did not finish: {stored(name)['failed']}" for name in names if "failed" in stored(name)]
 
 
-def _current(result, raised):
-    """The stored second review, less any Looks resolved on a comment the checks raise now: a selector change can bring one back, and the stage does not run again."""
-    comments = [c | {"state": "open", "why": MOVED_AGAIN} if c["state"] == "resolved_looks" and c["comment_id"] in raised else c for c in result.get("comments", ())]
-    return result | {"comments": comments} if "comments" in result else result
+def _current(result, findings, selected):
+    """The stored second review, less any Looks resolved on a comment the checks raise now: a selector change can bring one back, and the stage does not run again.
+    After a selection, a Looks resolved whose check now reads Cannot tell on its sheet or on no sheet reads Cannot tell too, by the doubt test the stage applies."""
+    # shortcut: a row stored before rows kept their comment names no check or sheet, so it keeps its Looks resolved after a selection, find its check in the parent's findings if such a review is re-evaluated.
+    raised = {f["comment_id"] for f in findings}
+    doubts = {(g["check"], g["sheet"]) for g in findings if g["severity"] == "unknown"}
+
+    def now(c):
+        f = c.get("comment")
+        if c["state"] != "resolved_looks":
+            return c
+        if c["comment_id"] in raised:
+            return c | {"state": "open", "why": MOVED_AGAIN}
+        if selected and f and {(f["check"], None), (f["check"], f["sheet"])} & doubts:
+            return c | {"state": "unknown", "why": NOT_TOLD_NOW}
+        return c
+
+    return result | {"comments": [now(c) for c in result["comments"]]} if "comments" in result else result
 
 
 def _rechecked(result, scales, url):
     """The second review as the screen reads it, with crops as urls and boxes in each sheet's JPEG. None on a first review, or if the stage did not finish."""
     if "comments" not in result:
         return None
-    return result | {"comments": [c | {side: c[side] and url(c[side]) for side in ("old_crop", "new_crop")} for c in result["comments"]],
+    return result | {"comments": [{k: v for k, v in c.items() if k != "comment"} | {side: c[side] and url(c[side]) for side in ("old_crop", "new_crop")} for c in result["comments"]],   # `comment` is in sheet pixels for the next cycle, and the screen does not read it
                      "changes": [_placed(c, scales) for c in result["changes"]], "clouds": [_placed(c, scales) for c in result["clouds"]]}
 
 
@@ -178,7 +221,7 @@ def assemble(dir: Path, jurisdiction: str = JURISDICTION, sprinklers: str | None
     parent = upload.get("parent")
     earlier = read_json(dir.parent / parent / "review.json") if parent else {}
     note = upload.get("note") or earlier.get("project", {}).get("note", "")   # a review that follows a test is built on a test
-    rechecked = _current(stored("recheck"), {f["comment_id"] for f in evaluated.get("findings", ())})
+    rechecked = _current(stored("recheck"), evaluated.get("findings", ()), first != choices)
     states = {c["comment_id"]: c["state"] for c in rechecked.get("comments", ())}
     decisions =_carried(earlier, evaluated.get("findings", ())) | read_json(dir / "decisions.json")   # review.json, so a decision from any earlier cycle arrives
     kept = [item for item in letter.get("items", ()) if decisions.get(item["key"]) != "drop"]
@@ -196,7 +239,7 @@ def assemble(dir: Path, jurisdiction: str = JURISDICTION, sprinklers: str | None
         "sheets": [_sheet(s, rows.get(i, {}), images[i], url, lost, left_out) for i, s in sheets.items()],
         "verticals": [_vertical(row, scales, floors.get("reference"), url) for row in stored("verticals").get("verticals", ())],
         "findings": [_placed(f, scales) | {"id": f["comment_id"], "state": states.get(f["comment_id"]), "crop": (name := _crop(dir, f, load)) and url(name)} for f in evaluated.get("findings", ())],
-        "routes": _routes(stored("vector"), scales) if _travel_checked(evaluated) else [],
+        "routes": _routes(_vector(stored, discharge), scales) if _travel_checked(evaluated) else [],
         "open_items": [_placed(item, scales) for item in evaluated.get("open_items", ())],
         "not_checked": [*evaluated.get("not_checked", ()), *_lost(stored, evaluated), *rechecked.get("not_checked", ())],
         "letter": letter | {"items": kept, "note": " ".join(filter(None, (note, ALL_DROPPED if letter.get("items") and not kept else letter.get("note")))) or None},

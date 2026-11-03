@@ -50,6 +50,8 @@ MIN_REACH = 0.8
 MIN_REGISTERED = 3
 REGISTER_SHARE = 0.3
 MINIMUM = "Minimum. Examiner to confirm."
+NO_LEVEL = "No exit markers were read, and with no discharge level a stair cannot end a route."
+AT_LEVEL = "No exit markers were read for the discharge level, where a stair does not end a route."
 UNNAMED = "Unnamed room"
 MAX_NAME = 60            # this text comes from the upload and goes on screen and into the letter
 BESIDE_PT = 22           # how far a dimension's text can sit from its line
@@ -785,9 +787,9 @@ def route_ends(i, plans, rows, floors, verticals, exits):
             end_at_stairs(ends, stairs, SNAP_M * IN_PER_M / plans[i].ipp)
         return ends, None
     if discharge is None:
-        return [], problem or "No exit markers were read, and with no discharge level a stair cannot end a route."
+        return [], problem or NO_LEVEL
     if i == discharge:
-        return [], problem or "No exit markers were read for the discharge level, where a stair does not end a route."
+        return [], problem or AT_LEVEL
     return stairs, None if stairs else problem or "No exit markers were read and no stair was found on this floor, so a route has no end."
 
 

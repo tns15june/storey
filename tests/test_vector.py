@@ -540,6 +540,21 @@ def test_only_a_stair_found_on_this_floor_ends_a_route(review):
     assert out["routes"] == [] and out["skipped"]
 
 
+def test_route_ends_read_the_discharge_level_only_as_none_this_floor_or_another():
+    # assemble._vector keeps a floor's routes when the level moves between two other floors, or between none and this floor, so each pair must give the same ends, and it maps the two reasons
+    plan = vector.Plan(np.zeros((0, 8)), [], [], PX_PER_PT, (0, 0, WIDTH, HEIGHT), None, {}, ipp=2 / 3)
+    marker = {"sheet": 1, "point": [1400, 1100], "width_mm": 915.0, "capacity": 180}   # 50 pt below the stair's box, well within reach of it
+
+    def ends(discharge, exits=()):
+        found, why = vector.route_ends(1, {i: plan for i in (0, 1, 3)}, {i: row(i) for i in (0, 1, 3)}, {"discharge": discharge}, [stair(1, box=(1300, 400, 1500, 1000))], list(exits))
+        return [(e["name"], e["box"] is not None) for e in found], why
+
+    assert ends(0) == ends(3) == ([("Stair A", True)], None)
+    assert ends(0, [marker]) == ends(3, [marker]) == ([("Exit, 915 mm, 180 people", True)], None)   # it ends at the stair beside it
+    assert ends(None) == ([], vector.NO_LEVEL) and ends(1) == ([], vector.AT_LEVEL)
+    assert ends(1, [marker]) == ends(None, [marker]) == ([("Exit, 915 mm, 180 people", False)], None)
+
+
 def test_failed_stages_upstream_give_reason(review):
     ctx = review([sheet(0)], [row(0)], floors={"failed": "x"}, verticals={"failed": "x"}, declared={"failed": "x"})
     out = vector.vector_stage(ctx)["sheets"][0]
