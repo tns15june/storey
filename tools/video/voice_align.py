@@ -24,6 +24,7 @@ from voice_split import ORDER, V, VOICE   # noqa: E402
 RATE = 16000
 FRAME = 0.01        # seconds per energy frame
 FADE = 0.015        # seconds of crossfade across a dropped stretch
+TARGET_LUFS = -17.0   # spoken-word loudness, a little under the -16 web norm, with the limiter catching peaks at -1.5 dB
 PAUSE, KEEP = 0.6, 0.35   # seconds: with --tighten, a pause inside a line longer than PAUSE is cut down to KEEP
 SAME = {"storey": "story", "storeys": "stories", "muse": "muse"}
 
@@ -54,6 +55,42 @@ def edge(db, loud, t, limit, step):
     return keep * FRAME if step < 0 else (keep + 1) * FRAME
 
 
+def denoise(src, out, span=None, cut_db=30.0):
+    """Writes src with its steady room noise taken down by cut_db: a spectral gate learned from span (start, end) in seconds,
+    or from the recording's longest stretch with no speech. Speech keeps its level; noise between and under words drops."""
+    from scipy.signal import istft, stft
+    sr = 48000
+    pcm = subprocess.run(["ffmpeg", "-v", "error", "-i", str(src), "-af", "adeclip", "-f", "s16le", "-ac", "1", "-ar", str(sr), "-"], capture_output=True, check=True).stdout
+    x = np.frombuffer(pcm, np.int16).astype(np.float32) / 32768   # clipped peaks repaired before the gate sees them
+    if span is None:
+        env = envelope(src)
+        db = 20 * np.log10(env + 1e-9)
+        quiet = np.append(db < float(np.percentile(db, 20)) + 6, False)
+        best, run, end = 0, 0, 0
+        for i, q in enumerate(quiet):
+            run = run + 1 if q else 0
+            if run > best:
+                best, end = run, i + 1
+        span = ((end - best) * FRAME + 0.5, end * FRAME - 0.5)   # keep clear of the speech at either end
+        if span[1] - span[0] < 1.0:
+            sys.exit("No second of silence to learn the room noise from. Record a few seconds of silence first, or pass --noise START-END.")
+    noise = x[int(span[0] * sr):int(span[1] * sr)]
+    f, _, N = stft(noise, sr, nperseg=2048, noverlap=1536)
+    f, _, X = stft(x, sr, nperseg=2048, noverlap=1536)
+    nd = 20 * np.log10(np.abs(N) + 1e-10)
+    thresh = nd.mean(1, keepdims=True) + 1.5 * nd.std(1, keepdims=True)   # per frequency: steady noise sits under this
+    xd = 20 * np.log10(np.abs(X) + 1e-10)
+    mask = 1 / (1 + np.exp(-(xd - thresh) / 2.0))
+    k = np.ones((3, 5)) / 15   # smooth the mask over 3 bins and 5 frames, so the gate does not chatter
+    from scipy.signal import convolve2d
+    mask = convolve2d(mask, k, mode="same", boundary="symm")
+    floor = 10 ** (-cut_db / 20)
+    _, y = istft(X * (floor + (1 - floor) * mask), sr, nperseg=2048, noverlap=1536)
+    y = np.clip(y[:len(x)], -1, 1)
+    subprocess.run(["ffmpeg", "-v", "error", "-y", "-f", "s16le", "-ar", str(sr), "-ac", "1", "-i", "-", str(out)], input=(y * 32767).astype(np.int16).tobytes(), check=True)
+    return span
+
+
 def quietest(env, lo, hi):
     a, b = max(int(lo / FRAME), 0), max(int(hi / FRAME), int(lo / FRAME) + 1)
     return (a + int(np.argmin(env[a:b]))) * FRAME
@@ -65,6 +102,8 @@ def main():
     ap.add_argument("words", type=Path)
     ap.add_argument("--drop", action="append", default=[], help="START-END in seconds of the recording, inside one line")
     ap.add_argument("--tighten", action="store_true", help="shorten long pauses inside each line")
+    ap.add_argument("--noise", help="START-END in seconds of room noise with no speech, to learn the noise from; found by itself if left out")
+    ap.add_argument("--keep-noise", action="store_true", help="skip the noise reduction")
     ap.add_argument("--start", action="append", default=[], help="LINE=SECONDS to start line LINE (counted from 1) at a chosen point, when the cut needs a person's call")
     a = ap.parse_args()
     spec = json.loads((V / "spec.json").read_text())
@@ -124,7 +163,19 @@ def main():
         print(f"{n + 1:2d} {key:13s} {start:7.2f}-{stop:7.2f} {cover:4.0%} {' '.join(mine)}{'   [dropped ' + ', '.join(f'{x:.2f}-{y:.2f}' for x, y in cuts) + ']' if cuts else ''}")
         last = end
     VOICE.mkdir(parents=True, exist_ok=True)
-    tidy = "highpass=f=70,adeclip,loudnorm=I=-16:TP=-1.5:LRA=11,aresample=48000"
+    source = a.recording
+    if not a.keep_noise:
+        source = VOICE.parent / "recording_clean.wav"
+        span = denoise(a.recording, source, tuple(map(float, a.noise.split("-"))) if a.noise else None)
+        print(f"Room noise learned from {span[0]:.1f}-{span[1]:.1f} s and taken down 30 dB.")
+    # One gain for the whole voice, so every line has the same level and no automatic gain lifts the pauses back up.
+    probe = subprocess.run(["ffmpeg", "-hide_banner", "-ss", f"{spans[0][1]:.2f}", "-to", f"{spans[-1][2]:.2f}", "-i", str(source), "-af", "highpass=f=90:poles=2,ebur128",
+                            "-f", "null", "-"], capture_output=True, text=True).stderr
+    loudness = float(re.findall(r"I:\s+(-?[\d.]+) LUFS", probe)[-1])
+    gain = TARGET_LUFS - loudness
+    print(f"Voice loudness {loudness:.1f} LUFS, raised {gain:+.1f} dB to {TARGET_LUFS} LUFS.")
+    # highpass: the room's rumble sits at 45-150 Hz, under most of a voice. agate: an expander that only acts below -48 dB, in the gaps between words.
+    tidy = f"highpass=f=90:poles=2,volume={gain:.2f}dB,agate=threshold=0.004:ratio=2:range=0.1:attack=10:release=250:knee=2.8,alimiter=limit=0.84:level=false,aresample=48000"
     for key, start, stop, cuts in spans:
         edges = [start, *[t for c in cuts for t in c], stop]
         parts = list(zip(edges[::2], edges[1::2]))
@@ -134,7 +185,7 @@ def main():
             chain.append(f"[{last_label}][p{i}]acrossfade=d={FADE}[x{i}]")
             last_label = f"x{i}"
         chain.append(f"[{last_label}]{tidy}[out]")
-        subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", str(a.recording), "-filter_complex", ";".join(chain), "-map", "[out]", "-ac", "2", str(VOICE / f"{key}.aiff")], check=True)
+        subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", str(source), "-filter_complex", ";".join(chain), "-map", "[out]", "-ac", "2", str(VOICE / f"{key}.aiff")], check=True)
     print(f"Wrote {len(spans)} lines to {VOICE}. Run python3 tools/video/build.py to make the video with this voice.")
 
 
