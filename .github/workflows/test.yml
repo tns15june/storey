@@ -10,14 +10,22 @@ permissions:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
+    # macOS on Apple silicon is where the evaluation ran and where the floor registration gate was set; Linux shows the product installs and runs elsewhere.
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
       # ffmpeg writes the floor stack. libgl1, because the opencv-contrib-python wheel loads it on import.
-      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg libgl1
+      - if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg libgl1
+      - if: runner.os == 'macOS'
+        run: brew install ffmpeg
       - run: pip install -r requirements.txt
       - run: pytest
