@@ -4,7 +4,8 @@
     python -m eval.report mml_capitol=<review folder> 710_1_mixed=<review folder>
 
 eval.json is public. It lists a set's misses, false findings and wrong passes only when the set's catalog entry says public_demo yes. Every other set keeps its counts and nothing else.
-eval.json is not written while any set waits for the judge or for a baseline asked on the drawings its run saw, because that set's misses would be missing from the page.
+eval.json is not written while any set waits for the judge or has no baseline scored on the drawings its run saw: none recorded, a call that failed, or one asked on other drawings.
+That set's misses would be missing from the page, and its blank baseline cells would shrink the page's baseline sums and what they are out of.
 """
 import json
 import sys
@@ -91,6 +92,11 @@ def build(entries, catalog):
                 lists[key] += [{"set": e["set"], "method": method, **row} for row in part.get(field, ())]
     public = {e["set"] for e in entries if shown(e.get("source"), catalog)}
     waiting = [part["waiting"] for e in entries for part in (e["Storey"], e.get("baseline") or {}) if part.get("waiting")]
+    for e in entries:
+        b = e.get("baseline")
+        if not b or b.get("failed"):
+            why = f"its last call failed. {b['failed']}" if b else f"none is recorded at {baseline.OUT / e['set']}.json."
+            waiting.append(f"A baseline scored for {e['set']}: {why} Run python -m eval.baseline {e['set']} <its review folder>.")
     full = {"about": ABOUT, "scores": rows, **lists, "quoted": QUOTED, "waiting for the judge": waiting, "sets": entries}
     return full, None if waiting else {"about": ABOUT, "scores": rows, **{key: [r for r in v if r["set"] in public] for key, v in lists.items()}, "quoted": QUOTED}
 

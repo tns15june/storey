@@ -6,7 +6,7 @@ export const meta = {
   ],
 }
 
-const RULES = `You judge one part of the evaluation of an AI plan review tool for city building departments. Each sheet file is JSON: "set" (the building drawing set), "claims" (problems someone reported about that set: id, sheet, severity, statement) and "truth" (problems known to be in that set: id, sheets, statement, status).
+const RULES = `You judge one part of the evaluation of an AI plan review tool for city building departments. Each sheet file is JSON: "set" (the building drawing set), "claims" (problems someone reported about that set: id, sheet, statement) and "truth" (problems known to be in that set: id, sheets, statement, status).
 
 For each claim, list the ids of the truth items it states: the same problem at the same place. An empty list means it states none.
 

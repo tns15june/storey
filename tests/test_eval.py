@@ -2,13 +2,16 @@
 import base64
 import json
 import shutil
+import sys
+import threading
 
 import cv2
 import numpy as np
 import pymupdf
 import pytest
 
-from eval import baseline, plant, report, run, score
+from eval import baseline, plant, report, run, run_all, score
+from eval.judge import blind
 from storey import ingest, meta, pipeline
 from storey.floors import WORK_PX, _resized, ink
 
@@ -259,6 +262,64 @@ def test_a_mapping_must_answer_this_match_sheet_once_per_claim_with_known_truth_
             score.read_matches(mapping(**bad), sheet)
 
 
+SAID = [("A1.2", "Door 2002 has no row in the door schedule."), ("A1.1", "The plan has no north arrow."), ("G0.1", "The index lists A7.1, and the set holds no such sheet."),
+        ("A1.3", "Stair A is missing on THIRD FLOOR."), ("A1.2", "Room 205 has no name."), ("A1.1", "The exit sign is not shown.")]
+
+
+def test_a_blinded_sheet_holds_nothing_that_tells_the_methods_apart(tmp_path):
+    truth = [{"id": "T01", "sheets": ["A1.2"], "statement": "Door 2002 has no row in the door schedule.", "status": "real"}]
+    sheets = [score.match_sheet("cap", "Storey", [{"id": f"A-{n:02d}", "sheet": s, "severity": "check", "statement": t} for n, (s, t) in enumerate(SAID, 1)], truth),
+              score.match_sheet("cap", "baseline", [{"id": f"B{n:02d}", "sheet": s, "statement": t} for n, (s, t) in enumerate(SAID[::-1], 1)], truth),
+              score.match_sheet("cap", "x", [], truth), score.match_sheet("q", "baseline", [{"id": "B01", "sheet": "A1.1", "statement": "x"}], [])]
+    for sheet in sheets:
+        write(tmp_path / "sheets" / f"{sheet['set']}.{sheet['method']}.json", sheet)
+    key = blind.blind(tmp_path / "sheets", tmp_path / "blind")
+    assert sorted(p.name for p in (tmp_path / "blind").iterdir()) == sorted(f"{name}.json" for name in key)   # the judges are given this folder, so the key that names each method is not in it
+    assert json.loads((tmp_path / "blind.key.json").read_text()) == key
+    out = {k["method"]: json.loads((tmp_path / "blind" / f"{name}.json").read_text()) for name, k in key.items()}
+    assert sorted(out) == ["Storey", "baseline"]   # a sheet with no claim or no truth item needs no judge
+    assert not any(tell in (tmp_path / "blind" / f"{name}.json").read_text() for name in key for tell in ("Storey", "baseline", "A-0", "B0", "severity", "check"))
+    for sheet in out.values():
+        assert set(sheet) == {"set", "how", "claims", "truth"} and [c["id"] for c in sheet["claims"]] == [f"C{n:02d}" for n in range(1, 7)]
+        assert all(set(c) == {"id", "sheet", "statement"} for c in sheet["claims"])
+    said = {method: [(c["sheet"], c["statement"]) for c in sheet["claims"]] for method, sheet in out.items()}
+    assert sorted(said["Storey"]) == sorted(said["baseline"]) and said["Storey"] != SAID and said["baseline"] != SAID[::-1]   # the same claims, each sheet in an order of its own
+    for name, k in key.items():
+        original = {c["id"]: (c["sheet"], c["statement"]) for c in next(s for s in sheets if s["sha256"] == k["sha256"])["claims"]}
+        assert all(original[k["ids"][c["id"]]] == (c["sheet"], c["statement"]) for c in out[k["method"]]["claims"])   # the key leads each neutral id back to its claim
+    assert blind.blind(tmp_path / "sheets", tmp_path / "again") == key
+    assert all((tmp_path / "again" / f"{name}.json").read_text() == (tmp_path / "blind" / f"{name}.json").read_text() for name in key)   # the shuffle is seeded by the sheet
+
+
+def test_rulings_on_neutral_ids_become_the_mapping_the_scorer_reads(tmp_path):
+    audit = {"items": [{"id": "T01", "sheets": ["G0.1"], "statement": "The index gives P6.1 the wrong title.", "status": "real"},
+                       {"id": "T03", "sheets": ["A2.3"], "statement": "Room 205 has no tag.", "status": "likely"}]}
+    t = truth_of(tmp_path, audit, "cap")
+    folder = stored(tmp_path, "cap", review(findings=[finding("A-01", 3, "check", "0", "Sheet title differs from the index"), finding("A-02", 3, "check", "1", "Floor name differs")]))
+    assert score.storey(t, folder)["waiting"]   # and the match sheet is written
+    key = blind.blind(score.SHEETS, tmp_path / "blind")
+    (name,) = key
+    neutral = {c["statement"]: c["id"] for c in json.loads((tmp_path / "blind" / f"{name}.json").read_text())["claims"]}
+    rows = [{"id": neutral["Sheet title differs from the index."], "truth": ["T01"], "note": "The same index row."}, {"id": neutral["Floor name differs."], "truth": [], "note": "No truth item."}]
+    for bad in (rows[:1], [rows[0], rows[1] | {"truth": None}], [*rows, rows[1]], [rows[0] | {"truth": ["T99"]}, rows[1]]):   # a claim left unruled, a dispute left open, a claim ruled twice, a truth item the sheet does not hold
+        with pytest.raises(ValueError):
+            blind.unblind(tmp_path / "blind", [{"batch": [name], "sheets": [{"sheet": name, "rows": bad}]}], score.MATCHES)
+    with pytest.raises(ValueError):   # one sheet judged twice, as when two workflow results are joined: the second judging would replace the first
+        blind.unblind(tmp_path / "blind", [{"batch": [name], "sheets": [{"sheet": name, "rows": rows}]}, {"batch": [name], "sheets": [{"sheet": name, "rows": [r | {"truth": []} for r in rows]}]}], score.MATCHES)
+    assert not score.MATCHES.exists()
+    results = [{"batch": [name], "sheets": [{"sheet": name, "rows": rows}]}, {"batch": ["sheet_09"], "error": "a judge returned nothing"}]
+    (path,) = blind.unblind(tmp_path / "blind", results, score.MATCHES)
+    written = path.read_text()
+    with pytest.raises(ValueError):
+        blind.unblind(tmp_path / "blind", results, score.MATCHES)   # a mapping already there may be the published record
+    assert path.read_text() == written
+    mapping = json.loads(written)
+    assert (path.name, mapping["set"], mapping["method"], mapping["sheet_sha256"]) == ("cap.Storey.json", "cap", "Storey", key[name]["sha256"])
+    assert sorted((m["id"], m["truth"]) for m in mapping["matches"]) == [("A-01", ["T01"]), ("A-02", [])]
+    s = score.storey(t, folder)
+    assert (s["findings judged real"], s["false findings"], s["truth items found"], s["out of"]) == (1, 1, 1, 2)
+
+
 # Public filter and statuses
 
 
@@ -267,7 +328,8 @@ def test_eval_json_shows_only_counts_for_sets_that_are_not_public(tmp_path):
         return {"wrong passes": 0, "findings judged real": 1, "false findings": 1, "truth items found": 1, "out of": 2, "cost USD": 0.4, "minutes": 2.0,
                 "misses": [{"item": "R1", "sheets": ["A1"], "statement": statement}], "false list": [{"id": "A-02", "sheet": "A1", "severity": "check", "statement": statement}],
                 "wrong pass list": [{"item": statement, "sheet": "2", "stair": "A", "state": "Found"}]}
-    entries = [entry("gen", "swiss_dwellings", scored("Shown statement")), entry("va_trb_richmond", "va_trb_richmond", scored(SECRET)), entry("queens_royce", "queens_royce", scored(SECRET + " queens"))]
+    entries = [entry(name, source, scored(text), scored(text)) for name, source, text in
+               (("gen", "swiss_dwellings", "Shown statement"), ("va_trb_richmond", "va_trb_richmond", SECRET), ("queens_royce", "queens_royce", SECRET + " queens"))]
     full, public = report.build(entries, CATALOG)
     shown = json.dumps(public)
     assert SECRET not in shown and "Shown statement" in shown and SECRET in json.dumps(full)
@@ -288,6 +350,22 @@ def test_the_public_copy_is_not_written_while_a_set_waits(tmp_path, monkeypatch)
     with pytest.raises(SystemExit):
         report.main(["gen=folder"])
     assert (tmp_path / "report.json").exists() and not (tmp_path / "eval.json").exists()
+
+
+def test_the_public_copy_is_not_written_until_every_set_has_a_baseline_scored(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(run, "truth_paths", lambda name: [write(tmp_path / "gen_truth.json", generated())])
+    monkeypatch.setattr(report, "catalog", lambda: CATALOG)
+    monkeypatch.setattr(report, "REPORT", tmp_path / "report.json")
+    monkeypatch.setattr(report, "PUBLIC", tmp_path / "eval.json")
+    folder = stored(tmp_path, "gen", review())
+    failed = {"failed": "The spend cap was reached.", "request": baseline.request(folder)[2], "usd": 0.01, "minutes": 0.1}
+    for record, reason in ((None, "none is recorded"), ({}, "none is recorded"), (failed, "The spend cap was reached.")):
+        if record is not None:
+            write(baseline.OUT / "gen.json", record)
+        with pytest.raises(SystemExit):
+            report.main([f"gen={folder}"])
+        printed = capsys.readouterr().out
+        assert reason in printed and "python -m eval.baseline gen" in printed and not report.PUBLIC.exists()   # blank baseline cells would shrink the page's sums without a word
 
 
 def test_held_out_status_needs_the_one_run_on_the_frozen_hashes_and_a_recorded_truth(monkeypatch):
@@ -473,6 +551,49 @@ def test_the_code_hash_covers_every_file_under_storey_but_compiled_caches(tmp_pa
     assert run.code_hash(tmp_path)[0] == digest
     (tmp_path / "rules" / "rows.json").write_text("[1]")
     assert run.code_hash(tmp_path)[0] != digest
+
+
+def test_the_driver_rebuilds_the_run_registry_and_names_a_held_out_run_frozen_json_lost(tmp_path, monkeypatch, code):
+    """eval.run updates runs.json and frozen.json by a read, a merge and a write with no lock. Here two runs read each file before either writes it, as two of the driver's four workers can."""
+    truths = {name: write(tmp_path / f"{name}.json", {"items": []}) for name in ("army_bt_bcof", "queens_royce")}
+    monkeypatch.setattr(run, "truth_paths", lambda name: [truths[name]] if name in truths else [])
+    monkeypatch.setattr(run, "inputs", lambda name: [(write(tmp_path / f"{name}.png", {}), None)])
+    monkeypatch.setattr(run, "ingest", lambda uploads, path: None)
+    monkeypatch.setattr(pipeline, "run", lambda path, **_: None)
+    monkeypatch.setattr(pipeline, "Meter", pipeline.Meter)   # two runs swap it at once, so it is put back after the test
+    run.freeze()
+    meet, real = {run.RUNS: threading.Barrier(2, timeout=30), run.FROZEN: threading.Barrier(2, timeout=30)}, run.read_json
+
+    def read_json(path):
+        value = real(path)
+        if path in meet and threading.current_thread() is not threading.main_thread():
+            meet[path].wait()   # both runs have read the file, so neither sees the other's write
+        return value
+
+    monkeypatch.setattr(run, "read_json", read_json)
+    monkeypatch.setattr(run_all, "step", lambda log, name, args: args[1] != "eval.run" or bool(run.run(name, args[4])))
+    monkeypatch.setattr(sys, "argv", ["run_all", str(tmp_path / "evaldata"), *truths])
+    try:
+        run_all.main()
+        stop = ""
+    except SystemExit as e:
+        stop = str(e.code)
+    reviews = (tmp_path / "evaldata" / "reviews").resolve()
+    assert json.loads(run.RUNS.read_text()) == {name: str(reviews / name) for name in truths}   # rebuilt from the eval_run.json files on disk
+    runs = json.loads(run.FROZEN.read_text())["runs"]
+    (lost,) = set(truths) - set(runs)   # frozen.json keeps the one run the last write held: the driver reports the other and leaves the file alone
+    assert lost in stop and len(runs) == 1
+
+
+def test_the_driver_names_a_held_out_run_frozen_json_lost_when_that_run_stopped_part_way(tmp_path):
+    """eval.run records a held-out run in frozen.json before it makes the run's folder, so a run that stopped part way, at the spend cap say, is the set's one attempt too."""
+    reviews = (tmp_path / "evaldata" / "reviews").resolve()
+    for name in ("queens_royce", "army_bt_bcof", "mml_capitol"):
+        write(reviews / name / "stage_upload.json", {"name": name})   # stopped part way, so no eval_run.json
+    (reviews / "cache" / "queens_royce").mkdir(parents=True)
+    write(reviews / "army_bt_bcof_plant" / "eval_run.json", {"set": "army_bt_bcof_plant", "review": "/elsewhere/army_bt_bcof_plant"})   # finished, then moved here
+    write(run.FROZEN, {"runs": {"army_bt_bcof": str(reviews / "army_bt_bcof"), "army_bt_bcof_plant": "/elsewhere/army_bt_bcof_plant"}})
+    assert run_all.register(tmp_path / "evaldata") == {"queens_royce": str(reviews / "queens_royce")}   # army_bt_bcof may resume, mml_capitol is not held out, and a finished run is where its record says it ran
 
 
 # Plants
@@ -850,7 +971,7 @@ def test_held_out_sets_and_their_plants_report_counts_and_lists_only_where_the_c
     def scored(item):
         return {"wrong passes": 1, "absent cells": 15, "erased cells": 3, "present cells": 45, "present shown": {"Found": 40, "Check": 5}, "out of": 3,
                 "wrong pass list": [{"item": item, "sheet": "page 8", "stair": "B", "state": "Found", "truth": "absent"}]}
-    entries = [entry(name, source, scored(f"{name} wrong pass"), status="frozen, held-out")
+    entries = [entry(name, source, scored(f"{name} wrong pass"), {"wrong passes": None, "truth items found": 0, "out of": 3}, status="frozen, held-out")
                for name, source in (("queens_royce", "queens_royce"), ("queens_royce_plant", "queens_royce"), ("army_bt_bcof", "army_bt_bcof"), ("army_bt_bcof_plant", "army_bt_bcof"))]
     full, public = report.build(entries, CATALOG | {"army_bt_bcof": {"public_demo": "yes"}})
     rows = {(r["set"], r["score"]): r for r in public["scores"]}
