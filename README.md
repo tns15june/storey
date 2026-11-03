@@ -56,7 +56,7 @@ Electrical, plumbing, mechanical, structural, zoning and energy sheets are liste
 
 Every model at runtime is Meta's, through the Meta Model API.
 
-- **muse-spark-1.3** reads each sheet's number, title, class, level, scale and plan box at low effort, and orders the floors of the building in one joint call. It compares all floors of a building in one multi-image call, three times, to list where each stair is drawn. It reads schedules and fine text in tiles where a sheet has no text layer, with two reads that must agree. It lists revision clouds on a resubmittal, and rewords the letter under a gate that allows no new word beyond a short list of connecting words, keeps every value, and rejects any status word such as "approved".
+- **muse-spark-1.3** reads each sheet's number, title, class, level, scale and plan box at low effort, and orders the floors of the building in one joint call. It compares all floors of a building in one multi-image call, three times, to list where each stair is drawn. It reads schedules and fine text in tiles where a sheet has no text layer, with two reads that must agree. It lists revision clouds on a resubmittal, and joins each letter comment's instruction to its item with one of a few fixed words, keeping the item word for word. Code writes every measured and required value, and rejects any status word such as "approved".
 - **sam-3.1** finds "floor plan" viewports on a sheet at a ninth of the cost of a Spark call, with Spark's box as the fallback when it returns none. Its video tracker runs over the stack of floor plans and draws each stair on the floors where it was found, as evidence for the examiner.
 
 What decides stair presence was settled by experiment, not by the model's word. Spark alone still claimed 10 of 15 planted stair erasures across three runs. The shipped rule keeps Spark's three runs but also needs ink at the registered place and a yes from a blind crop question that never mentions the other floors. On the same 15 planted erasures it gave no Found. SAM takes no part in that decision: with the treads erased and the walls kept, 14 of 20 SAM masks stayed on the empty stair room at the same confidence. The full experiment record, including what failed, is in [docs/research/build-log.md](docs/research/build-log.md).
@@ -67,7 +67,9 @@ On the sample sets a review cost 0.42 to 0.53 USD of model calls and took 2.3 to
 
 The evaluation runs the same pipeline the server runs, from `eval/`. Truth was written by labellers who saw no Storey output: two independent passes and an adjudicator for every disagreement. Two real sets were held out from all development and run once, on code frozen by hash in `eval/frozen.json`. The baseline is Spark asked directly, with every sheet in one call and a plain prompt.
 
-33 sets ran once each on the frozen code (1 November 2026), and every claim that needed judgement was mapped to truth by two judges blind to which method made it, with an adjudicator on the 11 of 382 claims they split. The full report, misses included, is on the How well it works page (`app/web/eval.html`).
+33 sets ran once each on the frozen code (1 November 2026), and every claim that needed judgement was mapped to truth by two Claude judges who were not told which method made it, with an adjudicator on the 11 of 382 claims they split. Their copies still showed each method's claim ids and Storey's severities, so a judge could tell the methods apart; `eval/judge/blind.py` now removes both ([eval/judge/README.md](eval/judge/README.md)). The full report, misses included, is on the How well it works page (`app/web/eval.html`).
+
+These numbers describe the code at tag `eval-frozen`. An outside code review on 3 November found defects in that code, among them a way for an unread value to resolve an earlier comment, a letter rewrite that could reverse measured and required values, and sprinkler rules that did not check the standard. Each was reproduced as a failing test and fixed after the freeze; [docs/review-response.md](docs/review-response.md) lists every finding and its fix.
 
 | | Storey | Spark asked directly |
 |---|---|---|
@@ -88,7 +90,7 @@ What the numbers say:
 
 ## Run it
 
-Python 3.12.
+Python 3.12, and ffmpeg on the PATH (`brew install ffmpeg` on macOS, `sudo apt install ffmpeg` on Ubuntu). ffmpeg writes the floor plans as the short video that SAM's tracker draws the stair outlines on. Without it the review still runs and follows the stairs, and Not checked says that the outlines were not drawn.
 
 ```
 python3.12 -m venv .venv
@@ -99,7 +101,7 @@ echo "MODEL_API_KEY=<your Meta Model API key>" > .env
 
 The server prints a link that carries this run's access key. Open it, upload a PDF or page images, and the review appears as each stage finishes. Without a server, open `app/web/start.html` from any static file server to browse the sample reviews.
 
-Tests make no network call: `.venv/bin/pytest`.
+Tests make no network call and need no key: `.venv/bin/pytest`. GitHub Actions runs them on every push and pull request (`.github/workflows/test.yml`).
 
 ## Repository map
 
@@ -108,7 +110,7 @@ Tests make no network call: `.venv/bin/pytest`.
 | `storey/` | The product: ingest, stages, checks, letter, second review, server |
 | `app/web/` | The screens, the four sample reviews, the evaluation page and the demo video |
 | `eval/` | The evaluation harness, truth files, frozen hashes, judge mappings and the driver that ran it (`run_all.py`) |
-| `eval/judge/` | How claims were judged blind against truth |
+| `eval/judge/` | How claims were judged against truth |
 | `lab/` | The experiments that set the design, with their results in `docs/research/build-log.md` |
 | `tools/video/` | How the demo video was recorded and cut |
 | `tests/` | The test suite, which makes no network call |
@@ -122,6 +124,9 @@ Tests make no network call: `.venv/bin/pytest`.
 - The miss rate on real defects is known from one full audit of one set by one labeller.
 - One- and two-family dwellings use the International Residential Code, which Storey does not check; those rule checks move to Not checked.
 - One upload is one building.
+- Storey was built and measured on macOS on Apple silicon. On Linux x86, OpenCV's block matching rounds differently, so match counts at the floor registration gate move. In CI a quarter-turned sheet reached 22 matches against the gate of 25, a clipped plan 0, and floors of two different buildings 27, which pass it. Those four tests run only on macOS arm64, and on Linux the floors screen is worth checking before the stair matrix is trusted.
+- A spend cap can be passed by at most one model call's hold. A call holds the most it can cost until it is charged: its prompt, 4,000 input tokens an image (the most measured was about 3,500) and its whole output token cap. The largest call, 50 floors in one request, holds 0.36 USD. The daily cap sees only the calls in flight in its own server process, and a request that fails before its reply arrives is charged nothing.
+- Letter edits stay in the viewer's browser, in the full app and on the static demo, so another examiner or device does not see them. On the static demo, Keep and Drop decisions stay in the browser too.
 
 ## Built during the hackathon
 

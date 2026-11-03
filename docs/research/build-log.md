@@ -165,7 +165,7 @@ All replays below cost 0 USD: stored model replies only, with any new call refus
 
 - 23:06 IST, 1 Nov. Code, scoring and truth frozen by hash in `eval/frozen.json`, before any held-out run. Nothing under `storey/` changed after this.
 - 33 sets ran once each through `eval/run_all.py`, four at a time, each followed by the baseline (Spark asked directly, every sheet in one call). 33 runs and 33 baselines finished with no failure. Storey spent 16.23 USD and the baseline 2.35 USD.
-- Judging: 382 claims on 35 match sheets went to two blind Claude judges, who agreed on 371; an adjudicator ruled on 11 (`eval/judge/`).
+- Judging: 382 claims on 35 match sheets went to two Claude judges not told the method, who agreed on 371; an adjudicator ruled on 11 (`eval/judge/`). The copies kept each method's claim ids and Storey's severities, which the 3 November review found; see `eval/judge/README.md`.
 
 | | Storey | Spark asked directly |
 |---|---|---|
@@ -182,3 +182,17 @@ All replays below cost 0 USD: stored model replies only, with any new call refus
 - The six real erasures not raised are all top-floor plants, the stated limit. On the Army plant the erased Stair 1 at discharge shows no stair row at that place, so it is a miss, not a wrong pass.
 - Real audits: most items are kinds no Storey check covers, such as section callouts that point at sheets missing from the set. That is the next work, and the report says so.
 - Demo: four sample reviews made on the frozen code (St. Elizabeths, The Capitol, the generated 710 set and its cycle 2) are on https://tns15june.github.io/storey/ with the evaluation page. The video (2:33, `tools/video/`) records two live runs on the frozen code: The Capitol uploaded from scratch (3.3 minutes, 0.39 USD) and Stair C removed from the second floor of a St. Elizabeths copy, which raised "Stair C is missing on SECOND FLOOR" (0.35 USD).
+
+## Outside code review, 3 Nov
+
+An outside review found five correctness defects, four in the evaluation and five operational gaps; [docs/review-response.md](../review-response.md) maps each to its fix. Every defect was written as a failing test on the unchanged code, fixed, attacked by a second agent that had not written the fix, and fixed again where that agent broke it. The suite went from 1,905 tests at the freeze to 2,091, all passing. `storey/` changed after the freeze, so every published number still describes tag `eval-frozen`.
+
+| Measured on the fixed code | Result |
+|---|---|
+| Stored second reviews in `data/kept`, evaluate run again offline | 40 of 40 comments that read Looks resolved still do |
+| The reviewer's 32 adversarial letter replies | 0 kept; 22 got through the first fix |
+| Stored sample letters from the old prompt, replayed | 19 of 30 first sentences would pass as joins; none of the 27 items with values had them reversed |
+| One live run, `710_1_mixed` then `710_1_second`, through the server | 14 of 14 and 9 of 9 truth items, no wrong pass, all 10 comment states as truth holds them; 0.59 and 0.51 USD |
+
+- The live run raised one false Check that the frozen run did not: a corridor on the fourth floor measured 0.9 in clear past a stair, where the frozen run measured 49.4 in at the same label. Spark read a slightly different plan box and stair outline there, and the width past the stair met two lines almost touching. The vector code did not change. A width that small could read Cannot tell instead; not done, because it is a false alarm, not a pass.
+- The second review read Cannot tell on 9 items against 6 in the frozen run, the expected cost of asking for item evidence before Looks resolved.
