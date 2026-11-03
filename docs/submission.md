@@ -10,7 +10,7 @@ Deadline: Wed 4 Nov 2026, 9:00 PM ET, which is 07:30 IST on Thu 5 Nov. Aim for 2
 - [x] No keys in the repository history
 - [x] Tests: 1,905 passed at the freeze
 - [x] Live demo with no key: https://tns15june.github.io/storey/
-- [x] Demo video, 2:33, plays with no login: https://tns15june.github.io/storey/demo.html (how it was made: `tools/video/`)
+- [x] Demo video, 2:52, narrated in the author's voice, plays with no login: https://tns15june.github.io/storey/demo.html (how it was made: `tools/video/`)
 - [x] Every runtime model is Meta's: Muse Spark 1.3 and SAM 3.1 through `https://api.meta.ai/v1`, one client in `storey/meta.py`
 - [ ] Submit the form (below)
 - [ ] After submitting, push nothing to this repository until judging ends, or it may count as late
@@ -40,7 +40,7 @@ Numbers come from `app/web/eval.json` (frozen run, 1 November 2026).
 **Links**
 - Code: https://github.com/tns15june/storey
 - Live demo (no key needed): https://tns15june.github.io/storey/
-- Video: https://tns15june.github.io/storey/demo.html (2:33, plays in the browser with no login; the file itself is https://tns15june.github.io/storey/video/storey.mp4)
+- Video: https://tns15june.github.io/storey/demo.html (2:52, plays in the browser with no login; the file itself is https://tns15june.github.io/storey/video/storey.mp4)
 
 **What it does**
 

@@ -1,6 +1,6 @@
 # How the demo video was made
 
-The video at `app/web/video/storey.mp4` (2:33) is a screen recording of the real app, cut and captioned by these scripts. Nothing in it is mocked: the upload and the stair removal are live runs on Meta's models, shown sped up.
+The video at `app/web/video/storey.mp4` (2:52) is a screen recording of the real app, cut and captioned by these scripts. Nothing in it is mocked: the upload and the stair removal are live runs on Meta's models, shown sped up.
 
 1. Start the server on the reviews to show, with a known key:
    `STOREY_DATA=<reviews folder> STOREY_ACCESS_KEY=<key> .venv/bin/python -m storey --port 8811`
@@ -17,3 +17,10 @@ Narration is macOS `say` (Samantha). To use a recorded voice, read the lines of 
     python3 tools/video/build.py
 
 `voice_split.py` cuts the recording into one file per line, evens the loudness, and stops without writing if the recording does not split into exactly 21 lines. A `line_NN` file replaces line NN.
+
+When the pauses between lines are too short to split on, cut by the time of each word instead (Whisper on this machine, nothing uploaded):
+
+    python transcribe.py <recording> words.json            # pip install faster-whisper, in its own environment
+    .venv/bin/python tools/video/voice_align.py <recording> words.json --tighten [--drop START-END] [--start LINE=SECONDS]
+
+The narration in the published video was cut this way from one 5-minute take: `--drop 128.16-129.00 --drop 138.80-140.50 --start 21=287.00 --tighten` removed two false starts, kept the S of the last line's first word, and shortened pauses over 0.6 s inside lines. Each line was then transcribed again on its own to check that no word was lost.

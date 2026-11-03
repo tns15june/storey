@@ -6,7 +6,7 @@ It never approves a plan. Every screen reads "Draft for examiner. Not an approva
 
 Built solo for the Meta Global AI Developer Hackathon (Indie track), from the "AI for City Hall" item on Y Combinator's [Requests for Startups](https://www.ycombinator.com/rfs).
 
-**Watch it:** [the 2:33 demo video](https://tns15june.github.io/storey/demo.html).
+**Watch it:** [the 2:52 demo video](https://tns15june.github.io/storey/demo.html).
 
 **Try it:** [tns15june.github.io/storey](https://tns15june.github.io/storey/) shows four finished reviews in three cities, a second review and the evaluation, with no server and no key. The full app runs from this repo with your own Meta Model API key (see Run it).
 
