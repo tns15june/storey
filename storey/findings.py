@@ -47,6 +47,11 @@ GROUP = re.compile(r"(?<![A-Za-z0-9-])([ABEFHIMRSU])(?:-?(\d))?(?![A-Za-z0-9])")
 BLOCK = re.compile(r"BLOCKS? \"?(\d[A-Z])")
 SAYS_YES = re.compile(r"SPRINKLER HEADS|yes box|\bYES\b", re.I)
 SAYS_NO = re.compile(r"not sprinklered|unsprinklered", re.I)
+# NFPA 13, 13R or 13D, or the IBC section that installs to it. After NFPA 13, any one mark before R or D, such as an en dash, reads 13R or 13D, which no row treats more leniently than NFPA 13.
+# A bare 13 takes only a dash, because 13/D or 13.D can be a note number
+STANDARD = re.compile(r"\bNFPA\s*[^\w\s]?\s*13(?:\s*[^\w\s]?\s*([RD]))?\b|\b13[-\u2010-\u2015\u2212]?([RD])\b|\b903\.3\.1\.([123])\b", re.I)
+SECTION_STANDARD = {"1": "", "2": "R", "3": "D"}
+LIMITED = re.compile(r"\bNOT?\b|\bNONE\b|\bN/?A\b|\bPARTIAL|\bONLY\b|\bEXCEPT", re.I)   # a system denied, or not throughout
 RESIDENTIAL = re.compile(r"\bIRC\b|\bCRC\b|Residential Code|one.{0,8}two.family|single.family|duplex|\bR-?3\b", re.I)
 BEDROOM = re.compile(r"\bBED\s?(ROOM)?\b|\bBDRM\b", re.I)
 NOT_A_STOREY = re.compile(r"foundation|roof|attic|crawl", re.I)
@@ -75,6 +80,14 @@ def _groups(value):
     # shortcut: a capital A opening a phrase reads as group A, match against the printed code's group list if a real value does this.
     found = [f"{letter}-{digit}" if digit else letter for letter, digit in GROUP.findall(value)]
     return found or [letter for word, letter in OCCUPANCY_WORDS.items() if word in norm(value)]
+
+
+def _standard(mentions):
+    """The one sprinkler standard the code sheet's statements name, as rule rows read it, or None. A statement that denies or limits the system, as in NFPA 13 NOT REQUIRED or PARTIAL NFPA 13, names none."""
+    # shortcut: NFPA 13 before a word, as in NFPA 13 RESIDENTIAL, reads as NFPA 13, have the code read return the standard if a real sheet words it so.
+    # shortcut: LIMITED is a closed list of words, so a limit worded otherwise, as in NFPA 13 AT LEVEL 1, still names NFPA 13, have the code read return whether the system is throughout if a real sheet words it so.
+    named = {"NFPA 13" + (m[1] or m[2] or SECTION_STANDARD.get(m[3], "")).upper() for text in mentions if isinstance(text, str) and not LIMITED.search(text) for m in STANDARD.finditer(text)}
+    return named.pop() if len(named) == 1 else None
 
 
 def _story_count(value):
@@ -171,6 +184,7 @@ class Review:
     discharge: int | None
     findings: list = field(default_factory=list)
     open_items: list = field(default_factory=list)
+    compared: list = field(default_factory=list)
     stricter: bool = False
 
     def __post_init__(self):
@@ -181,6 +195,7 @@ class Review:
         self.groups = _groups(self.value("occupancy"))
         self.load = int(n) if (n := num(self.value("occupant_load"))) else None
         self.sprinklers = next((v for v in (self.sprinklers, self.value("sprinklers")) if v in ("yes", "no")), None)
+        self.system = _standard((self.code.get("sprinklers") or {}).get("mentions") or ()) if self.sprinklers == "yes" else self.sprinklers   # what rule rows read: "no", a standard, or None when the status or its standard was not read
         chosen = self.floors.get("discharge") if self.discharge is None else self.discharge
         self.discharge = chosen if chosen in self.order else None
         self.dwelling = self._dwelling()
@@ -204,10 +219,10 @@ class Review:
         return self.sheets.get(i, {}).get("level") or self.number(i)
 
     def sprinkler_row(self, id, **inputs):
-        """The rule row at this review's sprinkler status. With none, the stricter row, and the review says so."""
+        """The rule row at this review's sprinkler system. With no status or no standard read, the stricter row, and the review says so."""
         try:
-            if self.sprinklers:
-                return rule(id, self.jurisdiction, sprinklers=self.sprinklers, **inputs)
+            if self.system:
+                return rule(id, self.jurisdiction, sprinklers=self.system, **inputs)
             self.stricter = True
             return stricter_when_unknown(id, self.jurisdiction, **inputs)
         except KeyError:
@@ -217,9 +232,16 @@ class Review:
         """True if a read a missing partner lives in did not finish, so its absence is unknown, not a Fix. See declared_stage."""
         return any(n["what"] in (*whats, "Text layer", "Spark reads") and (sheets is None or n.get("sheet") is None or n["sheet"] in sheets) for n in self.notes)
 
+    def key(self, check, sheet, thing, place=None):
+        return _key(check, "" if sheet is None else self.number(sheet), thing, place)
+
     def add(self, check, title, *, sheet=None, box=None, severity=None, measured="", required="", section="", evidence="", vertical=None, thing=None, place=None):
-        self.findings.append({"key": _key(check, "" if sheet is None else self.number(sheet), title if thing is None else thing, place), "check": check, "severity": severity or SEVERITY[check], "discipline": DISCIPLINE,
+        self.findings.append({"key": self.key(check, sheet, title if thing is None else thing, place), "check": check, "severity": severity or SEVERITY[check], "discipline": DISCIPLINE,
                               "sheet": sheet, "box": box, "title": title, "measured": measured, "required": required, "rule": section, "evidence": evidence, "vertical": vertical})
+
+    def compared_item(self, check, thing, sheet=None, place=None):
+        """Records the key of an item the check compared with every fact it rests on read, raised or not. Only this lets the second review call a comment the checks no longer raise Looks resolved."""
+        self.compared.append(self.key(check, sheet, thing, place))
 
     def stair(self, check, severity, row, i, cell, measured, required, section=""):
         words = "is not confirmed on" if cell.get("state") == "check" else "stops above" if check == 10 else "is missing on"
@@ -248,7 +270,9 @@ def _required_sheets(r):
         present["life safety plan"] = bool((r.declared.get("exits") or {}).get("sheets")) or titled(LIFE_SAFETY)
     unsure = not all(s.get("read_ok") for s in rows) or r.partial(("Sheets not placed",))
     for name, there in present.items():
-        if not there:
+        if there:
+            r.compared_item(1, name)
+        else:
             severity = "unknown" if unsure else "check" if name == "site plan" else None   # an interior alteration can properly have no site plan
             r.add(1, f"No {name} in the set", severity=severity, measured="No sheet was read as one.", required=f"A {name}", evidence="Sheet read.", thing=name)
 
@@ -273,15 +297,20 @@ def _sheet_index(r):
         if t.get("number"):
             sheets[sheet_key(t["number"])].append(t)
     blank = not all(t.get("number") for t in titles)
+    whole = not r.partial(("Sheet index",))   # on any sheet, because an index sheet with no row read is on no row's sheet
     for key, group in rows.items():
         x = group[0]
         number = x["number"]
         if key not in sheets:
             r.add(2, f"Sheet {number} is on the index and not in the set", sheet=x["sheet"], box=x.get("box"), severity="unknown" if blank else None, measured=f"The index lists {number}, {x['title']}.", required="A sheet for each index row",
                   evidence="Sheet index.", thing=f"row {key}")
+        else:
+            r.compared_item(2, f"row {key}", sheet=x["sheet"])
         if len(group) > 1:
             r.add(2, f"Sheet {number} is listed {len(group)} times on the index", sheet=x["sheet"], box=_union(y.get("box") for y in group), severity="check", measured="; ".join(y["title"] for y in group), required="One index row for each sheet",
                   evidence="Sheet index.", thing=f"twice {key}")
+        elif whole:   # a part of the index not read can hold the second row
+            r.compared_item(2, f"twice {key}", sheet=x["sheet"])
     listed = {sheet_key(x["number"]) for x in index}
     lost = r.partial(("Sheet index",), {x["sheet"] for x in index})
     for key, group in sheets.items():
@@ -289,8 +318,12 @@ def _sheet_index(r):
         number = t["number"]
         if key not in listed:
             r.add(2, f"Sheet {number} is in the set and not on the index", sheet=t["sheet"], box=t.get("box"), severity="unknown" if lost else None, measured=f"{number} is titled {t['title']}.", required="An index row for each sheet", evidence=_source(t), thing=f"sheet {key}")
+        else:
+            r.compared_item(2, f"sheet {key}", sheet=t["sheet"])
         if len(group) > 1:
             r.add(2, f"{len(group)} sheets carry the number {number}", sheet=t["sheet"], box=t.get("box"), severity="check", measured="; ".join(y["title"] for y in group), required="One number for each sheet", evidence=_source(t), thing=f"number {key}")
+        elif not blank:   # a sheet whose number was not read can carry this one
+            r.compared_item(2, f"number {key}", sheet=t["sheet"])
 
 
 def _blocks(text):
@@ -304,8 +337,8 @@ def _differ(read, a, b):
 
 
 def _titles(r):
-    rows = defaultdict(list)
-    for x in r.declared.get("index") or ():
+    rows, index = defaultdict(list), r.declared.get("index") or ()
+    for x in index:
         rows[sheet_key(x["number"])].append(x["title"])
     for t in r.declared.get("titles") or ():
         name, under = t.get("title") or "", t.get("under_drawing") or ""
@@ -315,6 +348,12 @@ def _titles(r):
         if on_label or on_index:
             said = [f"Title block says {name}.", *([f"The drawing says {under.split('; ')[0]}."] if on_label else []), *([f"The index says {listed[0]}."] if on_index else [])]
             r.add(3, "Floor name differs" if on_label else "Sheet title differs from the index", sheet=t["sheet"], box=t.get("box"), measured=" ".join(said), required="One name for this sheet", evidence=_source(t), thing="title")
+        elif name and not r.partial(("Sheet title", "Sheet number", "Label under the drawing", "Sheet index"), {t["sheet"], *(x["sheet"] for x in index)}):   # a label or an index row not read hides a difference
+            # shortcut: declared reads a Spark title's label once unless its floor words conflict, and stores a judge whose two reads split as same, so neither proves a title, have declared mark both if such comments should resolve.
+            label = not floor_words(name) or under and t.get("source") == "text"
+            row = any(title_same(x, name) for x in listed) or not listed and not r.partial(("Sheet index",))   # an index sheet with no row read is on no row's sheet, and can hold this sheet's row
+            if label and row:
+                r.compared_item(3, "title", sheet=t["sheet"])
 
 
 def _code_summary(r):
@@ -323,6 +362,9 @@ def _code_summary(r):
         if row is None or (r.dwelling and name in IBC_ONLY):
             continue
         value, where = row.get("value"), {"sheet": row.get("sheet"), "box": row.get("box"), "evidence": "Code sheet."}
+        if value or row.get("reads", 0) >= 2:   # a value, or two reads that both found none printed
+            r.compared_item(4, name, sheet=row.get("sheet"))
+            r.compared_item(4, f"Code field {name}", sheet=row.get("sheet"))   # the note a lost read of this field left
         if value and name == "edition" and not YEAR.search(value):
             r.add(4, "The code edition has no year", measured=value, required="The code and its year", thing=name, **where)
         elif not value and row.get("reads", 0) >= 2:
@@ -330,6 +372,7 @@ def _code_summary(r):
     sprinklers = r.code.get("sprinklers") or {}
     against = {"no": SAYS_YES, "yes": SAYS_NO}.get(sprinklers.get("value"))
     other = next((m for m in sprinklers.get("mentions") or () if against and against.search(m)), None)
+    # shortcut: declared keeps only the statements both reads make and notes none that one read alone gave, so a statement gone from the list can be unread, and this comment never reads Looks resolved, have declared note mention lists that differ if examiners need it to.
     if other:
         r.add(4, "Sprinkler statements disagree", sheet=sprinklers.get("sheet"), box=sprinklers.get("box"), measured=f"The sheet says {sprinklers['value']}, and also says: {other}", required="One sprinkler statement", evidence="Code sheet.", thing="sprinkler statements")
 
@@ -344,6 +387,8 @@ def _plans_left_out(r):
     if names:
         r.add(1, f"Stairs, travel distance and corridor width were not checked on {some(names)}", severity="unknown", measured=f"Outside the floor order: {', '.join(names)}.", required="One floor plan in the floor order for each storey",
               evidence="Sheet read and floor order.", thing="left out")
+    elif all(s.get("read_ok") for s in r.sheets.values()):   # a sheet not read is in no class, so it can be a plan left out
+        r.compared_item(1, "left out")
 
 
 def _stories(r):
@@ -351,9 +396,13 @@ def _stories(r):
     declared = _story_count(row.get("value") or "")
     plans = [r.floor(i) for i in r.order if not NOT_A_STOREY.search(r.floor(i))]
     above = sum(not BELOW_GRADE.search(p) for p in plans)
-    if declared is None or not plans or declared in (above, len(plans)):
+    if declared is None or not plans:
         return
     unsure = _left_out(r) or not all(s.get("read_ok") for s in r.sheets.values())   # a plan outside the order, or a sheet not read, can be the storey that looks missing
+    if not unsure:
+        r.compared_item(5, "stories", sheet=row.get("sheet"))
+    if declared in (above, len(plans)):
+        return
     r.add(5, "Stories declared differ from the floor plans", sheet=row.get("sheet"), box=row.get("box"), severity="unknown" if unsure else None, measured=f"The code summary declares {declared:g}. The set has {above} floor plans above grade.",
           required="One floor plan per storey", evidence="Code sheet and floor order.", thing="stories")
 
@@ -362,6 +411,8 @@ def _edition(r):
     row = r.code.get("edition") or {}
     years = [m[0] for m in YEAR.finditer(row.get("value") or "")]
     adopted = JURISDICTIONS[r.jurisdiction]
+    if years:
+        r.compared_item(5, "edition", sheet=row.get("sheet"))
     if years and not any(year in adopted for year in years):
         r.add(5, "Code edition differs from the adopted code", sheet=row.get("sheet"), box=row.get("box"), measured=row["value"], required=adopted, evidence="Code sheet.", thing="edition")
 
@@ -371,9 +422,11 @@ def _load_table(r, t):
     for x in rooms:
         area, factor, printed = x.get("area"), x.get("factor"), x.get("occupants")
         if area and factor and printed is not None:
+            thing = f"load {x.get('room') or (area, factor)}"
+            r.compared_item(6, thing, sheet=t["sheet"])
             worked = math.ceil(area / factor - 1e-9)
             if worked != printed:
-                r.add(6, f"Room {x['room']} occupant load" if x.get("room") else "Occupant load row", sheet=t["sheet"], box=x.get("box") or t.get("box"), thing=f"load {x.get('room') or (area, factor)}", required="The area over the factor, rounded up",
+                r.add(6, f"Room {x['room']} occupant load" if x.get("room") else "Occupant load row", sheet=t["sheet"], box=x.get("box") or t.get("box"), thing=thing, required="The area over the factor, rounded up",
                       measured=f"{area:g} SF at {factor:g} SF per occupant gives {worked}, and the table says {printed}. " + ("A load rounded down is unsafe." if printed < worked else "A load over-declared is safe."), evidence="Occupant table.")
     total = next((x for x in t["rows"] if x.get("total")), None)
     if total:
@@ -381,6 +434,8 @@ def _load_table(r, t):
         if printed is not None and printed != summed:
             r.add(6, "Occupant total differs from its rows", sheet=t["sheet"], box=total.get("box"), thing="load total", required="A total that matches its rows", evidence="Occupant table.",
                   measured=f"Rows sum to {summed}, and the total says {printed}. " + ("A load rounded down is unsafe." if printed < summed else "A load over-declared is safe."))
+        elif printed is not None and all(x.get("occupants") is not None for x in rooms) and not r.partial(("Occupant table",), {t["sheet"]}):   # a row not read can be the one that makes the difference
+            r.compared_item(6, "load total", sheet=t["sheet"])
         _area_total(r, t, rooms, total, "Area total")
     note = next((x for x in t["rows"] if "note" in x), None)
     if note and any(x.get("factor") for x in rooms) and None not in (note.get("area"), note.get("net_area")):
@@ -394,6 +449,8 @@ def _load_table(r, t):
 def _area_total(r, t, rows, total, title):
     areas = [x.get("area") for x in rows]
     printed = total.get("area")
+    if printed and None not in areas and not r.partial((f"{t['kind'].capitalize()} table",), {t["sheet"]}):
+        r.compared_item(6, f"{t['kind']} area total", sheet=t["sheet"])
     if printed and None not in areas and abs(sum(areas) - printed) > AREA_TOLERANCE * printed:
         r.add(6, title + " differs from its rows", sheet=t["sheet"], box=total.get("box"), measured=f"Rows sum to {sum(areas):,.0f} SF, and the total says {printed:,.0f} SF.", required="A total that matches its rows", evidence=f"{t['kind'].capitalize()} table.", thing=f"{t['kind']} area total")
 
@@ -404,33 +461,39 @@ def _worked_row(rows, example):
     return next((x for x in rows if x["exit"] == name or name.split()[-1:] == x["exit"].split()[:1]), None)
 
 
-def _width_note(printed, worked, occupants, alarmed):
-    """What a printed width means against the worked figure. `alarmed` holds the factors that also need a voice alarm."""
+def _width_note(printed, worked, occupants, alarmed, standard):
+    """What a printed width means against the worked figure. `alarmed` holds the factors that also need a voice alarm, and `standard` says whether the sprinkler standard was read."""
     if printed > worked:
         return "A width above the worked figure is safe."
     factor = next((f for f in sorted(alarmed) if abs(printed - occupants * f) <= WIDTH_TOLERANCE), None)
     if factor:
-        return f"That is the {factor} in per occupant row, which also needs a voice alarm. No voice alarm was read, so the examiner must confirm this value."
+        unread = "No voice alarm was read" if standard else "Neither a voice alarm nor a sprinkler standard was read"
+        return f"That is the {factor} in per occupant row, which also needs a voice alarm. {unread}, so the examiner must confirm this value."
     return "A width below the worked figure is unsafe."
 
 
 def _exit_table(r, t, tables):
     door, stair = rule("ibc.1005.3.2", r.jurisdiction), rule("ibc.1005.3.1", r.jurisdiction)
-    # no stage reads a voice alarm, so its row changes how an item reads and never clears one: a fact nobody read must not unlock a more lenient case
-    alarmed = {rule("ibc.1005.3.2", r.jurisdiction, occupancy=g, sprinklers="yes", voice_alarm="yes")["value"] for g in r.groups} if r.sprinklers == "yes" else ()
+    # no stage reads a voice alarm, and the standard can be unread too, so this row changes how an item reads and never clears one: a fact nobody read must not unlock a more lenient case
+    alarmed = {rule("ibc.1005.3.2", r.jurisdiction, occupancy=g, sprinklers=r.system or "NFPA 13", voice_alarm="yes")["value"] for g in r.groups} if r.sprinklers == "yes" else ()
     rows = [x for x in t["rows"] if not x.get("example")]
     for x in rows:
         name, clear, occupants, printed = x["exit"], x.get("clear_in"), x.get("occupants"), x.get("required_in")
         if occupants is None or printed is None:
             continue
         worked = occupants * door["value"]
+        r.compared_item(6, f"width {name}", sheet=t["sheet"])
         if abs(printed - worked) > WIDTH_TOLERANCE and abs(printed - occupants * stair["value"]) > WIDTH_TOLERANCE:
             r.add(6, f"{name} required width", sheet=t["sheet"], box=x.get("box"), section=_section(door), thing=f"width {name}", required=f"{door['value']} in per occupant", evidence="Exit table.",
-                  measured=f"{occupants} occupants give {worked:g} in, and the table says {printed:g} in. " + _width_note(printed, worked, occupants, alarmed))
+                  measured=f"{occupants} occupants give {worked:g} in, and the table says {printed:g} in. " + _width_note(printed, worked, occupants, alarmed, r.system))
+        if clear is not None:
+            r.compared_item(6, f"clear {name}", sheet=t["sheet"])
         if clear is not None and clear < printed:
             r.add(6, f"{name} clear width is below its required width", sheet=t["sheet"], box=x.get("box"), measured=f"{clear:g} in clear", required=f"{printed:g} in", evidence="Exit table.", thing=f"clear {name}")
     for example in (x for x in t["rows"] if x.get("example")):
         row = _worked_row(rows, example)
+        if row:
+            r.compared_item(6, f"example {example['exit']}", sheet=t["sheet"])
         if row and row.get("occupants") != example.get("occupants"):
             r.add(6, f"Worked example for {example['exit']} differs from the table", sheet=t["sheet"], box=example.get("box"), measured=f"The example uses {example.get('occupants')} occupants, and the table says {row.get('occupants')}.", required="One figure in the example and the table",
                   evidence="Exit table.", thing=f"example {example['exit']}")
@@ -483,6 +546,8 @@ def _tags(r):
         if alone:
             r.add(7, f"{kind} schedule rows with no tag on the plan: {_marks(row['mark'] for row in alone)}", sheet=s["sheet"], box=_union(row.get("box") for row in alone), severity=unsure(kind, {s["sheet"], *plans}),
                   measured=f"{len(alone)} of {len(s['rows'])} rows", required="A tag on the plan for each schedule row", evidence=_source(s), thing=f"rows {s['kind']}")
+        elif not unsure(kind, {s["sheet"], *plans}):   # a row or a tag not read can be the pair that does not match
+            r.compared_item(7, f"rows {s['kind']}", sheet=s["sheet"])
     for kind, plan in dict.fromkeys((s["kind"], plan) for s in schedules for plan in s.get("plans") or ()):
         serving = [s for s in schedules if s["kind"] == kind and plan in (s.get("plans") or ())]
         known = {_mark(row["mark"]) for s in serving for row in s["rows"]}
@@ -492,6 +557,8 @@ def _tags(r):
             name = kind.capitalize()
             r.add(7, f"{name} tags with no schedule row: {_marks(t['mark'] for t in extra)}", sheet=plan, box=_union(_around(t["point"], TAG_HALF) for t in extra), severity=unsure(name, {plan, *(s["sheet"] for s in serving)}),
                   measured=f"{len({t['mark'] for t in extra})} of {len(here)} tags on this plan", required="A schedule row for each tag", evidence=_source(serving[0]), thing=f"tags {kind}")
+        elif not unsure(kind.capitalize(), {plan, *(s["sheet"] for s in serving)}):
+            r.compared_item(7, f"tags {kind}", sheet=plan)
 
 
 def _swings(r):
@@ -583,10 +650,17 @@ def _aligned(r, i, cell):
     return (cell.get("signals") or {}).get("aligned") is not False and i not in (r.floors.get("unaligned") or ())
 
 
+def _alone(r, i, place):
+    """A key holds only its cell, so a cell two stairs share on a floor proves neither, whichever of them was followed."""
+    return [_place(row, (row.get("floors") or {}).get(str(i)) or {}) for row in r.verticals.get("verticals") or ()].count(place) == 1
+
+
 def _stair_gaps(r):
     for row, cells, found in _established(r):
         for k, cell in enumerate(cells):
             state = cell.get("state")
+            if state == "found" and _alone(r, r.order[k], _place(row, cell)):   # drawn at this place on this floor, so no gap is left here
+                r.compared_item(9, "stair", sheet=r.order[k], place=_place(row, cell))
             if state in ("missing", "check") and found and found[0] < k < found[-1]:
                 i = r.order[k]
                 below, above = r.floor(r.order[max(f for f in found if f < k)]), r.floor(r.order[min(f for f in found if f > k)])
@@ -605,31 +679,36 @@ def _stair_discharge(r):
     for row, cells, found in rows:
         cell = cells[d]
         state = cell.get("state")
+        if state == "found" and _alone(r, r.discharge, _place(row, cell)):
+            r.compared_item(10, "stair", sheet=r.discharge, place=_place(row, cell))
         if found and found[-1] > d and state in ("missing", "end", "check"):
             bottom, top = r.floor(r.order[found[0]]), r.floor(r.order[found[-1]])
             seen = f"Found on {top}" if bottom == top else f"Found from {bottom} to {top}"
             r.stair(10, "check", row, r.discharge, cell, f"{seen}. On {r.floor(r.discharge)}, the level of exit discharge, it reads {LEGEND[state]}.", REACHES, section)
 
 
-def _single_exit(r, story):
-    """The rows that let this story use one exit, or None. A group or a load nobody read unlocks nothing."""
+def _single_exit(r, story, system=None):
+    """The rows that let this story use one exit, or None. A group or a load nobody read unlocks nothing. R-2 reads `system`, or with none given the review's, which is the stricter row when no system was read."""
     rows = []
     for group in r.groups:
-        row = r.sprinkler_row("ibc.1006.3.4.t1", story=story) if group == "R-2" else _lookup("ibc.1006.3.4.t2", r.jurisdiction, occupancy=group, story=story)
+        if group != "R-2":
+            row = _lookup("ibc.1006.3.4.t2", r.jurisdiction, occupancy=group, story=story)
+        else:
+            row = _lookup("ibc.1006.3.4.t1", r.jurisdiction, story=story, sprinklers=system) if system else r.sprinkler_row("ibc.1006.3.4.t1", story=story)
         if row is None or row["value"] == "NP" or (group != "R-2" and (r.load is None or r.load > row["value"])):
             return None
         rows.append(row)
     return rows or None
 
 
-def _short_floors(r, rows, table):
-    """(sheet, found cells, cells to confirm, the rows that let it use one exit or None) for each storey above discharge with fewer found stairs than its load needs."""
+def _short_floors(r, rows, table, system=None):
+    """(sheet, found cells, cells to confirm, the rows that let it use one exit at `system` or None) for each storey above discharge with fewer found stairs than its load needs."""
     above = r.order[r.order.index(r.discharge) + 1:]
     for story, i in enumerate((i for i in above if not NOT_A_STOREY.search(r.floor(i))), 2):
         cells = [row["floors"].get(str(i)) or {} for row in rows]
         found, unsure = [c for c in cells if c.get("state") == "found"], [c for c in cells if c.get("state") == "check"]
         if len(found) < table["value"]:
-            yield i, found, unsure, _single_exit(r, story) if found else None
+            yield i, found, unsure, _single_exit(r, story, system) if found else None
 
 
 def _exits_per_floor(r):
@@ -699,14 +778,16 @@ def _unmeasured(r, check, what, floors, required):
 
 def _one_exit_rows(r):
     """{sheet: the single exit row with the shortest travel limit, its value made that limit} for each floor that may use one exit: the level of exit discharge
-    wherever the rows allow it, because its exits are doors, which are never counted, and each floor above that check 11 finds using its one found stair because the rows allow it."""
+    wherever the rows allow it, because its exits are doors, which are never counted, and each floor above that check 11 finds using its one found stair because the rows allow it.
+    With no sprinkler system read, the rows are read at NFPA 13, which allows one exit wherever another system does, because for travel the lower limit is the stricter."""
     if r.discharge is None:
         return {}
     rows = [row for row, *_ in _established(r)]
     table = _lookup("ibc.1006.3.3", r.jurisdiction, occupant_load=r.load) if rows else None
-    floors = [(r.discharge, _single_exit(r, 1))]
+    system = r.system or "NFPA 13"
+    floors = [(r.discharge, _single_exit(r, 1, system))]
     if table:
-        floors += [(i, allowed) for i, _, _, allowed in _short_floors(r, rows, table)]
+        floors += [(i, allowed) for i, _, _, allowed in _short_floors(r, rows, table, system)]
     out = {}
     for i, allowed in floors:
         travel = [row for row in allowed or () if isinstance(row["value"], dict)]   # only Table 1006.3.4(1) rows carry a travel limit
@@ -724,7 +805,7 @@ def _travel(r):
     _unmeasured(r, 13, "Travel distance", [(i, entry.get("skipped") or "No route was traced.") for i, entry in floors if not entry.get("routes")], "A vector plan with route ends")
     for i, entry in floors:
         single = one_exit[i] if i in one_exit and one_exit[i]["value"] < limit["value"] else None   # the stricter limit wins
-        here = limit if single is None or i == r.discharge else single
+        here = limit if single is None or i == r.discharge or r.system is None else single   # one exit is not proven where the exits are doors, or where no sprinkler system was read
         for route in entry.get("routes") or ():
             length = route["length_ft"]
             xs, ys = zip(*route["path"])
@@ -736,13 +817,18 @@ def _travel(r):
                 r.add(13, title, required=_required("Exit access travel is not permitted at this occupancy and sprinkler status.", here), section=_section(here), **where)
             elif length >= ROUTE_MARGIN * here["value"]:
                 r.add(13, title, required=_required(f"{here['value']} ft limit", here), section=_section(here), **where)
-            elif single and length >= ROUTE_MARGIN * single["value"]:   # the level of exit discharge
-                r.add(13, title, severity="unknown", required=_required(f"{single['value']} ft limit if this story has one exit. Its exits are doors, which are not counted.", single),
+            elif single and length >= ROUTE_MARGIN * single["value"]:
+                why = [*(["Its exits are doors, which are not counted."] if i == r.discharge else []), *(["Only some sprinkler standards allow one exit, and none was read."] if r.system is None else [])]
+                r.add(13, title, severity="unknown", required=_required(" ".join([f"{single['value']} ft limit if this story has one exit.", *why]), single),
                       section=_section(single), **(where | {"thing": "one exit route"}))
 
 
 def _corridors(r):
-    minimum = _strictest([_lookup("ibc.1020.3", r.jurisdiction, occupancy=g, occupant_load=r.load) for g in r.groups], max)
+    # shortcut: a corridor must also be as wide as 1005.3.2 asks for the load it serves, which no stage reads, so only Table 1020.3 is compared, upgrade when a stage reads that load
+    rows = [_lookup("ibc.1020.3", r.jurisdiction, occupancy=g, occupant_load=r.load) for g in r.groups]
+    minimum = _strictest(rows, max)
+    wider = minimum and max((case for row in rows for case in row.get("unless", ()) if case["value"] > minimum["value"]), key=lambda case: case["value"], default=None)   # a stricter case that a fact nobody read, the corridor's use, leaves open
+    required = minimum and (_required(f"{minimum['value']} in, or {wider['value']} in if:", wider) if wider else _required(f"{minimum['value']} in", minimum))
     floors = _floors_measured(r)
     _unmeasured(r, 14, "Corridor width", [(i, ("No Hall or Corridor label was read on this floor." if entry.get("scale_in_per_pt") else entry.get("skipped") or "No scale was checked."))
                                           for i, entry in floors if entry.get("scale_in_per_pt") is None or not entry.get("corridors")], "A vector plan with a checked scale and a Hall or Corridor label")
@@ -756,11 +842,13 @@ def _corridors(r):
             if clear is None:
                 r.add(14, title, severity="unknown", measured="The walls here gave no width.", required="A clear width", **where)
             elif minimum and clear < minimum["value"]:
-                r.add(14, title, measured=f"{clear:g} in clear", required=_required(f"{minimum['value']} in", minimum), section=_section(minimum), **where)
+                r.add(14, title, measured=f"{clear:g} in clear", required=required, section=_section(minimum), **where)
             elif printed and printed - clear > WALL_IN:
                 r.add(14, f"{title} is narrower than its printed width", measured=f"{clear:g} in clear", required=f"{printed:g} in printed", **where)
             elif minimum is None:
                 r.add(14, title, severity="unknown", measured=f"{clear:g} in clear", required="A declared occupancy, which sets the minimum", **where)
+            elif wider and clear < wider["value"]:
+                r.add(14, title, severity="unknown", measured=f"{clear:g} in clear, and the corridor's use was not read", required=required, section=_section(minimum), **where)
 
 
 def _room_cell(cells):
@@ -792,7 +880,7 @@ def _room_names(r):
     if not rooms:
         return   # declared notes a finish schedule with no room label to compare
     schedules = r.declared.get("schedules") or []
-    differ = set()
+    differ, agreed = set(), defaultdict(list)   # agreed: for each label, whether each schedule row naming it was read and gives its name
 
     def different(got, name, where):
         differ.add((got["sheet"], _mark(got["number"])))
@@ -805,6 +893,8 @@ def _room_names(r):
         absent = []
         for row in s["rows"]:
             name, got = _room_cell(row["cells"]), labels.get(_mark(row["mark"]))
+            if got and not (name and NOT_USED.search(name)):
+                agreed[got["sheet"], _mark(got["number"])].append(bool(name) and room_same(name, got["name"]))
             if not name or NOT_USED.search(name):
                 continue
             if got:
@@ -821,8 +911,15 @@ def _room_names(r):
         for row in s["rows"]:
             name, mark = row["cells"].get("ROOM"), _mark(row["mark"])
             got = labels.get(mark) or labels.get(_door_room(mark))
+            if got and "ROOM" in row["cells"]:
+                agreed[got["sheet"], _mark(got["number"])].append(bool(name) and room_same(name, got["name"]))
             if name and got and (got["sheet"], _mark(got["number"])) not in differ and not room_same(name, got["name"]):
                 different(got, name, "door")
+    # shortcut: a schedule missing from the new set with no note looks the same as one the set does not have, so the rows left can still prove a name, compare with the schedules the last set read if a real set loses one silently.
+    unread = r.partial(("Finish schedule", "Door schedule", "Room labels", "Plan not read"))   # on any sheet, because a schedule lost whole is on no kept schedule's sheet
+    for (sheet, mark), names in agreed.items():
+        if all(names) and not unread:
+            r.compared_item(16, f"name {mark}", sheet=sheet)
 
 
 def _feet(inches):
@@ -898,8 +995,9 @@ def _masked(value):
 
 
 def evaluate(stages: dict, jurisdiction: str, sprinklers: str | None, discharge: int | None) -> dict:
-    """{"findings": [...], "open_items": [...], "not_checked": [...]}. `sprinklers` ("yes" or "no") and `discharge` (a sheet index) are the examiner's choices, and None leaves the code sheet's statement and the floors stage's label standing.
-    Stage results are read as stored, so maps keyed by sheet index have string keys. Open items have key, check, sheet, box, title, evidence and vertical. Raises KeyError for an unknown jurisdiction."""
+    """{"findings": [...], "open_items": [...], "not_checked": [...], "compared": [...]}. `sprinklers` ("yes" or "no") and `discharge` (a sheet index) are the examiner's choices, and None leaves the code sheet's statement and the floors stage's label standing.
+    Stage results are read as stored, so maps keyed by sheet index have string keys. Open items have key, check, sheet, box, title, evidence and vertical. `compared` holds the keys of items a check compared
+    with every fact they rest on read, raised or not, and a check with no such evidence for an item leaves it out. Raises KeyError for an unknown jurisdiction."""
     JURISDICTIONS[jurisdiction]   # a typo here would otherwise read as rule rows with no case
     lost = {name: (stages.get(name) or {}).get("failed", "It has no result.") for name in STAGES if not stages.get(name) or "failed" in stages[name]}
     r = Review(**{name: {} if name in lost else stages[name] for name in STAGES}, jurisdiction=jurisdiction, sprinklers=sprinklers, discharge=discharge)
@@ -910,13 +1008,19 @@ def evaluate(stages: dict, jurisdiction: str, sprinklers: str | None, discharge:
             skipped[name].append(label)
         if down or (r.dwelling and label in RULE_BASED):
             continue
+        mark = len(r.compared)
         try:
             check(r)
         except Exception as e:   # stage text is hostile and stage shapes are not proven, and one check must not cost the others
+            del r.compared[mark:]   # a check that stopped part way can have compared an item it had yet to raise
             log.warning("The %s check failed with %s", label, type(e).__name__)
             broken.append(f"The {label} check did not finish.")
     if r.stricter:
-        r.add(4, "Sprinkler status is not known, so the stricter value was used", severity="unknown", measured="No selection and no sprinkler statement on the code sheet.", required="Examiner to confirm the sprinkler status", evidence="Rule rows.", thing="stricter")
+        what = "standard" if r.sprinklers == "yes" else "status"
+        r.add(4, f"Sprinkler {what} is not known, so the stricter value was used", severity="unknown", required=f"Examiner to confirm the sprinkler {what}", evidence="Rule rows.", thing="stricter",
+              measured="The building is taken as sprinklered, and no statement read on the code sheet names one standard, such as NFPA 13." if r.sprinklers == "yes" else "No selection and no sprinkler statement on the code sheet.")
+    elif r.system:
+        r.compared_item(4, "stricter")
     r.findings.sort(key=lambda f: RANK[f["severity"]])
     _unique(r.findings)
     _unique(r.open_items)
@@ -924,7 +1028,8 @@ def evaluate(stages: dict, jurisdiction: str, sprinklers: str | None, discharge:
     lines = [*(f"The {name} stage did not finish: {lost[name]} Not checked because of it: {', '.join(labels)}." for name, labels in skipped.items()), *broken, r.floors.get("not_checked"), *(r.verticals.get("not_checked") or ()),
              *(SEVERAL_PLANS.format(r.number(s["index"])) for s in _plan_sheets(list(r.sheets.values())) if len(s.get("viewports") or ()) >= 2),   # one box or none says nothing, because SAM misses plans
              SHAFTS, OTHER_TRADES, DWELLING if r.dwelling else None]
-    return _masked({"findings": r.findings, "open_items": r.open_items, "not_checked": list(dict.fromkeys(line for line in lines if line))})
+    once = [key for key, n in Counter(r.compared).items() if n == 1]   # a key two items share proves neither of them
+    return _masked({"findings": r.findings, "open_items": r.open_items, "not_checked": list(dict.fromkeys(line for line in lines if line)), "compared": once})
 
 
 def _drift_pairs(new, free):

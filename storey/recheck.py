@@ -44,9 +44,10 @@ MAX_CLOUDS = 20    # per tile, because a reply is untrusted
 DELTA_MAX = 12     # characters
 
 CLOUDS_DRAFT = "The revision cloud list is a draft read by a model, and a sheet with no cloud listed can still have changed."
-NOT_COMPARED = "The last review's checks did not finish, so no comment was compared."
+NOT_COMPARED = "The last review's checks did not finish, so the comments they would have raised were not compared."
 AGAIN = "The checks raised this comment again."
 NO_MATCH = "This sheet has no match in the new set."
+NOT_CARRIED = "Some comments the last review held open were not compared, because its comparison did not finish or did not record them."
 NOT_LINED_UP = "This sheet could not be lined up with the new set."
 STILL = "This {} did not change."   # place, or for a comment with no box its sheet, or the whole set if it names no sheet
 STILL_GONE = "This {} did not change, although the checks no longer raise this comment."
@@ -147,7 +148,8 @@ def _mapped(H, box):
 
 
 def _row(f, state, why, old_crop=None, new_crop=None):
-    return {"comment_id": f["comment_id"], "title": f["title"], "state": state, "old_crop": old_crop, "new_crop": new_crop, "why": why}
+    """`f` is the comment as it stands on the new set, its sheet and box in that set's sheet pixels, and the row keeps it so the next cycle compares it again while it is not resolved."""
+    return {"comment_id": f["comment_id"], "title": f["title"], "state": state, "old_crop": old_crop, "new_crop": new_crop, "why": why, "comment": f}
 
 
 def _unplaced(f, again, proven, changed, where):
@@ -157,10 +159,11 @@ def _unplaced(f, again, proven, changed, where):
 
 
 def _checked(f, sheet, stored, evaluated):
-    """True only on proof that the check behind a comment ran on the new set and could tell on `sheet`, the new set's index. Without that, a comment the checks did not raise proves nothing."""
-    # shortcut: this proves a check ran and raised no doubt on this sheet, not that it read this comment's own item, so a value lost with no note can still pass, compare the item's read if a real set shows it.
+    """True only on proof that the checks compared this comment's own item on the new set with every fact it rests on read, which evaluate gives as its key in `compared`.
+    Without that, a comment the checks did not raise proves nothing. The stage, check and sheet doubts below are a second guard, and `sheet` is the new set's index."""
     entries = [entry for entry in CHECKS if entry[0] in RAISED_BY.get(f["check"], ())]
-    if "findings" not in evaluated or not entries or any(not stored[name] or "failed" in stored[name] for _, _, needs in entries for name in needs):
+    # shortcut: keys must match exactly, so a stair that drifted into the next grid cell reads Cannot tell although it was found, match keys a cell apart as assign_ids does if real reviews show this often.
+    if f["key"] not in evaluated.get("compared", ()) or not entries or any(not stored[name] or "failed" in stored[name] for _, _, needs in entries for name in needs):
         return False
     lines = evaluated["not_checked"]
     if any(f"The {label} check did not finish." in lines or (DWELLING in lines and label in RULE_BASED) for label, _, _ in entries):
@@ -197,17 +200,18 @@ def _compare(ctx, comments, raised, proven, old, new, fit, sheet):
     rows, placed, held = [], {}, []
     for f in comments:
         if not f["box"]:
-            rows.append(_unplaced(f, f["comment_id"] in raised, f["comment_id"] in proven, bool(regions), "sheet"))
+            rows.append(_unplaced(f | {"sheet": sheet}, f["comment_id"] in raised, f["comment_id"] in proven, bool(regions), "sheet"))
             continue
         name, (x1, y1, x2, y2) = f["comment_id"], f["box"]
         placed[name] = box = [int(x1 * kx), int(y1 * ky), int(x2 * kx) + 1, int(y2 * ky) + 1]
+        at = _mapped(back, f["box"])   # the place on the new sheet
         # `CHANGED` was measured on erased and moved items, and a word replaced in place keeps most of its ink, 0.03 to 0.17 on the planned revision set, so ink gone at the sheet's own size counts too.
         # A stair drawn back adds ink and takes none away, so a stair's place also reads the new sheet against the old. Only there, because a cloud drawn round any item adds ink too: on 710 A1.2 a cloud alone put 2595 px of new ink in the floor name's box.
         # shortcut: a cloud round a stair narrower than the middle third of its box runs inside that third and counts, so a stair comment the checks drop with no stair drawn can read Looks resolved, tell scallops from treads if a real set shows it.
-        moved = a is not None and (_changed(a, b, box) or _gone(old, new, H, f["box"]) >= GONE or f["check"] in STAIR_CHECKS and _gone(new, old, back, _mapped(back, f["box"]), MIDDLE) >= GONE)
+        moved = a is not None and (_changed(a, b, box) or _gone(old, new, H, f["box"]) >= GONE or f["check"] in STAIR_CHECKS and _gone(new, old, back, at, MIDDLE) >= GONE)
         if moved:
             held.append(box)
-        rows.append(_row(f, *_verdict(moved, name in raised, name in proven), _saved(old, f["box"], ctx.dir / f"old_{name}.jpg"), _saved(new, _mapped(back, f["box"]), ctx.dir / f"new_{name}.jpg")))
+        rows.append(_row(f | {"sheet": sheet, "box": at}, *_verdict(moved, name in raised, name in proven), _saved(old, f["box"], ctx.dir / f"old_{name}.jpg"), _saved(new, at, ctx.dir / f"new_{name}.jpg")))
     changes = []
     for region in regions:
         if not any(_mostly_inside(region, box) for box in held):   # a changed place's row accounts for what it holds, and every other region stays listed, so no change found is lost
@@ -297,9 +301,9 @@ def _numbered(rows):
 
 
 def recheck_stage(ctx) -> dict:
-    """{} on a first review. Otherwise `comments`, `changes` and `clouds`, each with a `sheet` and `box` in the new sheet's pixels where it has one, `unmatched_sheets`, and `not_checked` lines. Crops are file names in the review folder, and None with no place to cut.
+    """{} on a first review. Otherwise `comments`, a row for each comment the last review raised and each it held open, as stored or as shown, that its checks no longer raised, `changes` and `clouds`, each with a `sheet` and `box`
+    in the new sheet's pixels where it has one, `unmatched_sheets`, and `not_checked` lines. A row's `comment` is the comment as it stands on the new set. Crops are file names in the review folder, and None with no place to cut.
     A change reads `new_change`, or has no state where a listed cloud or delta marks it as the applicant's own."""
-    # shortcut: compares with the parent only, so a comment that left the findings in cycle 2 has no row in cycle 3, carry the parent's rows forward if a third cycle matters.
     # shortcut: `raised` is read under the first run's choices, so a later change of jurisdiction does not reset a state, recompute it in assemble if an examiner relies on that.
     from .pipeline import read_json   # here, because pipeline imports this module to register the stage
 
@@ -307,10 +311,17 @@ def recheck_stage(ctx) -> dict:
     if not parent:
         return {}
     before = replace(ctx, dir=ctx.dir.parent / parent)
-    evaluated = before.stage("evaluate")
-    dropped = {key for key, decision in read_json(before.dir / "review.json").get("decisions", {}).items() if decision == "drop"}
-    comments = [f for f in evaluated.get("findings", ()) if f["key"] not in dropped]
+    evaluated, review = before.stage("evaluate"), read_json(before.dir / "review.json")
+    dropped = {key for key, decision in review.get("decisions", {}).items() if decision == "drop"}
+    shown = {c["comment_id"]: c["state"] for c in (review.get("recheck") or {}).get("comments", ())}   # after a selection the screen can show a stored Looks resolved as Cannot tell, and the examiner saw that
+    found, last = evaluated.get("findings", ()), before.stage("recheck")
+    ids = {f["comment_id"] for f in found}
+    outstanding = [c for c in last.get("comments", ()) if {c["state"], shown.get(c["comment_id"])} & {"open", "unknown"} and c["comment_id"] not in ids]   # the parent's checks no longer raise these, and nothing resolved them
+    carried = [c["comment"] for c in outstanding if "comment" in c]
+    comments = [f for f in (*found, *carried) if f["key"] not in dropped]
     latest, stored = ctx.stage("evaluate"), {name: ctx.stage(name) for name in FACT_STAGES}
+    shared = {f["key"].partition("#")[0] for f in (*found, *carried) if "#" in f["key"]}   # the last set held two items under this key, so the new set's evidence for it can be either one's
+    latest = latest | {"compared": [key for key in latest.get("compared", ()) if key not in shared]}
     raised = {f["comment_id"] for f in latest.get("findings", ())}
     old_rows, new_rows = before.stage("read").get("sheets", []), ctx.stage("read").get("sheets", [])
     old_by, new_by = _numbered(old_rows), _numbered(new_rows)
@@ -338,7 +349,7 @@ def recheck_stage(ctx) -> dict:
         if not same and fit is None:
             unmatched.append(_sheet_name(n))
             to_read.append(new_sheets[n["index"]])
-            rows |= {f["comment_id"]: _row(f, "unknown", NOT_LINED_UP) for f in here}
+            rows |= {f["comment_id"]: _row(f | {"sheet": n["index"], "box": None}, "unknown", NOT_LINED_UP) for f in here}
             continue
         proven = {f["comment_id"] for f in here if _checked(f, n["index"], stored, latest)}
         compared, new_changes, differs = _compare(ctx, here, raised, proven, old, new, fit, n["index"])
@@ -348,7 +359,8 @@ def recheck_stage(ctx) -> dict:
             to_read.append(new_sheets[n["index"]])
     for sheet, here in by_sheet.items():
         for f in here:   # the set changed if a sheet came, went, could not be lined up or differs, and each of those is in `to_read` or `unmatched`
-            rows[f["comment_id"]] = _unplaced(f, f["comment_id"] in raised, _checked(f, None, stored, latest), bool(to_read or unmatched), "set") if sheet is None else _row(f, "unknown", NO_MATCH)
+            # shortcut: a comment with no place on the new set goes on as one on its sheet, or on the whole set where its sheet has no match, so a later cycle cuts no crop for it and takes any change there as its place changing, keep the last set that showed it if a real review needs this.
+            rows[f["comment_id"]] = _unplaced(f, f["comment_id"] in raised, _checked(f, None, stored, latest), bool(to_read or unmatched), "set") if sheet is None else _row(f | {"sheet": None, "box": None}, "unknown", NO_MATCH)
     clouds, marks, lines = _read_clouds(ctx, to_read)
     marks = [m for m in marks if any(c["sheet"] == m["sheet"] and _mostly_inside(m["box"], c["box"]) for c in changes)]   # this revision's marks are new ink, and a cloud or delta left from an earlier one is on both sets, so no change holds it
     for change in changes:
@@ -359,4 +371,5 @@ def recheck_stage(ctx) -> dict:
         if len(many) > MAX_CHANGES:
             changes = [c for c in changes if c not in many] + [{"sheet": sheet, "box": _union(c["box"] for c in many), "note": f"Changed in {len(many)} places since the last set, shown as one box.", "state": "new_change"}]
     return {"comments": [rows[f["comment_id"]] for f in comments], "changes": changes, "clouds": clouds, "unmatched_sheets": list(dict.fromkeys(unmatched)),
-            "not_checked": [CLOUDS_DRAFT, *lines, *([] if "findings" in evaluated else [NOT_COMPARED])]}
+            "not_checked": [CLOUDS_DRAFT, *lines, *([] if "findings" in evaluated else [NOT_COMPARED]),
+                            *([NOT_CARRIED] if before.stage("upload").get("parent") and ("comments" not in last or len(carried) < len(outstanding)) else [])]}

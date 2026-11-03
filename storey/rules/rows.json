@@ -5,7 +5,7 @@
     "unit": "in per occupant",
     "stricter": "higher",
     "cases": [
-      {"when": {"occupancy": ["A", "B", "E", "F", "I-1", "I-3", "I-4", "M", "R", "S", "U"], "sprinklers": "yes", "voice_alarm": "yes"}, "value": 0.2},
+      {"when": {"occupancy": ["A", "B", "E", "F", "I-1", "I-3", "I-4", "M", "R", "S", "U"], "sprinklers": ["NFPA 13", "NFPA 13R"], "voice_alarm": "yes"}, "value": 0.2},
       {"value": 0.3}
     ]
   },
@@ -15,7 +15,7 @@
     "unit": "in per occupant",
     "stricter": "higher",
     "cases": [
-      {"when": {"occupancy": ["A", "B", "E", "F", "I-1", "I-3", "I-4", "M", "R", "S", "U"], "sprinklers": "yes", "voice_alarm": "yes"}, "value": 0.15},
+      {"when": {"occupancy": ["A", "B", "E", "F", "I-1", "I-3", "I-4", "M", "R", "S", "U"], "sprinklers": ["NFPA 13", "NFPA 13R"], "voice_alarm": "yes"}, "value": 0.15},
       {"value": 0.2}
     ]
   },
@@ -35,9 +35,9 @@
     "unit": "units; ft",
     "cases": [
       {
-        "when": {"sprinklers": "yes", "story": {"max": 3}},
+        "when": {"sprinklers": ["NFPA 13", "NFPA 13R"], "story": {"max": 3}},
         "value": {"max_dwelling_units": 4, "max_exit_access_travel": 125},
-        "conditions": ["4 units per floor at most", "Emergency escape openings at sleeping rooms"],
+        "conditions": ["4 dwelling units per floor at most", "Emergency escape openings at sleeping rooms"],
         "confirm": true
       },
       {"value": "NP"}
@@ -45,18 +45,18 @@
     "overrides": {
       "seattle": [
         {
-          "when": {"sprinklers": "yes", "story": {"max": 3}},
+          "when": {"sprinklers": ["NFPA 13", "NFPA 13R"], "story": {"max": 3}},
           "value": {"max_dwelling_units": 4, "max_exit_access_travel": 125},
-          "conditions": ["4 units per floor at most", "Emergency escape openings at sleeping rooms"],
+          "conditions": ["4 dwelling units per floor at most", "Emergency escape openings at sleeping rooms"],
           "confirm": true
         },
         {
-          "when": {"sprinklers": "yes", "story": {"max": 5}},
+          "when": {"sprinklers": ["NFPA 13"], "story": {"max": 5}},
           "value": {"max_dwelling_units": 4, "max_exit_access_travel": 125},
           "section": "1006.3.4 item 7",
           "conditions": [
             "6 stories above grade at most",
-            "4 units per floor at most",
+            "4 dwelling units per floor at most",
             "NFPA 13 sprinklers and 1-hour construction",
             "Exterior stair, or pressurized interior stair",
             "20 ft at most from unit door to stair",
@@ -73,11 +73,11 @@
     "title": "Single exit stories, other occupancies",
     "unit": "occupants",
     "cases": [
-      {"when": {"occupancy": ["A", "B", "E", "F", "M", "U"], "story": {"max": 1}}, "value": 49},
-      {"when": {"occupancy": ["H-2", "H-3"], "story": {"max": 1}}, "value": 3},
-      {"when": {"occupancy": ["H-4", "H-5", "I", "R-1"], "story": {"max": 1}}, "value": 10},
-      {"when": {"occupancy": ["S"], "story": {"max": 1}}, "value": 29},
-      {"when": {"occupancy": ["B", "F", "M", "S"], "story": {"max": 2}}, "value": 29},
+      {"when": {"occupancy": ["A", "B", "E", "F", "M", "U"], "story": {"max": 1}}, "value": 49, "conditions": ["75 ft exit access travel at most"], "confirm": true},
+      {"when": {"occupancy": ["H-2", "H-3"], "story": {"max": 1}}, "value": 3, "conditions": ["25 ft exit access travel at most"], "confirm": true},
+      {"when": {"occupancy": ["H-4", "H-5", "I", "R-1"], "story": {"max": 1}}, "value": 10, "conditions": ["75 ft exit access travel at most"], "confirm": true},
+      {"when": {"occupancy": ["S"], "story": {"max": 1}}, "value": 29, "conditions": ["75 ft exit access travel at most"], "confirm": true},
+      {"when": {"occupancy": ["B", "F", "M", "S"], "story": {"max": 2}}, "value": 29, "conditions": ["75 ft exit access travel at most"], "confirm": true},
       {"value": "NP"}
     ]
   },
@@ -95,28 +95,28 @@
     "title": "Longest exit access travel, by occupancy and sprinklers",
     "unit": "ft",
     "cases": [
-      {"when": {"occupancy": ["A", "E", "F-1", "M", "R", "S-1"], "sprinklers": "no"}, "value": 200},
-      {"when": {"occupancy": ["A", "E", "F-1", "M", "R", "S-1"], "sprinklers": "yes"}, "value": 250},
-      {"when": {"occupancy": ["I-1"], "sprinklers": "no"}, "value": "NP"},
-      {"when": {"occupancy": ["I-1"], "sprinklers": "yes"}, "value": 250},
-      {"when": {"occupancy": ["B"], "sprinklers": "no"}, "value": 200},
-      {"when": {"occupancy": ["B"], "sprinklers": "yes"}, "value": 300},
-      {"when": {"occupancy": ["F-2", "S-2", "U"], "sprinklers": "no"}, "value": 300},
-      {"when": {"occupancy": ["F-2", "S-2", "U"], "sprinklers": "yes"}, "value": 400},
-      {"when": {"occupancy": ["H-1"], "sprinklers": "no"}, "value": "NP"},
-      {"when": {"occupancy": ["H-1"], "sprinklers": "yes"}, "value": 75},
-      {"when": {"occupancy": ["H-2"], "sprinklers": "no"}, "value": "NP"},
-      {"when": {"occupancy": ["H-2"], "sprinklers": "yes"}, "value": 100},
-      {"when": {"occupancy": ["H-3"], "sprinklers": "no"}, "value": "NP"},
-      {"when": {"occupancy": ["H-3"], "sprinklers": "yes"}, "value": 150},
-      {"when": {"occupancy": ["H-4"], "sprinklers": "no"}, "value": "NP"},
-      {"when": {"occupancy": ["H-4"], "sprinklers": "yes"}, "value": 175},
-      {"when": {"occupancy": ["H-5"], "sprinklers": "no"}, "value": "NP"},
-      {"when": {"occupancy": ["H-5"], "sprinklers": "yes"}, "value": 200},
-      {"when": {"occupancy": ["I-2", "I-3"], "sprinklers": "no"}, "value": "NP"},
-      {"when": {"occupancy": ["I-2", "I-3"], "sprinklers": "yes"}, "value": 200},
-      {"when": {"occupancy": ["I-4"], "sprinklers": "no"}, "value": 150},
-      {"when": {"occupancy": ["I-4"], "sprinklers": "yes"}, "value": 200}
+      {"when": {"occupancy": ["A", "E", "F-1", "M", "R", "S-1"], "sprinklers": ["NFPA 13", "NFPA 13R"]}, "value": 250},
+      {"when": {"occupancy": ["A", "E", "F-1", "M", "R", "S-1"]}, "value": 200},
+      {"when": {"occupancy": ["I-1"], "sprinklers": ["NFPA 13", "NFPA 13R"]}, "value": 250},
+      {"when": {"occupancy": ["I-1"]}, "value": "NP"},
+      {"when": {"occupancy": ["B"], "sprinklers": ["NFPA 13"]}, "value": 300},
+      {"when": {"occupancy": ["B"]}, "value": 200},
+      {"when": {"occupancy": ["F-2", "S-2", "U"], "sprinklers": ["NFPA 13"]}, "value": 400},
+      {"when": {"occupancy": ["F-2", "S-2", "U"]}, "value": 300},
+      {"when": {"occupancy": ["H-1"], "sprinklers": ["NFPA 13"]}, "value": 75},
+      {"when": {"occupancy": ["H-1"]}, "value": "NP"},
+      {"when": {"occupancy": ["H-2"], "sprinklers": ["NFPA 13"]}, "value": 100},
+      {"when": {"occupancy": ["H-2"]}, "value": "NP"},
+      {"when": {"occupancy": ["H-3"], "sprinklers": ["NFPA 13"]}, "value": 150},
+      {"when": {"occupancy": ["H-3"]}, "value": "NP"},
+      {"when": {"occupancy": ["H-4"], "sprinklers": ["NFPA 13"]}, "value": 175},
+      {"when": {"occupancy": ["H-4"]}, "value": "NP"},
+      {"when": {"occupancy": ["H-5"], "sprinklers": ["NFPA 13"]}, "value": 200},
+      {"when": {"occupancy": ["H-5"]}, "value": "NP"},
+      {"when": {"occupancy": ["I-2", "I-3"], "sprinklers": ["NFPA 13"]}, "value": 200},
+      {"when": {"occupancy": ["I-2", "I-3"]}, "value": "NP"},
+      {"when": {"occupancy": ["I-4"], "sprinklers": ["NFPA 13"]}, "value": 200},
+      {"when": {"occupancy": ["I-4"]}, "value": 150}
     ]
   },
   "ibc.1020.3": {
@@ -125,6 +125,7 @@
     "unit": "in",
     "cases": [
       {"when": {"occupancy": ["I-2"]}, "value": 96, "conditions": ["Applies where beds are moved"], "confirm": true},
+      {"when": {"occupancy": ["B"], "use": "stretcher traffic"}, "value": 72, "conditions": ["The corridor serves stretcher traffic for outpatient care"], "confirm": true},
       {"when": {"occupancy": ["E"], "occupant_load": {"min": 100}}, "value": 72},
       {"when": {"occupancy": ["A", "B", "E", "F", "H", "I-1", "I-3", "I-4", "M", "R", "S", "U"], "occupant_load": {"max": 49}}, "value": 36},
       {"when": {"occupancy": ["E"], "occupant_load": {"min": 50}}, "value": 44},
@@ -136,13 +137,13 @@
     "title": "Dead-end corridor length",
     "unit": "ft",
     "cases": [
-      {"when": {"occupancy": ["B", "E", "F", "I-1", "M", "R-1", "R-2", "S", "U"], "sprinklers": "yes"}, "value": 50},
+      {"when": {"occupancy": ["B", "E", "F", "I-1", "M", "R-1", "R-2", "S", "U"], "sprinklers": ["NFPA 13"]}, "value": 50},
       {"value": 20}
     ],
     "overrides": {
       "seattle": [
         {"when": {"occupancy": ["B"], "construction": ["IA", "IB"], "occupant_load": {"max": 50}}, "value": 75},
-        {"when": {"occupancy": ["B", "E", "F", "I-1", "M", "R-1", "R-2", "S", "U"], "sprinklers": "yes"}, "value": 50},
+        {"when": {"occupancy": ["B", "E", "F", "I-1", "M", "R-1", "R-2", "S", "U"], "sprinklers": ["NFPA 13"]}, "value": 50},
         {"value": 25}
       ]
     }

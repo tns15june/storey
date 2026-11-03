@@ -4,11 +4,11 @@ from pathlib import Path
 
 import pytest
 
-from storey.rules import JURISDICTIONS, ROWS, rule, stricter_when_unknown
+from storey.rules import JURISDICTIONS, ROWS, SYSTEMS, rule, stricter_when_unknown
 
 RESEARCH = Path(__file__).resolve().parent.parent / "data/rules/ibc2021_egress.json"
 T1, T2 = "ibc.1006.3.4.t1", "ibc.1006.3.4.t2"
-REDUCED = {"occupancy": "B", "sprinklers": "yes", "voice_alarm": "yes"}
+REDUCED = {"occupancy": "B", "sprinklers": "NFPA 13", "voice_alarm": "yes"}
 GROUPS = "A-1 A-2 A-3 A-4 A-5 B E F-1 F-2 H-1 H-2 H-3 H-4 H-5 I-1 I-2 I-3 I-4 M R-1 R-2 R-3 R-4 S-1 S-2 U".split()
 PROBES = [  # rule id, research table row, research field, inputs that should land on that cell
     ("ibc.1005.3.1", 0, "factor", {}),
@@ -18,12 +18,13 @@ PROBES = [  # rule id, research table row, research field, inputs that should la
     ("ibc.1006.3.3", 0, "min_exits", {"occupant_load": 500}),
     ("ibc.1006.3.3", 1, "min_exits", {"occupant_load": 1000}),
     ("ibc.1006.3.3", 2, "min_exits", {"occupant_load": 1001}),
-    (T1, 1, "max_dwelling_units", {"story": 4, "sprinklers": "yes"}),
+    (T1, 1, "max_dwelling_units", {"story": 4, "sprinklers": "NFPA 13"}),
     ("ibc.1010.1.1", 0, "min", {"occupancy": "B"}),
     ("ibc.1010.1.1", 1, "min", {"occupancy": "I-2"}),
     ("ibc.1020.3", 0, "min_width", {"occupancy": "B", "occupant_load": 50}),
     ("ibc.1020.3", 2, "min_width", {"occupancy": "B", "occupant_load": 49}),
     ("ibc.1020.3", 4, "min_width", {"occupancy": "E", "occupant_load": 100}),
+    ("ibc.1020.3", 5, "min_width", {"occupancy": "B", "occupant_load": 50, "use": "stretcher traffic"}),
     ("ibc.1020.3", 6, "min_width", {"occupancy": "I-2", "occupant_load": 50}),
     ("ibc.1020.5", 0, "max_length", {}),
 ]
@@ -50,11 +51,11 @@ def test_dead_end_seattle_25_houston_20():
     assert rule("ibc.1020.5", "seattle")["value"] == 25
     assert rule("ibc.1020.5", "houston")["value"] == 20
     assert rule("ibc.1020.5", "philadelphia")["value"] == 20
-    assert rule("ibc.1020.5", "houston", occupancy="B", sprinklers="yes")["value"] == 50
+    assert rule("ibc.1020.5", "houston", occupancy="B", sprinklers="NFPA 13")["value"] == 50
 
 
 def test_seattle_dead_end_exceptions():
-    assert rule("ibc.1020.5", "seattle", occupancy="B", sprinklers="yes")["value"] == 50
+    assert rule("ibc.1020.5", "seattle", occupancy="B", sprinklers="NFPA 13")["value"] == 50
     assert rule("ibc.1020.5", "seattle", occupancy="B", construction="IB", occupant_load=50)["value"] == 75
     assert rule("ibc.1020.5", "seattle", occupancy="B", construction="IA", occupant_load=50)["value"] == 75
     assert rule("ibc.1020.5", "seattle", occupancy="B", construction="IB", occupant_load=51)["value"] == 25
@@ -65,12 +66,12 @@ def test_seattle_dead_end_exceptions():
 def test_dead_end_50_ft_groups():
     for group in GROUPS:
         reduced = group in "B E F-1 F-2 I-1 M R-1 R-2 S-1 S-2 U".split()
-        assert rule("ibc.1020.5", "houston", occupancy=group, sprinklers="yes")["value"] == (50 if reduced else 20), group
-        assert rule("ibc.1020.5", "seattle", occupancy=group, sprinklers="yes")["value"] == (50 if reduced else 25), group
+        assert rule("ibc.1020.5", "houston", occupancy=group, sprinklers="NFPA 13")["value"] == (50 if reduced else 20), group
+        assert rule("ibc.1020.5", "seattle", occupancy=group, sprinklers="NFPA 13")["value"] == (50 if reduced else 25), group
 
 
 def test_travel_distance_b_sprinklered():
-    row = rule("ibc.1017.2", "houston", occupancy="B", sprinklers="yes")
+    row = rule("ibc.1017.2", "houston", occupancy="B", sprinklers="NFPA 13")
     assert row == {"value": 300, "unit": "ft", "section": "Table 1017.2", "adopted": JURISDICTIONS["houston"], "title": ROWS["ibc.1017.2"]["title"]}
     assert rule("ibc.1017.2", "houston", occupancy="B", sprinklers="no")["value"] == 200
     assert set(JURISDICTIONS) == {"houston", "philadelphia", "seattle"}
@@ -83,8 +84,57 @@ def test_unknown_sprinkler_uses_stricter():
     assert stricter_when_unknown("ibc.1005.3.1", "houston", occupancy="B", voice_alarm="yes")["value"] == 0.3   # more inches per person is stricter
     assert stricter_when_unknown("ibc.1005.3.2", "houston", occupancy="B", voice_alarm="yes")["value"] == 0.2
     assert stricter_when_unknown("ibc.1006.3.3", "houston", occupant_load=10)["value"] == 2
-    for status in (None, "conditional", "not_stated"):
+    for status in (None, "conditional", "not_stated", "yes"):
         assert stricter_when_unknown("ibc.1017.2", "houston", occupancy="B", sprinklers=status)["value"] == 200
+
+
+def test_a_sprinklered_value_needs_the_standard_its_row_names():
+    """Presence with no standard read, or a standard the row does not take, gives the value without sprinklers.
+    The code takes 13R in 1005.3, Table 1006.3.4(1) and the travel rows of A, E, F-1, M, R, S-1 and I-1, and NFPA 13 alone elsewhere."""
+    for status in ("yes", "NFPA 13R", "NFPA 13D", None):
+        assert rule("ibc.1017.2", "houston", occupancy="B", sprinklers=status)["value"] == 200, status
+        assert rule("ibc.1020.5", "houston", occupancy="B", sprinklers=status)["value"] == 20, status
+        assert rule(T1, "seattle", story=5, sprinklers=status)["value"] == "NP", status   # item 7 names NFPA 13
+    for status in ("yes", "NFPA 13D", None):
+        assert rule("ibc.1017.2", "houston", occupancy="R-2", sprinklers=status)["value"] == 200, status
+        assert rule(T1, "houston", story=3, sprinklers=status)["value"] == "NP", status
+        assert rule("ibc.1005.3.2", "houston", **{**REDUCED, "sprinklers": status})["value"] == 0.2, status
+    assert rule("ibc.1017.2", "houston", occupancy="R-2", sprinklers="NFPA 13R")["value"] == 250
+    assert rule(T1, "houston", story=3, sprinklers="NFPA 13R")["value"] == {"max_dwelling_units": 4, "max_exit_access_travel": 125}
+    assert rule("ibc.1005.3.2", "houston", **{**REDUCED, "sprinklers": "NFPA 13R"})["value"] == 0.15
+
+
+def test_every_sprinklered_case_takes_nfpa_13():
+    """So a statement read as 13R or 13D where it means NFPA 13 never reaches a case NFPA 13 would not."""
+    for row in ROWS.values():
+        for case in [*row["cases"], *(case for cases in row.get("overrides", {}).values() for case in cases)]:
+            assert "NFPA 13" in case.get("when", {}).get("sprinklers", ["NFPA 13"]), row["section"]
+
+
+def test_nfpa_13_allows_one_exit_wherever_a_system_does_at_the_lowest_travel_limit():
+    """With no system read, findings compares travel with Table 1006.3.4(1) at NFPA 13, because for travel the lower limit is the stricter."""
+    for jurisdiction in JURISDICTIONS:
+        for story in range(1, 8):
+            limits = [found["value"]["max_exit_access_travel"] for found in (rule(T1, jurisdiction, story=story, sprinklers=s) for s in SYSTEMS) if found["value"] != "NP"]
+            lenient = rule(T1, jurisdiction, story=story, sprinklers="NFPA 13")["value"]
+            assert not limits or lenient != "NP" and lenient["max_exit_access_travel"] == min(limits), (jurisdiction, story)
+
+
+def test_a_case_that_needs_a_fact_nobody_read_comes_back_under_unless():
+    """No stage reads a corridor's use, so the 72 in of stretcher traffic can apply to any business corridor."""
+    found = rule("ibc.1020.3", "houston", occupancy="B", occupant_load=120)
+    assert found["value"] == 44 and [case["value"] for case in found["unless"]] == [72] and found["unless"][0]["confirm"] is True
+    assert rule("ibc.1020.3", "houston", occupancy="B", occupant_load=120, use="stretcher traffic")["value"] == 72
+    assert "unless" not in rule("ibc.1020.3", "houston", occupancy="R-2", occupant_load=120)
+    assert "unless" not in rule("ibc.1017.2", "houston", occupancy="B", sprinklers="NFPA 13")
+
+
+def test_one_exit_for_other_occupancies_asks_for_its_travel_limit():
+    """Table 1006.3.4(2) also caps exit access travel, which is measured only as a minimum, so a person confirms it."""
+    found = rule(T2, "houston", occupancy="B", story=2)
+    assert found["value"] == 29 and found["confirm"] is True and found["conditions"] == ["75 ft exit access travel at most"]
+    assert rule(T2, "houston", occupancy="H-3", story=1)["conditions"] == ["25 ft exit access travel at most"]
+    assert "confirm" not in rule(T2, "houston", occupancy="B", story=3)
 
 
 def test_every_row_has_section_value_unit():
@@ -103,8 +153,8 @@ def test_no_row_contains_a_sentence_over_12_words():
 
 
 def test_seattle_r2_single_exit_differs_from_houston():
-    houston = rule(T1, "houston", story=5, sprinklers="yes")
-    seattle = rule(T1, "seattle", story=5, sprinklers="yes")
+    houston = rule(T1, "houston", story=5, sprinklers="NFPA 13")
+    seattle = rule(T1, "seattle", story=5, sprinklers="NFPA 13")
     assert houston["value"] == "NP" and "confirm" not in houston
     assert seattle["value"] == {"max_dwelling_units": 4, "max_exit_access_travel": 125}
     assert seattle["section"] == "1006.3.4 item 7"
@@ -112,23 +162,23 @@ def test_seattle_r2_single_exit_differs_from_houston():
 
 
 def test_seattle_single_exit_limits():
-    assert rule(T1, "seattle", story=6, sprinklers="yes")["value"] == "NP"
+    assert rule(T1, "seattle", story=6, sprinklers="NFPA 13")["value"] == "NP"
     assert rule(T1, "seattle", story=5, sprinklers="no")["value"] == "NP"
-    assert rule(T1, "seattle", sprinklers="yes")["value"] == "NP"
+    assert rule(T1, "seattle", sprinklers="NFPA 13")["value"] == "NP"
     assert stricter_when_unknown(T1, "seattle", story=5)["value"] == "NP"
-    assert rule(T1, "seattle", story=3, sprinklers="yes") == {**rule(T1, "houston", story=3, sprinklers="yes"), "adopted": JURISDICTIONS["seattle"]}
-    assert rule(T1, "seattle", story=4, sprinklers="yes")["confirm"] is True
-    assert rule(T1, "seattle", story=4, sprinklers="yes")["section"] == "1006.3.4 item 7"
+    assert rule(T1, "seattle", story=3, sprinklers="NFPA 13") == {**rule(T1, "houston", story=3, sprinklers="NFPA 13"), "adopted": JURISDICTIONS["seattle"]}
+    assert rule(T1, "seattle", story=4, sprinklers="NFPA 13")["confirm"] is True
+    assert rule(T1, "seattle", story=4, sprinklers="NFPA 13")["section"] == "1006.3.4 item 7"
 
 
 def test_r2_single_exit_asks_a_person():
     for jurisdiction in JURISDICTIONS:
-        found = rule(T1, jurisdiction, story=3, sprinklers="yes")
+        found = rule(T1, jurisdiction, story=3, sprinklers="NFPA 13")
         assert found["value"] == {"max_dwelling_units": 4, "max_exit_access_travel": 125}
         assert found["section"] == "Table 1006.3.4(1)"
         assert found["confirm"] is True
-        assert found["conditions"] == ["4 units per floor at most", "Emergency escape openings at sleeping rooms"]
-    assert rule(T1, "houston", story=4, sprinklers="yes")["value"] == "NP"
+        assert found["conditions"] == ["4 dwelling units per floor at most", "Emergency escape openings at sleeping rooms"]
+    assert rule(T1, "houston", story=4, sprinklers="NFPA 13")["value"] == "NP"
 
 
 def test_exits_by_occupant_load():
@@ -151,7 +201,7 @@ def test_exits_by_occupant_load():
 def test_travel_distance_table(groups, unsprinklered, sprinklered):
     for group in groups.split():
         assert rule("ibc.1017.2", "houston", occupancy=group, sprinklers="no")["value"] == unsprinklered, group
-        assert rule("ibc.1017.2", "houston", occupancy=group, sprinklers="yes")["value"] == sprinklered, group
+        assert rule("ibc.1017.2", "houston", occupancy=group, sprinklers="NFPA 13")["value"] == sprinklered, group
 
 
 @pytest.mark.parametrize("groups, first, second", [
@@ -183,7 +233,7 @@ def test_door_width_general():
 
 
 def test_mixed_occupancy_fits_no_group():
-    assert rule("ibc.1005.3.2", "houston", occupancy="A-3/I-2", sprinklers="yes", voice_alarm="yes")["value"] == 0.2
+    assert rule("ibc.1005.3.2", "houston", occupancy="A-3/I-2", sprinklers="NFPA 13", voice_alarm="yes")["value"] == 0.2
     assert rule(T2, "houston", occupancy="A-3/I-4", story=1)["value"] == "NP"
 
 
@@ -193,10 +243,10 @@ def test_number_given_as_text_counts_as_unread():
 
 
 def test_occupancy_division_falls_in_its_group():
-    assert rule("ibc.1017.2", "houston", occupancy="R-2", sprinklers="yes")["value"] == 250
-    assert rule("ibc.1017.2", "houston", occupancy="S-2", sprinklers="yes")["value"] == 400
-    assert rule("ibc.1017.2", "houston", occupancy="I-2", sprinklers="yes")["value"] == 200
-    assert rule("ibc.1020.5", "houston", occupancy="R-3", sprinklers="yes")["value"] == 20
+    assert rule("ibc.1017.2", "houston", occupancy="R-2", sprinklers="NFPA 13")["value"] == 250
+    assert rule("ibc.1017.2", "houston", occupancy="S-2", sprinklers="NFPA 13")["value"] == 400
+    assert rule("ibc.1017.2", "houston", occupancy="I-2", sprinklers="NFPA 13")["value"] == 200
+    assert rule("ibc.1020.5", "houston", occupancy="R-3", sprinklers="NFPA 13")["value"] == 20
     assert rule(T2, "houston", occupancy="H-1", story=1)["value"] == "NP"
 
 
@@ -218,11 +268,11 @@ def test_bed_movement_values_ask_a_person():
 @pytest.mark.parametrize("id, jurisdiction, inputs", [
     ("ibc.9999", "houston", {}),
     ("ibc.1023.3", "gotham", {}),
-    ("ibc.1017.2", "houston", {"occupancy": "Business", "sprinklers": "yes"}),
-    ("ibc.1017.2", "houston", {"occupancy": "B"}),
+    ("ibc.1017.2", "houston", {"occupancy": "Business", "sprinklers": "NFPA 13"}),
+    ("ibc.1017.2", "houston", {"sprinklers": "NFPA 13"}),
     ("ibc.1006.3.3", "houston", {"occupant_load": 0}),
-    ("ibc.1017.2", "houston", {"occupancy": "A-3/B", "sprinklers": "yes"}),
-    ("ibc.1017.2", "houston", {"occupancy": "A-3, B", "sprinklers": "yes"}),
+    ("ibc.1017.2", "houston", {"occupancy": "A-3/B", "sprinklers": "NFPA 13"}),
+    ("ibc.1017.2", "houston", {"occupancy": "A-3, B", "sprinklers": "NFPA 13"}),
     ("ibc.1006.3.3", "houston", {"occupant_load": "43"}),
     ("ibc.1006.3.3", "houston", {"occupant_load": "not printed"}),
     ("ibc.1020.3", "houston", {"occupancy": "E"}),
@@ -249,18 +299,22 @@ def test_values_match_research_file():
     for id, index, field, inputs in PROBES:
         assert rule(id, "houston", **inputs)["value"] == research[id]["table"][index][field], (id, index)
     first = research[T1]["table"][0]
-    assert rule(T1, "houston", story=3, sprinklers="yes")["value"] == {k: first[k] for k in ("max_dwelling_units", "max_exit_access_travel")}
+    assert rule(T1, "houston", story=3, sprinklers="NFPA 13")["value"] == {k: first[k] for k in ("max_dwelling_units", "max_exit_access_travel")}
     assert rule("ibc.1023.3", "houston")["value"] == research["ibc.1023.3"]["value"]
     single = research[T2]["table"]
     dead_end_groups = research["ibc.1020.5"]["table"][2]["case"].removesuffix(" with NFPA 13")
     for group in GROUPS:
         travel = next(row for row in research["ibc.1017.2"]["table"] if listed(row["occupancy"], group))
-        assert rule("ibc.1017.2", "houston", occupancy=group, sprinklers="yes")["value"] == travel["sprinklered"], group
+        assert rule("ibc.1017.2", "houston", occupancy=group, sprinklers="NFPA 13")["value"] == travel["sprinklered"], group
+        assert rule("ibc.1017.2", "houston", occupancy=group, sprinklers="NFPA 13R")["value"] == travel["sprinklered" if "13R" in travel["sprinkler_standard"] else "unsprinklered"], group
         assert rule("ibc.1017.2", "houston", occupancy=group, sprinklers="no")["value"] == travel["unsprinklered"], group
-        first = next((row["max_occupants"] for row in single[:4] if listed(row["occupancy"], group)), "NP")   # R-2 sleeping units are left out, no stage reads them
-        assert rule(T2, "houston", occupancy=group, story=1)["value"] == first, group
+        first = next((row for row in single[:4] if listed(row["occupancy"], group)), None)   # R-2 sleeping units are left out, no stage reads them
+        found = rule(T2, "houston", occupancy=group, story=1)
+        assert found["value"] == (first["max_occupants"] if first else "NP"), group
+        assert found.get("conditions") == ([f"{first['max_exit_access_travel']} ft exit access travel at most"] if first else None), group
         assert rule(T2, "houston", occupancy=group, story=2)["value"] == (single[4]["max_occupants"] if listed(single[4]["occupancy"], group) else "NP"), group
         assert rule(T2, "houston", occupancy=group, story=3)["value"] == single[5]["max_occupants"], group
         for jurisdiction, general in (("houston", research["ibc.1020.5"]["table"][0]["max_length"]), ("seattle", 25)):
             expected = research["ibc.1020.5"]["table"][2]["max_length"] if listed(dead_end_groups, group) else general
-            assert rule("ibc.1020.5", jurisdiction, occupancy=group, sprinklers="yes")["value"] == expected, group
+            assert rule("ibc.1020.5", jurisdiction, occupancy=group, sprinklers="NFPA 13")["value"] == expected, group
+            assert rule("ibc.1020.5", jurisdiction, occupancy=group, sprinklers="NFPA 13R")["value"] == general, group   # the research notes say 13R does not qualify

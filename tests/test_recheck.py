@@ -8,11 +8,11 @@ import numpy as np
 import pymupdf
 import pytest
 
-from storey import findings, floors, ingest, meta, pipeline, recheck
+from storey import declared, findings, floors, ingest, meta, pipeline, recheck
 from storey.assemble import CROP_PAD, assemble, evaluate_stage
 from storey.meta import Meter
 from storey.pipeline import Context, read_json, run, write_json
-from storey.recheck import CLOUDS_DRAFT, NOT_COMPARED, recheck_stage
+from storey.recheck import CLOUDS_DRAFT, NOT_CARRIED, NOT_COMPARED, recheck_stage
 from storey.verticals import verticals_stage
 
 PARENT, CHILD = "a" * 32, "b" * 32
@@ -77,7 +77,8 @@ def finding(comment_id, sheet, box, key=None):
             "measured": "m", "required": "r", "rule": "", "evidence": "e", "vertical": None}
 
 
-def folder(root, name, source, numbers, findings=(), parent=None):
+def folder(root, name, source, numbers, findings=(), parent=None, compared=()):
+    """`compared` are the keys the stored checks compared with every fact read."""
     path = root / "reviews" / name
     path.mkdir(parents=True)
     sheets = ingest.ingest([source], path)
@@ -88,7 +89,7 @@ def folder(root, name, source, numbers, findings=(), parent=None):
     write_json(path / "stage_verticals.json", {"verticals": [{"id": "A", "name": "Stair", "established": True, "pos": None, "floors": {}}], "not_checked": []})
     write_json(path / "stage_declared.json", {"code": {}})
     write_json(path / "stage_vector.json", {"sheets": {}})
-    write_json(path / "stage_evaluate.json", {"findings": list(findings), "open_items": [], "not_checked": [], "choices": {"jurisdiction": "houston", "sprinklers": None, "discharge": None},
+    write_json(path / "stage_evaluate.json", {"findings": list(findings), "open_items": [], "not_checked": [], "compared": list(compared), "choices": {"jurisdiction": "houston", "sprinklers": None, "discharge": None},
                                               "ids": {f["key"]: f["comment_id"] for f in findings}})
     return path
 
@@ -113,11 +114,11 @@ def isolated(tmp_path, monkeypatch):
     meta.set_transport(None)
 
 
-def pair(tmp_path, comments=(), raised=(), old=((True, False),), new=((False, False),), numbers=("A1.1",), new_numbers=None):
-    """A parent review and its child, one PDF each. `raised` are the findings the child's checks raised again."""
+def pair(tmp_path, comments=(), raised=(), old=((True, False),), new=((False, False),), numbers=("A1.1",), new_numbers=None, compared=None):
+    """A parent review and its child, one PDF each. `raised` are the findings the child's checks raised again, and `compared` the keys they compared with every fact read, by default every comment's."""
     tmp_path.joinpath("in").mkdir(exist_ok=True)
     parent = folder(tmp_path, PARENT, pdf(tmp_path / "in/old.pdf", *old), numbers, comments)
-    child = folder(tmp_path, CHILD, pdf(tmp_path / "in/new.pdf", *new), new_numbers or numbers, raised, parent=PARENT)
+    child = folder(tmp_path, CHILD, pdf(tmp_path / "in/new.pdf", *new), new_numbers or numbers, raised, parent=PARENT, compared=[f["key"] for f in comments] if compared is None else compared)
     return parent, child
 
 
@@ -392,7 +393,7 @@ def test_a_real_size_change_is_found_on_the_new_sheets_pixels(tmp_path, monkeypa
     scale = 6000 / 2592
     parent = folder(tmp_path, PARENT, pdf(tmp_path / "in/a.pdf", (True, False), size=(2592, 1728)), ("A1.1",), [finding("A-01", 0, [v * scale for v in STAIR])])
     monkeypatch.setattr(ingest, "MAX_EDGE", 5400)
-    child = folder(tmp_path, CHILD, pdf(tmp_path / "in/b.pdf", (False, True), size=(2592, 1728)), ("A1.1",), parent=PARENT)
+    child = folder(tmp_path, CHILD, pdf(tmp_path / "in/b.pdf", (False, True), size=(2592, 1728)), ("A1.1",), parent=PARENT, compared=["key-A-01"])
     result = recheck_stage(context(child))
     assert by_id(result)["A-01"]["state"] == "resolved_looks"
     assert any(overlaps(c["box"], [v * 5400 / 2592 for v in NOTE]) for c in result["changes"])
@@ -716,8 +717,20 @@ def test_a_stage_with_no_result_is_cannot_tell(tmp_path):
     assert state_after(child)[0] == "unknown"
 
 
+def title_comment():
+    """A sheet title comment on A1.1, under the key the checks give it."""
+    return finding("A-01", 0, px(STAIR)) | {"check": 3, "key": findings._key(3, "A1.1", "title")}
+
+
+def titles_agree(path):
+    """The set declares A1.1 once, and its title block and its index row agree."""
+    write_json(path / "stage_declared.json", {"code": {}, "index": [{"number": "A1.1", "title": "PLAN A1.1", "not_used": False, "sheet": 0, "box": None}],
+                                              "titles": [{"sheet": 0, "number": "A1.1", "title": "PLAN A1.1", "under_drawing": None, "source": "text", "judge": None, "box": None}], "cannot_tell": []})
+
+
 def test_a_comment_on_a_stage_that_failed_with_no_bearing_on_it_can_still_read_resolved(tmp_path):
-    _, child = pair(tmp_path, [finding("A-01", 0, px(STAIR)) | {"check": 3}])
+    _, child = pair(tmp_path, [title_comment()])
+    titles_agree(child)
     write_json(child / "stage_verticals.json", {"failed": "Follow the stairs did not finish."})
     run_checks(child)
     assert state_after(child)[0] == "resolved_looks"
@@ -733,18 +746,44 @@ def test_a_sheet_outside_the_new_floor_order_or_not_aligned_is_cannot_tell(tmp_p
     assert state_after(child)[0] == "unknown"
 
 
+def code_sheet_and_plan(path, code):
+    """Sheet 0 is the code sheet, outside the floor order, and sheet 1 the one plan. `code` is what the code sheet declares."""
+    rows = read_json(path / "stage_read.json")
+    rows["sheets"][0] |= {"title": "CODE SUMMARY", "cls": "code_summary"}
+    write_json(path / "stage_read.json", rows)
+    write_json(path / "stage_floors.json", read_json(path / "stage_floors.json") | {"order": [1], "discharge": 1})
+    declare(path, code)
+
+
 def test_a_comment_on_a_sheet_with_no_floor_can_read_resolved(tmp_path):
     """A code sheet is in no floor order, and a stories comment is settled there."""
-    _, child = pair(tmp_path, [finding("A-01", 0, px(STAIR)) | {"check": 5}])
-    write_json(child / "stage_floors.json", {"order": [], "order_read": True, "not_checked": None})
-    run_checks(child)
-    assert state_after(child)[0] == "resolved_looks"
+    parent, child = pair(tmp_path, old=((True, False), (False, False)), new=((False, False), (False, False)), numbers=("G0.1", "A1.1"))
+    for path, stories in ((parent, "2 STORIES"), (child, "1 STORY")):
+        code_sheet_and_plan(path, {"stories": {"value": stories, "sheet": 0, "box": px(STAIR), "reads": 2}})
+        run_checks(path)
+    comment = next(f for f in read_json(parent / "stage_evaluate.json")["findings"] if f["check"] == 5)
+    assert state_after(child, comment["comment_id"])[0] == "resolved_looks"
+
+
+STAIR_AT = px(((STAIR[0] + STAIR[2]) / 2, (STAIR[1] + STAIR[3]) / 2))
+
+
+def found_on(*sheets, established=True):
+    """The stair stage: stair A at the stair's place, found on each sheet given."""
+    cell = {"state": "found", "signals": {}, "point": STAIR_AT, "box": None, "crop": None, "mask": None}
+    return {"verticals": [{"id": "A", "name": "Stair", "established": established, "pos": STAIR_AT, "floors": {str(i): cell for i in sheets}}], "not_checked": []}
+
+
+def stair_key(number, check=9):
+    return findings._key(check, number, "stair", findings._cell(STAIR_AT))
 
 
 def test_the_floor_order_is_read_on_the_new_sets_sheet_numbers(tmp_path):
-    """The comment is on sheet 1 of the old set, and that sheet is sheet 0 of the new one."""
-    _, child = pair(tmp_path, [stair_comment() | {"sheet": 1}], old=((False, False), (True, False)), new=((False, False), (False, False)), numbers=("A1.0", "A1.1"), new_numbers=("A1.1", "A1.0"))
-    write_json(child / "stage_floors.json", {"order": [0], "order_read": True, "unaligned": [], "discharge": 0, "not_checked": None})
+    """The comment is on sheet 1 of the old set, and that sheet is sheet 0 of the new one, where the stair is drawn back and found."""
+    comment = stair_comment() | {"sheet": 1, "key": stair_key("A1.1")}
+    _, child = pair(tmp_path, [comment], old=((True, False), (False, False)), new=((True, False), (True, False)), numbers=("A1.0", "A1.1"), new_numbers=("A1.1", "A1.0"))
+    write_json(child / "stage_floors.json", {"order": [1, 0], "order_read": True, "unaligned": [], "discharge": 1, "not_checked": None})
+    write_json(child / "stage_verticals.json", found_on(0, 1))
     run_checks(child)
     assert state_after(child)[0] == "resolved_looks"
 
@@ -912,3 +951,215 @@ def test_a_comment_back_in_the_findings_after_a_selector_change_reads_still_open
     assert [f["state"] for f in r["findings"]] == ["open"]
     row = r["recheck"]["comments"][0]
     assert row["state"] == "open" and "again" in row["why"]
+
+
+EDITION_2015 = {"value": "2015 International Building Code", "sheet": 0, "box": None, "reads": 2}
+EDITION_UNREAD = {"value": None, "sheet": 0, "box": None, "reads": 0}
+EDITION_NOTE = {"what": "Code field edition", "why": "Two reads gave 2015 and 2O15.", "sheet": 0}
+
+
+def declare(path, code, notes=(), **facts):
+    write_json(path / "stage_declared.json", {"code": code, "cannot_tell": list(notes), **facts})
+
+
+def raised_by_checks(path, check, title=""):
+    return next(f for f in read_json(path / "stage_evaluate.json")["findings"] if f["check"] == check and f["title"].startswith(title))
+
+
+@pytest.mark.parametrize("box, where", [(px(TAG), "place"), (None, "sheet")])
+def test_an_edition_the_new_set_did_not_read_is_cannot_tell(tmp_path, box, where):
+    """The first review flags a 2015 edition under check 5. On the resubmittal two reads of the edition disagree, which the checks note under check 4, and the drawing changed at the comment."""
+    parent, child = pair(tmp_path, old=((True, False, "6"),), new=((False, False, "5"),))   # the year's digit replaced in place, and a stair erased elsewhere on the sheet
+    declare(parent, {"edition": EDITION_2015 | {"box": box}})
+    run_checks(parent)
+    declare(child, {"edition": EDITION_UNREAD}, [EDITION_NOTE])
+    run_checks(child)
+    assert state_after(child, raised_by_checks(parent, 5)["comment_id"]) == ("unknown", recheck.NOT_TOLD.format(where))
+
+
+def test_an_edition_read_on_the_new_set_and_adopted_looks_resolved(tmp_path):
+    parent, child = pair(tmp_path, old=((True, False, "6"),), new=((False, False, "5"),))
+    declare(parent, {"edition": EDITION_2015 | {"box": px(TAG)}})
+    run_checks(parent)
+    declare(child, {"edition": EDITION_2015 | {"value": "2021 International Building Code"}})
+    run_checks(child)
+    assert state_after(child, raised_by_checks(parent, 5)["comment_id"])[0] == "resolved_looks"
+
+
+def test_a_stair_seen_by_one_run_at_the_comments_place_is_cannot_tell(tmp_path):
+    """Another stair was followed and found on this floor, which is no proof for the stair this comment is about."""
+    _, child = pair(tmp_path, [stair_comment() | {"key": stair_key("A1.1")}], old=((False, False),), new=((True, False),))
+    elsewhere = found_on(0)["verticals"][0] | {"id": "B", "pos": [3000.0, 1800.0]}
+    write_json(child / "stage_verticals.json", {"verticals": [found_on(0, established=False)["verticals"][0], elsewhere], "not_checked": []})
+    run_checks(child)
+    assert state_after(child) == ("unknown", recheck.NOT_TOLD.format("place"))
+
+
+def test_door_tags_whose_schedule_the_new_set_did_not_read_are_cannot_tell(tmp_path):
+    """The schedule's own sheet holds the doubt, and the comment is on the plan."""
+    comment = finding("A-01", 0, px(STAIR)) | {"key": findings._key(7, "A1.1", "tags door"), "title": "Door tags with no schedule row: 2010"}
+    _, child = pair(tmp_path, [comment], old=((True, False), (False, False)), new=((False, False), (False, False)), numbers=("A1.1", "A6.1"))
+    declare(child, {}, [{"what": "Door schedule", "why": "No ruled table was found on this sheet, so it was not read.", "sheet": 1}], tags=[{"sheet": 0, "kind": "door", "mark": "2010", "point": [1000.0, 700.0]}], schedules=[])
+    run_checks(child)
+    assert state_after(child) == ("unknown", recheck.NOT_TOLD.format("place"))
+
+
+LABEL_101 = {"sheet": 0, "number": "101", "name": "STORAGE", "source": "text", "box": px(STAIR)}   # where the stair is erased on the new set, so the label's place changed
+DOOR_101 = {"sheet": 1, "kind": "door", "rows": [{"mark": "101A", "cells": {"ROOM": "STORAGE"}, "box": None}], "source": "spark", "plans": [0]}
+FINISH_101 = {"sheet": 1, "kind": "finish", "rows": [{"mark": "101", "cells": {"NAME": "OFFICE"}, "box": None}], "source": "spark", "plans": []}
+TAG_101A = [{"sheet": 0, "kind": "door", "mark": "101A", "point": [3000.0, 2000.0]}]
+
+
+def plan_and_schedules(tmp_path):
+    return pair(tmp_path, old=((True, False), (False, False)), new=((False, False), (False, False)), numbers=("A1.1", "A6.1"))
+
+
+def test_a_room_name_whose_finish_row_the_new_set_did_not_read_is_cannot_tell(tmp_path):
+    """The finish schedule named room 101 OFFICE against STORAGE on the plan. On the new set only one read saw the row, so declared left it out, and the door schedule's ROOM cell agrees."""
+    parent, child = plan_and_schedules(tmp_path)
+    declare(parent, {}, rooms=[LABEL_101], schedules=[DOOR_101, FINISH_101], tags=TAG_101A)
+    run_checks(parent)
+    declare(child, {}, [{"what": "Finish schedule", "why": "Only one read saw 101.", "sheet": 1}], rooms=[LABEL_101], schedules=[DOOR_101], tags=TAG_101A)
+    run_checks(child)
+    assert state_after(child, raised_by_checks(parent, 16, "Room 101 name")["comment_id"]) == ("unknown", recheck.NOT_TOLD.format("place"))
+
+
+def test_a_room_name_whose_door_row_the_new_set_did_not_read_is_cannot_tell(tmp_path):
+    """The reverse: the door schedule's ROOM cell differed, and on the new set its row is lost while the finish schedule agrees."""
+    parent, child = plan_and_schedules(tmp_path)
+    door, finish = DOOR_101 | {"rows": [{"mark": "101A", "cells": {"ROOM": "OFFICE"}, "box": None}]}, FINISH_101 | {"rows": [{"mark": "101", "cells": {"NAME": "STORAGE"}, "box": None}]}
+    declare(parent, {}, rooms=[LABEL_101], schedules=[door, finish], tags=TAG_101A)
+    run_checks(parent)
+    declare(child, {}, [{"what": "Door schedule", "why": "Only one read saw 101A.", "sheet": 1}], rooms=[LABEL_101], schedules=[finish])
+    run_checks(child)
+    assert state_after(child, raised_by_checks(parent, 16, "Room 101 name")["comment_id"]) == ("unknown", recheck.NOT_TOLD.format("place"))
+
+
+def test_sprinkler_statements_one_read_missed_are_cannot_tell(tmp_path):
+    """declared keeps only the statements both reads make, and notes none that one read alone gave."""
+    reply = {"code_edition": "", "occupancy": "", "occupancy_mentions": [], "construction": "", "sprinklered": "yes", "sprinkler_mentions": ["THE BUILDING IS NOT SPRINKLERED"], "stories": "", "area": "", "occupant_load": ""}
+    code, notes = declared.code_fields({0: [reply, reply | {"sprinkler_mentions": []}]})
+    assert code["sprinklers"]["mentions"] == [] and notes == []
+    parent, child = pair(tmp_path)
+    declare(parent, {"sprinklers": code["sprinklers"] | {"box": px(STAIR), "mentions": reply["sprinkler_mentions"]}})
+    run_checks(parent)
+    declare(child, {"sprinklers": code["sprinklers"] | {"box": px(STAIR)}})
+    run_checks(child)
+    assert state_after(child, raised_by_checks(parent, 4, "Sprinkler statements disagree")["comment_id"]) == ("unknown", recheck.NOT_TOLD.format("place"))
+
+
+INDEX_A11 = [{"number": "A1.1", "title": "FIRST FLOOR PLAN", "not_used": False, "sheet": 0, "box": None}]
+
+
+def spark_title(**fields):
+    return {"sheet": 0, "number": "A1.1", "title": "FIRST FLOOR PLAN", "under_drawing": None, "source": "spark", "judge": None, "box": px(STAIR)} | fields
+
+
+def test_a_floor_name_whose_label_the_new_set_did_not_read_is_cannot_tell(tmp_path):
+    """The title says FIRST FLOOR and the label under the drawing SECOND FLOOR. On the new set the sheet read gave no level, so the label is None and declared leaves no note."""
+    parent, child = pair(tmp_path)
+    declare(parent, {}, titles=[spark_title(under_drawing="SECOND FLOOR")], index=INDEX_A11)
+    run_checks(parent)
+    declare(child, {}, titles=[spark_title()], index=INDEX_A11)
+    run_checks(child)
+    assert state_after(child, raised_by_checks(parent, 3, "Floor name differs")["comment_id"]) == ("unknown", recheck.NOT_TOLD.format("place"))
+
+
+def test_a_title_the_judge_split_on_is_cannot_tell(tmp_path):
+    """Both judge reads called the title and its index row different drawings. On the new set one read says same, and declared stores any split as same."""
+    parent, child = pair(tmp_path)
+    index = [INDEX_A11[0] | {"title": "ENLARGED TOILET PLANS"}]
+    declare(parent, {}, titles=[spark_title(title="MECHANICAL ROOM DETAILS", judge="different")], index=index)
+    run_checks(parent)
+    declare(child, {}, titles=[spark_title(title="MECHANICAL ROOM DETAILS", judge="same")], index=index)
+    run_checks(child)
+    assert state_after(child, raised_by_checks(parent, 3, "Sheet title differs")["comment_id"]) == ("unknown", recheck.NOT_TOLD.format("place"))
+
+
+THIRD = "c" * 32
+
+
+def third(tmp_path, *pages, numbers=("A1.1",), raised=(), compared=()):
+    """A third cycle, on the child. The child's comparison must be stored first."""
+    return folder(tmp_path, THIRD, pdf(tmp_path / "in/third.pdf", *pages), numbers, raised, parent=CHILD, compared=compared)
+
+
+def compare_child(child):
+    result = recheck_stage(context(child))
+    write_json(child / "stage_recheck.json", result)
+    return result
+
+
+def test_a_comment_still_open_in_the_second_cycle_is_compared_in_the_third(tmp_path):
+    """The child's checks no longer raise it and its place did not change, so it is open, and the child's findings do not hold it."""
+    _, child = pair(tmp_path, [finding("A-01", 0, px(QUIET))])
+    second = compare_child(child)
+    assert by_id(second)["A-01"]["state"] == "open" and NOT_CARRIED not in second["not_checked"]
+    row = by_id(recheck_stage(context(third(tmp_path, (False, False)))))["A-01"]
+    assert (row["state"], row["title"]) == ("open", "Comment A-01")
+
+
+def test_a_carried_comment_is_compared_at_its_latest_place(tmp_path):
+    """A1.1 is sheet 1 in the first set and sheet 0 in the second, where its stair is unchanged. The third set erases the stair, and the second set's sheet 1 does not change."""
+    _, child = pair(tmp_path, [finding("A-01", 1, px(STAIR))], old=((False, False), (True, False)), new=((True, False), (False, False)), numbers=("A1.0", "A1.1"), new_numbers=("A1.1", "A1.0"))
+    carried = by_id(compare_child(child))["A-01"]
+    assert carried["state"] == "open" and carried["comment"]["sheet"] == 0 and carried["comment"]["box"] == pytest.approx(px(STAIR), abs=0.1)
+    row = by_id(recheck_stage(context(third(tmp_path, (False, False), (False, False), numbers=("A1.1", "A1.0"), compared=["key-A-01"]))))["A-01"]
+    assert row["state"] == "resolved_looks" and row["old_crop"] and row["new_crop"]
+
+
+def test_a_carried_comment_needs_its_item_compared_again(tmp_path):
+    _, child = pair(tmp_path, [finding("A-01", 0, px(STAIR))], new=((True, False),))
+    compare_child(child)
+    assert state_after(third(tmp_path, (False, False)))[0] == "unknown"
+
+
+def test_a_comment_cannot_tell_in_the_second_cycle_is_compared_in_the_third(tmp_path):
+    _, child = pair(tmp_path, [finding("A-01", 0, px(STAIR))], new_numbers=("B9.9",))
+    assert by_id(compare_child(child))["A-01"]["state"] == "unknown"
+    assert state_after(third(tmp_path, (False, False)))[0] == "unknown"
+
+
+def test_a_comment_resolved_in_the_second_cycle_is_not_carried(tmp_path):
+    _, child = pair(tmp_path, [finding("A-01", 0, px(STAIR))])
+    assert by_id(compare_child(child))["A-01"]["state"] == "resolved_looks"
+    assert "A-01" not in by_id(recheck_stage(context(third(tmp_path, (False, False)))))
+
+
+def test_a_comment_the_examiner_saw_as_cannot_tell_is_compared_in_the_third_cycle(tmp_path):
+    """The second cycle stored Looks resolved, and a selection made after it showed Cannot tell, which review.json holds and the stage file does not."""
+    _, child = pair(tmp_path, [finding("A-01", 0, px(STAIR))])
+    assert by_id(compare_child(child))["A-01"]["state"] == "resolved_looks"
+    write_json(child / "review.json", {"decisions": {}, "recheck": {"comments": [{"comment_id": "A-01", "state": "unknown"}]}})
+    assert by_id(recheck_stage(context(third(tmp_path, (False, False)))))["A-01"]["state"] == "open"
+
+
+def test_a_carried_comment_keeps_its_id_when_the_checks_raise_it_again(tmp_path):
+    """The edition is flagged, then not read, then flagged again: the third set's checks give it its first id, and its row reads Still open."""
+    parent, child = pair(tmp_path)
+    declare(parent, {"edition": EDITION_2015})
+    run_checks(parent)
+    declare(child, {"edition": EDITION_UNREAD}, [EDITION_NOTE])
+    run_checks(child)
+    comment = raised_by_checks(parent, 5)
+    assert by_id(compare_child(child))[comment["comment_id"]]["state"] == "unknown"
+    last = third(tmp_path, (False, False))
+    declare(last, {"edition": EDITION_2015})
+    run_checks(last)
+    assert raised_by_checks(last, 5)["comment_id"] == comment["comment_id"]
+    assert state_after(last, comment["comment_id"]) == ("open", recheck.AGAIN)
+
+
+def test_a_last_comparison_that_did_not_finish_says_its_comments_were_not_carried(tmp_path):
+    _, child = pair(tmp_path, [finding("A-01", 0, px(QUIET))])
+    write_json(child / "stage_recheck.json", {"failed": "Compare with the last review did not finish."})
+    assert NOT_CARRIED in recheck_stage(context(third(tmp_path, (False, False))))["not_checked"]
+
+
+def test_evidence_for_a_key_two_comments_share_resolves_neither(tmp_path):
+    """Two stairs in one grid cell gave the last set one key twice, and the new set's evidence for that key can be the other stair's."""
+    parent, child = pair(tmp_path, [finding("A-01", 0, px(STAIR), key="k@3,2"), finding("A-02", 0, px(STAIR), key="k@3,2#2")], compared=["k@3,2"])
+    rows = by_id(recheck_stage(context(child)))
+    assert rows["A-01"]["state"] == rows["A-02"]["state"] == "unknown"
+    write_json(parent / "review.json", {"decisions": {"k@3,2#2": "drop"}})   # the twin the examiner dropped still shares the key
+    assert by_id(recheck_stage(context(child)))["A-01"]["state"] == "unknown"

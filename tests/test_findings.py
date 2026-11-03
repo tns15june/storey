@@ -68,7 +68,7 @@ def measured(length_ft=100.0):
 def base():
     sheets = [sheet(0, "G0.1", "CODE SUMMARY", "code_summary"), sheet(1, "A1.1", "LIFE SAFETY PLAN", level="FIRST FLOOR"), sheet(2, "A2.1", "FIRST FLOOR PLAN", level="FIRST FLOOR"),
               sheet(3, "A2.2", "SECOND FLOOR PLAN", level="SECOND FLOOR"), sheet(4, "A2.3", "THIRD FLOOR PLAN", level="THIRD FLOOR"), sheet(5, "A6.1", "DOOR SCHEDULE", "schedule"), sheet(6, "C1.0", "SITE PLAN", "site_plan")]
-    code = {"edition": code_field("2021 International Building Code"), "occupancy": code_field("B", mentions=[]), "construction": code_field("IIB"), "sprinklers": code_field("yes", mentions=[]),
+    code = {"edition": code_field("2021 International Building Code"), "occupancy": code_field("B", mentions=[]), "construction": code_field("IIB"), "sprinklers": code_field("yes", mentions=["FULLY SPRINKLERED PER NFPA 13"]),
             "stories": code_field("3 STORIES"), "area": code_field("30,000 SF"), "occupant_load": code_field("120")}
     return {
         "read": {"sheets": sheets},
@@ -413,7 +413,7 @@ def test_check_4_edition_with_no_year_is_check():
 def test_check_4_sprinkler_statements_that_disagree_are_check(value, mention):
     s = base()
     s["declared"]["code"]["sprinklers"] |= {"value": value, "mentions": [mention]}
-    assert only(s, 4)["severity"] == "check"
+    assert [f["severity"] for f in raised(s, 4) if f["title"] == "Sprinkler statements disagree"] == ["check"]
 
 
 def test_check_4_field_two_reads_disagreed_on_is_unknown_once():
@@ -574,6 +574,14 @@ def width_at_the_voice_alarm_factor(s):
 def test_check_6_voice_alarm_factor_on_a_sprinklered_building_is_a_value_to_confirm():
     f = only(width_at_the_voice_alarm_factor(base()), 6)
     assert f["severity"] == "check" and "voice alarm" in f["measured"] and "unsafe" not in f["measured"]
+
+
+def test_check_6_voice_alarm_factor_with_no_standard_read_is_a_value_to_confirm():
+    s = width_at_the_voice_alarm_factor(base())
+    s["declared"]["code"]["sprinklers"]["mentions"] = ["SPRINKLERED THROUGHOUT"]
+    f = only(s, 6)
+    assert f["severity"] == "check" and "0.15" in f["measured"] and "sprinkler standard" in f["measured"] and "unsafe" not in f["measured"]
+    assert "standard" not in only(width_at_the_voice_alarm_factor(base()), 6)["measured"]   # NFPA 13 was read
 
 
 def test_check_6_voice_alarm_factor_with_no_sprinklers_is_unsafe():
@@ -1205,14 +1213,15 @@ def test_check_11_roof_plan_is_not_a_storey():
     assert raised(s, 11) == []
 
 
-def test_check_11_single_exit_group_needs_a_small_load():
+def test_check_11_single_exit_group_needs_a_small_load_and_asks_for_its_travel_limit():
     s = base()
     order = storeys(s, ["FIRST FLOOR", "SECOND FLOOR"])
     s["floors"]["discharge"] = order[0]
     with_stairs(s, stair("A", "found", "found", order=order))
     s["declared"]["code"]["stories"]["value"] = "2"
     s["declared"]["code"]["occupant_load"]["value"] = "29"
-    assert raised(s, 11) == []
+    f = only(s, 11)
+    assert f["severity"] == "unknown" and "75 ft exit access travel" in f["required"] and "Table 1006.3.4(2)" in f["rule"]
     s["declared"]["code"]["occupant_load"]["value"] = "30"
     assert only(s, 11)["severity"] == "check"
 
@@ -1383,6 +1392,57 @@ def test_no_route_compared_means_no_stricter_item():
     assert not any("stricter" in f["title"] for f in run(s)["findings"])
 
 
+def test_sprinklered_with_no_standard_read_uses_the_stricter_limit_and_asks():
+    s = base()
+    s["declared"]["code"]["sprinklers"]["mentions"] = ["AUTOMATIC SPRINKLER SYSTEM: YES"]
+    s["vector"]["sheets"]["3"]["routes"] = [route(160.0)]   # 80% of the 200 ft with no sprinklers, 53% of the 300 ft that needs NFPA 13
+    assert "200" in only(s, 13)["required"]
+    asked = [f for f in raised(s, 4) if "stricter" in f["title"]]
+    assert [f["severity"] for f in asked] == ["unknown"] and "standard" in asked[0]["required"]
+    assert "200" in only(s, 13, sprinklers="yes")["required"]   # the examiner's Sprinklered names no standard either
+
+
+def test_a_standard_the_row_does_not_take_gives_the_limit_with_no_sprinklers():
+    s = base()
+    s["declared"]["code"]["sprinklers"]["mentions"] = ["FULLY SPRINKLERED PER NFPA 13R"]
+    s["vector"]["sheets"]["3"]["routes"] = [route(160.0)]
+    assert "200" in only(s, 13)["required"]   # business travel of 300 ft needs NFPA 13
+    assert not any("stricter" in f["title"] for f in run(s)["findings"])   # the standard was read, so nothing was assumed
+
+
+@pytest.mark.parametrize("mentions, standard", [
+    (["YES, NFPA 13 THROUGHOUT", "5. EVERY STORY IS SPRINKLERED TO NFPA 13."], "NFPA 13"),
+    (["Sprinklered per NFPA-13"], "NFPA 13"),
+    (["AUTOMATIC SPRINKLER SYSTEM PER IBC 903.3.1.1"], "NFPA 13"),
+    (["NFPA 13R SYSTEM"], "NFPA 13R"),
+    (["Sprinklers: 13-R"], "NFPA 13R"),
+    (["SECTION 903.3.1.2"], "NFPA 13R"),
+    (["NFPA 13D"], "NFPA 13D"),
+    (["NFPA 13 AT LEVELS 1 AND 2", "NFPA 13R ABOVE"], None),   # a podium under a residential system is not NFPA 13 throughout
+    (["NFPA 13/13R"], None),
+    (["NFPA 13 NOT REQUIRED"], None),
+    (["NFPA 13\u2013R"], "NFPA 13R"),
+    (["NFPA 13\u2010R"], "NFPA 13R"),
+    (["NFPA 13\u2011R"], "NFPA 13R"),
+    (["NFPA 13/R"], "NFPA 13R"),
+    (["NFPA 13 (R)"], "NFPA 13R"),
+    (["NFPA\u201313D"], "NFPA 13D"),
+    (["SPRINKLERS: 13\u2013R"], "NFPA 13R"),
+    (["NFPA 13\u2212R"], "NFPA 13R"),   # a minus sign
+    (["NFPA 13 - DRY PIPE AT THE ATTIC"], "NFPA 13"),
+    (["SPRINKLERED, SEE NOTE 13/D"], None),   # a bare 13 takes only a dash before R or D
+    (["PARTIAL NFPA 13 AT LEVEL 1 ONLY"], None),
+    (["NFPA 13: NONE"], None),
+    (["NFPA 13 SYSTEM: N/A"], None),
+    (["NFPA 13 THROUGHOUT EXCEPT THE GARAGE"], None),
+    (["NFPA 130 TRANSIT"], None),
+    (["FULLY SPRINKLERED"], None),
+    ([], None),
+])
+def test_the_standard_comes_from_the_sprinkler_statements(mentions, standard):
+    assert findings._standard(mentions) == standard
+
+
 def test_code_sheet_statement_sets_sprinklers_with_no_selector():
     s = base()
     s["vector"]["sheets"]["3"]["routes"] = [route(150.0)]
@@ -1429,6 +1489,32 @@ def test_a_long_route_on_the_level_of_exit_discharge_asks_how_many_exits_it_has(
     assert raised(s, 13, jurisdiction=city) == []
 
 
+@pytest.mark.parametrize("statement", [{"mentions": ["SPRINKLERED THROUGHOUT"]}, {"value": None, "mentions": []}], ids=["sprinklered with no standard", "no statement"])
+def test_a_floor_whose_one_exit_rests_on_an_unread_standard_is_cannot_tell_against_its_travel_limit(statement):
+    """With NFPA 13 or 13R, Houston lets stories 1 to 3 of this R-2 building use one exit with 125 ft of travel, and Seattle stories 1 to 5. With neither, they need two exits and 200 ft.
+    For travel the lower limit is the stricter, so each 100 ft route there, under the 150 ft that 200 ft asks at, is compared with 125 ft. Check 11 keeps the stricter row."""
+    s, order = r2_stairs(base())
+    s["declared"]["code"]["sprinklers"] |= statement
+    houston = raised(s, 13)
+    assert sorted(f["sheet"] for f in houston) == order[:3] and {f["severity"] for f in houston} == {"unknown"}
+    assert all("125 ft" in f["required"] and "standard" in f["required"] and "Table 1006.3.4(1)" in f["rule"] for f in houston)
+    assert sorted(f["sheet"] for f in raised(s, 13, jurisdiction="seattle")) == order
+    assert sorted(f["sheet"] for f in raised(s, 11) if f["title"].startswith("Too few stairs")) == order[1:]
+    assert raised(s, 13, sprinklers="no") == []
+    s["vector"]["sheets"][str(order[1])]["routes"] = [route(150.0)]
+    assert [f["severity"] for f in raised(s, 13) if f["sheet"] == order[1]] == ["check"]   # over 75% of 200 ft, whichever system it has
+
+
+@pytest.mark.parametrize("length, severity", [(93.0, None), (94.0, "unknown"), (149.0, "unknown"), (150.0, "check")])
+def test_a_route_on_the_level_of_exit_discharge_with_no_standard_read(length, severity):
+    s, order = r2_stairs(base())
+    s["declared"]["code"]["sprinklers"]["mentions"] = ["SPRINKLERED THROUGHOUT"]
+    s["vector"]["sheets"][str(order[0])]["routes"] = [route(length)]
+    found = raised(with_stairs(s), 13)   # no stair rows, as in a building of one storey
+    assert [f["severity"] for f in found] == ([severity] if severity else [])
+    assert all(f["sheet"] == order[0] and ("125 ft" if severity == "unknown" else "200 ft") in f["required"] for f in found)
+
+
 # Check 14
 
 
@@ -1446,7 +1532,26 @@ def test_check_14_below_the_minimum_is_check():
 def test_check_14_printed_width_runs_wall_centre_to_wall_centre():
     s = base()
     s["vector"]["sheets"]["3"]["corridors"] = [hall(44.7, 49.0)]
+    assert not any("narrower" in f["title"] for f in raised(s, 14))
+
+
+def test_check_14_a_width_only_an_unread_use_can_fail_is_cannot_tell():
+    s = base()
+    s["vector"]["sheets"]["3"]["corridors"] = [hall(50.0)]
+    f = only(s, 14)
+    assert f["severity"] == "unknown" and all(words in f["required"] for words in ("44 in", "72 in", "stretcher")) and "use" in f["measured"]
+    s["vector"]["sheets"]["3"]["corridors"] = [hall(72.0)]
     assert raised(s, 14) == []
+    s["declared"]["code"]["occupancy"]["value"] = "R-2"
+    s["vector"]["sheets"]["3"]["corridors"] = [hall(50.0)]
+    assert raised(s, 14) == []   # no case for a residential corridor asks for more than 44 in
+
+
+def test_check_14_below_the_minimum_names_the_use_that_asks_more():
+    s = base()
+    s["vector"]["sheets"]["3"]["corridors"] = [hall(41.0)]
+    f = only(s, 14)
+    assert f["severity"] == "check" and "44 in" in f["required"] and "72 in" in f["required"]
 
 
 def test_check_14_narrower_than_printed_by_more_than_a_wall_is_check():
@@ -2290,3 +2395,150 @@ def test_module_has_no_file_or_network_use():
     with open(source) as handle:
         text = handle.read()
     assert not re.search(r"\bopen\(|read_text|read_json|spark\(|sam_video\(|sam_image\(", text)
+
+
+# Compared items: the second review's only proof that a comment the checks no longer raise was compared again
+
+
+A_CELL = findings._cell((1000.0, 800.0))   # stair A's grid cell in the base set
+
+
+def compared(stages, check, number, thing, place=None):
+    return findings._key(check, number, thing, place) in run(stages)["compared"]
+
+
+READ_ITEMS = {"required sheet": (1, "", "door schedule", None), "plans left out": (1, "", "left out", None), "index row": (2, "G0.1", "row A61", None), "index row listed once": (2, "G0.1", "twice A61", None),
+              "sheet on the index": (2, "A6.1", "sheet A61", None), "sheet number used once": (2, "A6.1", "number A61", None), "sheet title": (3, "A6.1", "title", None), "code field": (4, "G0.1", "area", None),
+              "code field note": (4, "G0.1", "Code field area", None), "sprinkler status": (4, "", "stricter", None),
+              "stories": (5, "G0.1", "stories", None), "edition": (5, "G0.1", "edition", None), "schedule rows": (7, "A6.1", "rows door", None), "plan tags": (7, "A2.1", "tags door", None),
+              "stair on a floor": (9, "A2.2", "stair", A_CELL), "stair at discharge": (10, "A2.1", "stair", A_CELL), "room name": (16, "A2.1", "name 101", None)}
+
+
+@pytest.mark.parametrize("item", READ_ITEMS.values(), ids=READ_ITEMS)
+def test_an_item_compared_with_every_fact_read_is_listed(item):
+    assert compared(base(), *item)
+
+
+def test_a_floor_title_is_listed_with_its_label_read_from_the_text_layer():
+    s = base()
+    s["declared"]["titles"][2]["under_drawing"] = "FIRST FLOOR PLAN"
+    assert compared(s, 3, "A2.1", "title")
+
+
+def edition_unread(s):
+    s["declared"]["code"]["edition"] |= {"value": None, "reads": 0}
+    s["declared"]["cannot_tell"] = [{"what": "Code field edition", "why": "Two reads gave 2015 and 2O15.", "sheet": 0}]
+
+
+def stories_unread(s):
+    s["declared"]["code"]["stories"] |= {"value": None, "reads": 1}
+    s["declared"]["cannot_tell"] = [{"what": "Code field stories", "why": "A read of this sheet was lost.", "sheet": 0}]
+
+
+def index_partial(s):
+    s["declared"]["cannot_tell"] = [{"what": "Sheet index", "why": "1 of 8 crops of this sheet could not be read, so entries can be missing.", "sheet": 0}]
+
+
+def number_unread(s):
+    s["declared"]["titles"][6]["number"] = ""
+    s["declared"]["cannot_tell"] = [{"what": "Sheet number", "why": "Two reads gave C1.0 and C1.6.", "sheet": 6}]
+
+
+def tags_partial(s):
+    s["declared"]["cannot_tell"] = [{"what": "Door tags", "why": "Only one read saw 3.", "sheet": 2}]
+
+
+def door_schedule_unread(s):
+    s["declared"]["schedules"] = [x for x in s["declared"]["schedules"] if x["kind"] != "door"]
+    s["declared"]["cannot_tell"] = [{"what": "Door schedule", "why": "No ruled table was found on this sheet, so it was not read.", "sheet": 5}]
+
+
+def stair_seen_once(s):
+    with_stairs(s, stair("A", "found", "found", "found", established=False), stair("B", "found", "found", "found", pos=(4000.0, 800.0)))
+
+
+def stair_beside_one_seen_once(s):
+    with_stairs(s, stair("A", "found", "found", "found"), stair("C", "check", "check", "check", pos=(1040.0, 810.0), established=False))
+
+
+def index_sheet_lost(s):
+    """A second index sheet whose crops were all lost gives no row, so its note is on a sheet no index row names, and its rows can include A6.1's."""
+    s["declared"]["index"] = [x for x in s["declared"]["index"] if x["number"] != "A6.1"]
+    s["declared"]["cannot_tell"] = [{"what": "Sheet index", "why": "1 of 1 crops of this sheet could not be read, so entries can be missing.", "sheet": 1}]
+
+
+def finish_row_lost(s):
+    """Only one read saw the finish row, so declared left it out, and a door row names the room."""
+    s["declared"]["schedules"] = [schedule(5, "door", [row("101A", ROOM="Office")], [2])]
+    s["declared"]["tags"] = [tag(2, "101A")]
+    s["declared"]["cannot_tell"] = [{"what": "Finish schedule", "why": "Only one read saw 101.", "sheet": 5}]
+
+
+def finish_schedule_lost_whole(s):
+    """As on two stored sets: no table of the finish schedule's sheet was kept, so its note is on a sheet no kept schedule names."""
+    finish_row_lost(s)
+    s["declared"]["cannot_tell"] = [{"what": "Finish schedule", "why": "1 of 1 crops of this sheet could not be read, so entries can be missing.", "sheet": 1}]
+
+
+UNREAD = {"edition not read, noted under check 4": (edition_unread, (5, "G0.1", "edition", None)),
+          "edition not read, its own field": (edition_unread, (4, "G0.1", "edition", None)),
+          "stories not read": (stories_unread, (5, "G0.1", "stories", None)),
+          "a sheet not read can be a storey": (lambda s: unread(s, 6), (5, "G0.1", "stories", None)),
+          "a sheet not read can be a plan left out": (lambda s: unread(s, 6), (1, "", "left out", None)),
+          "a dwelling is asked for no life safety plan": (lambda s: s["declared"]["code"]["occupancy"].update(value="R-3"), (1, "", "life safety plan", None)),
+          "an index part not read can hold the title's row": (index_partial, (3, "A6.1", "title", None)),
+          "an index sheet with no row read can hold an unlisted title's row": (index_sheet_lost, (3, "A6.1", "title", None)),
+          "a floor title with no label under the drawing": (lambda s: s["declared"]["titles"][2].update(under_drawing=None), (3, "A2.1", "title", None)),
+          "a Spark floor title, whose label is one read unless it conflicts": (lambda s: s["declared"]["titles"][2].update(under_drawing="FIRST FLOOR PLAN", source="spark"), (3, "A2.1", "title", None)),
+          "a title only the judge matches, which reads same when its reads split": (lambda s: s["declared"]["titles"][5].update(title="OPENINGS LIST", judge="same"), (3, "A6.1", "title", None)),
+          "an index part not read can hold a second row": (index_partial, (2, "G0.1", "twice A61", None)),
+          "an index sheet with no row read can hold a second row": (index_sheet_lost, (2, "G0.1", "twice A21", None)),
+          "sprinkler statements, which one read can drop with no note": (lambda s: None, (4, "G0.1", "sprinkler statements", None)),
+          "a sheet number not read can repeat this one": (number_unread, (2, "A6.1", "number A61", None)),
+          "a tag not read can be the one with no row": (tags_partial, (7, "A2.1", "tags door", None)),
+          "a tag not read can be the row's": (tags_partial, (7, "A6.1", "rows door", None)),
+          "a schedule not read compares no tag": (door_schedule_unread, (7, "A2.1", "tags door", None)),
+          "the stair at this place was seen by one run": (stair_seen_once, (9, "A2.2", "stair", A_CELL)),
+          "a stair seen once shares this cell": (stair_beside_one_seen_once, (9, "A2.2", "stair", A_CELL)),
+          "the room's plan label not read": (lambda s: s["declared"].update(rooms=[room("102", "Storage")]), (16, "A2.1", "name 101", None)),
+          "the room's schedule name not read": (lambda s: s["declared"]["schedules"][1]["rows"].append(row("101", NAME=None)), (16, "A2.1", "name 101", None)),
+          "a finish row not read while a door row agrees": (finish_row_lost, (16, "A2.1", "name 101", None)),
+          "a finish schedule lost whole while a door row agrees": (finish_schedule_lost_whole, (16, "A2.1", "name 101", None)),
+          "no sprinkler statement": (lambda s: s["declared"]["code"]["sprinklers"].update(value=None), (4, "", "stricter", None)),
+          "a sprinkler statement that names no standard": (lambda s: s["declared"]["code"]["sprinklers"].update(mentions=["FULLY SPRINKLERED"]), (4, "", "stricter", None))}
+
+
+@pytest.mark.parametrize("change, item", UNREAD.values(), ids=UNREAD)
+def test_an_item_whose_facts_were_not_all_read_is_not_listed(change, item):
+    s = base()
+    change(s)
+    assert not compared(s, *item)
+
+
+def tables(*occupant_tables):
+    s = base()
+    s["declared"]["tables"] = list(occupant_tables)
+    return s
+
+
+def test_a_table_total_is_listed_only_when_every_row_and_the_table_were_read():
+    whole = occupant_table(load_row(3000.0, 150.0, 20), load_row(4351.0, 100.0, 44, "102"), total_row(7351.0, 64))
+    assert compared(tables(whole), 6, "G0.1", "load total") and compared(tables(whole), 6, "G0.1", "load 102")
+    lost = occupant_table(load_row(3000.0, 150.0, 20), load_row(4351.0, 100.0, None, "102"), total_row(7351.0, 20))
+    assert not compared(tables(lost), 6, "G0.1", "load total") and not compared(tables(lost), 6, "G0.1", "load 102")
+    s = tables(whole)
+    s["declared"]["cannot_tell"] = [{"what": "Occupant table", "why": "The two reads differ on a row of one table of this sheet.", "sheet": 0}]
+    assert not compared(s, 6, "G0.1", "load total")
+
+
+def test_a_key_two_items_share_is_not_listed():
+    one = occupant_table(load_row(3000.0, 150.0, 20), total_row(3000.0, 20))
+    assert compared(tables(one), 6, "G0.1", "load total") and not compared(tables(one, dict(one)), 6, "G0.1", "load total")
+
+
+def test_a_check_that_stops_part_way_lists_nothing():
+    s = tables(occupant_table(load_row(3000.0, 150.0, 20)), {"sheet": 0, "kind": "occupant", "rows": None, "box": None})
+    out = evaluate(s, "houston", None, None)
+    assert any("table arithmetic" in line for line in out["not_checked"])
+    assert findings._key(6, "G0.1", "load 101") not in out["compared"]
+    assert compared(tables(occupant_table(load_row(3000.0, 150.0, 20))), 6, "G0.1", "load 101")

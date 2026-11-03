@@ -34,7 +34,7 @@ def check_11(m):
     for city in JURISDICTIONS:
         floors = []
         for story, f in enumerate(m.floors[1:], 2):
-            one_stair = rule("ibc.1006.3.4.t1", city, sprinklers="yes", story=story)["value"] != "NP"
+            one_stair = rule("ibc.1006.3.4.t1", city, sprinklers="NFPA 13", story=story)["value"] != "NP"
             floors.append({"floor": f.name, "story": story, "outcome": "one stair depends on conditions" if one_stair and f.stair_on_plan else "too few stairs"})
         out.append({"jurisdiction": city, "exits_required": required, "floors": floors})
     return out
