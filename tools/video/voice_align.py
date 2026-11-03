@@ -24,6 +24,8 @@ from voice_split import ORDER, V, VOICE   # noqa: E402
 RATE = 16000
 FRAME = 0.01        # seconds per energy frame
 FADE = 0.015        # seconds of crossfade across a dropped stretch
+RNNOISE = V / "rnnoise-sh.rnnn"
+LOW_CUT = "highpass=f=80:poles=2,highpass=f=80:poles=2"   # 24 dB an octave under 80 Hz: the room's rumble sits at 45-80 Hz, under the voice
 TARGET_LUFS = -17.0   # spoken-word loudness, a little under the -16 web norm, with the limiter catching peaks at -1.5 dB
 PAUSE, KEEP = 0.6, 0.35   # seconds: with --tighten, a pause inside a line longer than PAUSE is cut down to KEEP
 SAME = {"storey": "story", "storeys": "stories", "muse": "muse"}
@@ -89,6 +91,30 @@ def denoise(src, out, span=None, cut_db=30.0):
     y = np.clip(y[:len(x)], -1, 1)
     subprocess.run(["ffmpeg", "-v", "error", "-y", "-f", "s16le", "-ar", str(sr), "-ac", "1", "-i", "-", str(out)], input=(y * 32767).astype(np.int16).tobytes(), check=True)
     return span
+
+
+def rnnoise(src, out, model, split=2000.0):
+    """Writes src with room noise taken out by RNNoise below `split` Hz, where this room's noise lives, and the original voice above it,
+    where the noise is 100 dB down: RNNoise softens fricatives such as the v of every, and the voice above 2 kHz is mostly fricatives.
+    The bands join through a Linkwitz-Riley crossover, which sums flat once RNNoise's own delay is taken out."""
+    from scipy.signal import butter, correlate, sosfilt
+    sr = 48000
+
+    def decode(af):
+        pcm = subprocess.run(["ffmpeg", "-v", "error", "-i", str(src), "-af", af, "-f", "s16le", "-ac", "1", "-ar", str(sr), "-"], capture_output=True, check=True).stdout
+        return np.frombuffer(pcm, np.int16).astype(np.float32) / 32768
+
+    raw, net = decode("adeclip"), decode(f"adeclip,arnndn=m={model}")
+    w = int(6 * sr)   # the loudest 6 s, where speech makes the delay unambiguous
+    k = int(np.argmax(np.convolve(raw[::480] ** 2, np.ones(w // 480), "valid"))) * 480
+    c = correlate(net[k:k + w], raw[k:k + w], mode="full", method="fft")
+    lag = min(max(int(np.argmax(c)) - (w - 1), 0), 4800)
+    net = np.concatenate([net[lag:], np.zeros(lag, np.float32)])[:len(raw)]
+    low, high = butter(2, split, "low", fs=sr, output="sos"), butter(2, split, "high", fs=sr, output="sos")
+    y = sosfilt(low, sosfilt(low, net)) + sosfilt(high, sosfilt(high, raw))
+    y = np.clip(y, -1, 1)
+    subprocess.run(["ffmpeg", "-v", "error", "-y", "-f", "s16le", "-ar", str(sr), "-ac", "1", "-i", "-", str(out)], input=(y * 32767).astype(np.int16).tobytes(), check=True)
+    return lag
 
 
 def quietest(env, lo, hi):
@@ -164,18 +190,24 @@ def main():
         last = end
     VOICE.mkdir(parents=True, exist_ok=True)
     source = a.recording
-    if not a.keep_noise:
+    if not a.keep_noise and RNNOISE.exists() and not a.noise:
+        # RNNoise, a recurrent network for speech, also takes noise out from under the words; the model is the one rnnoise-models
+        # (GregorR) trains for recording noise under speech, somnolent-hogwash, which its authors state is not subject to copyright.
+        source = VOICE.parent / "recording_clean.wav"
+        lag = rnnoise(a.recording, source, RNNOISE)
+        print(f"Room noise taken out with RNNoise under 2 kHz (its {lag / 48:.0f} ms delay removed); the voice above 2 kHz is the original.")
+    elif not a.keep_noise:
         source = VOICE.parent / "recording_clean.wav"
         span = denoise(a.recording, source, tuple(map(float, a.noise.split("-"))) if a.noise else None)
         print(f"Room noise learned from {span[0]:.1f}-{span[1]:.1f} s and taken down 30 dB.")
     # One gain for the whole voice, so every line has the same level and no automatic gain lifts the pauses back up.
-    probe = subprocess.run(["ffmpeg", "-hide_banner", "-ss", f"{spans[0][1]:.2f}", "-to", f"{spans[-1][2]:.2f}", "-i", str(source), "-af", "highpass=f=90:poles=2,ebur128",
+    probe = subprocess.run(["ffmpeg", "-hide_banner", "-ss", f"{spans[0][1]:.2f}", "-to", f"{spans[-1][2]:.2f}", "-i", str(source), "-af", f"{LOW_CUT},ebur128",
                             "-f", "null", "-"], capture_output=True, text=True).stderr
     loudness = float(re.findall(r"I:\s+(-?[\d.]+) LUFS", probe)[-1])
     gain = TARGET_LUFS - loudness
     print(f"Voice loudness {loudness:.1f} LUFS, raised {gain:+.1f} dB to {TARGET_LUFS} LUFS.")
-    # highpass: the room's rumble sits at 45-150 Hz, under most of a voice. agate: an expander that only acts below -48 dB, in the gaps between words.
-    tidy = f"highpass=f=90:poles=2,volume={gain:.2f}dB,agate=threshold=0.004:ratio=2:range=0.1:attack=10:release=250:knee=2.8,alimiter=limit=0.84:level=false,aresample=48000"
+    # agate: an expander that only acts below -48 dB, in the gaps between words.
+    tidy = f"{LOW_CUT},volume={gain:.2f}dB,agate=threshold=0.004:ratio=2:range=0.1:attack=10:release=250:knee=2.8,alimiter=limit=0.84:level=false,aresample=48000"
     for key, start, stop, cuts in spans:
         edges = [start, *[t for c in cuts for t in c], stop]
         parts = list(zip(edges[::2], edges[1::2]))
