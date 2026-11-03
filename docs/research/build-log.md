@@ -185,13 +185,14 @@ All replays below cost 0 USD: stored model replies only, with any new call refus
 
 ## Outside code review, 3 Nov
 
-An outside review found five correctness defects, four in the evaluation and five operational gaps; [docs/review-response.md](../review-response.md) maps each to its fix. Every defect was written as a failing test on the unchanged code, fixed, attacked by a second agent that had not written the fix, and fixed again where that agent broke it. The suite went from 1,905 tests at the freeze to 2,091, all passing. `storey/` changed after the freeze, so every published number still describes tag `eval-frozen`.
+An outside review found five correctness defects, four in the evaluation and five operational gaps; [docs/review-response.md](../review-response.md) maps each to its fix. Every code defect was written as a failing test on the unchanged code, fixed, attacked by a second agent that had not written the fix, and fixed again where that agent broke it. The suite went from 1,905 tests at the freeze to 2,091, all passing. `storey/` changed after the freeze, so every published number still describes tag `eval-frozen`.
 
 | Measured on the fixed code | Result |
 |---|---|
 | Stored second reviews in `data/kept`, evaluate run again offline | 40 of 40 comments that read Looks resolved still do |
 | The reviewer's 32 adversarial letter replies | 0 kept; 22 got through the first fix |
-| Stored sample letters from the old prompt, replayed | 19 of 30 first sentences would pass as joins; none of the 27 items with values had them reversed |
+| The model's join under the new prompt, both live letters below | kept on 23 of 23 items |
+| Stored sample letters (frozen code), read by eye | none of the 27 items with values has measured and required reversed |
 | One live run, `710_1_mixed` then `710_1_second`, through the server | 14 of 14 and 9 of 9 truth items, no wrong pass, all 10 comment states as truth holds them; 0.59 and 0.51 USD |
 
 - The live run raised one false Check that the frozen run did not: a corridor on the fourth floor measured 0.9 in clear past a stair, where the frozen run measured 49.4 in at the same label. Spark read a slightly different plan box and stair outline there, and the width past the stair met two lines almost touching. The vector code did not change. A width that small could read Cannot tell instead; not done, because it is a false alarm, not a pass.

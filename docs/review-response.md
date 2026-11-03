@@ -4,7 +4,7 @@ An outside review of this repository found five correctness defects, four evalua
 
 **The published numbers describe tag `eval-frozen` (commit a45163c), not this code.** `eval/frozen.json` froze `storey/` by hash at 23:06 IST on 1 November, and the 33 sets ran once on that code. Every fix below changes `storey/` after the freeze. The three held-out sets cannot run again as held out ([eval/REPRODUCE.md](../eval/REPRODUCE.md)), so no number on the How well it works page was rerun on the fixed code. The scoring files and truth files that `eval/frozen.json` pins were not edited.
 
-Each defect was first written as a test that failed on the unchanged code. Then it was fixed, and a second agent that had not written the fix tried to break it. That reviewer's must-fix issues were fixed in a further round, again test first.
+Each code defect was first written as a test that failed on the unchanged code. Then it was fixed, and a second agent that had not written the fix tried to break it. That reviewer's must-fix issues were fixed in a further round, again test first.
 
 ## Correctness
 
@@ -32,7 +32,7 @@ Each defect was first written as a test that failed on the unchanged code. Then 
 | 10 | Image uploads skip the rendered-output disk cap. | Images count toward the same cap as PDF pages, and a failed ingest removes what it wrote. The server also removes rendered sheets when the reader is killed at its time or CPU limit, or crashes. | 86a238f |
 | 11 | A failed ffmpeg stack fails the whole floors stage. | The floor order and registration are kept, Not checked says the outlines were not drawn, and the outline step sends no model call without a stack. The README lists ffmpeg. | 86a238f |
 | 12 | Parallel calls can overshoot a spend cap. | Each call holds its worst-case cost before it is sent and settles after. A cap can be passed by at most one call's hold, 0.36 USD for the largest call. README Limits states this, and notes the daily cap is per server process. | 86a238f |
-| 13 | No CI. | `.github/workflows/test.yml` runs the suite on Ubuntu and macOS on every push and pull request, with no secret. Its first run failed four floor registration tests on Linux, where OpenCV rounds differently at the 25-match gate. Those four now run only on macOS arm64, and README Limits says what that means on Linux. | 86a238f |
+| 13 | No CI. | `.github/workflows/test.yml` runs the suite on Ubuntu and macOS on every push and pull request, with no secret. Its first run failed four floor registration tests on Linux, where the same pinned OpenCV gives different match counts at the 25-match gate. Those four now run only on macOS arm64, and README Limits says what that means on Linux. | 86a238f |
 | 14 | Letter edits and decisions on the static demo stay in the browser. | README Limits says so. | 86a238f |
 
 ## Still open

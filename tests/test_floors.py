@@ -19,7 +19,7 @@ BOX = (100, 80, 1400, 1020)
 SMALL = (660, 340, 840, 760)
 CORNERS = np.array([[BOX[0], BOX[1]], [BOX[2], BOX[1]], [BOX[2], BOX[3]], [BOX[0], BOX[3]]], float)
 ffmpeg = pytest.mark.skipif(shutil.which("ffmpeg") is None, reason="ffmpeg is not installed")
-# These sit at GATE, which was set on macOS arm64. On Linux x86 OpenCV's block matches round differently, and CI counted 22, 0 and 27 inliers against 25.
+# These sit at GATE, which was set on macOS arm64. On Linux x86 the same pinned OpenCV gave other counts: CI saw 22, 0 and 27 inliers against 25.
 AT_GATE = pytest.mark.skipif((sys.platform, platform.machine()) != ("darwin", "arm64"), reason="inlier counts at the gate were set on macOS arm64; see README Limits")
 
 
