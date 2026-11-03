@@ -2,7 +2,9 @@ Storey video: voiceover script
 
 Read the lines in this order, in one recording.
 Leave about 2 seconds of silence between lines, so each line can be cut out and placed on its own scene.
-Re-read a line straight away if you stumble; the last take of each line is used.
+Pause only between lines, not inside one (a breath is fine, a stop of over a second splits the line).
+If you stumble, carry on to the end. Then read each faulty line again in its own short file, named by its number:
+line_07.m4a for line 7. Phone voice memos (m4a) are fine.
 
  1. Storey. First-pass plan review for city building departments, built on Meta's Muse Spark and SAM 3.1.
  2. In Portland, eight in ten permit plans needed corrections. Seattle's own AI pilot passed six point four percent of the checks a human examiner sent back. Storey has no pass state at all.

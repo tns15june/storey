@@ -11,4 +11,9 @@ The video at `app/web/video/storey.mp4` (2:33) is a screen recording of the real
    `node cards.mjs spec.json ../../data/video/work/cards`
 4. Cut, caption, narrate and join: `python3 build.py` writes `data/video/work/storey.mp4`; `python3 build.py --silent` writes a cut with no voice.
 
-Narration is macOS `say` (Samantha). To use a recorded voice, put one file per line in `data/video/work/voice/`, named by the line ids in `spec.json`, and run `build.py` again. `voiceover-script.txt` lists the lines in the order the video plays them.
+Narration is macOS `say` (Samantha). To use a recorded voice, read the lines of `voiceover-script.txt` in one recording, with a pause between lines, then:
+
+    python3 tools/video/voice_split.py <recording> [line_NN.m4a ...]
+    python3 tools/video/build.py
+
+`voice_split.py` cuts the recording into one file per line, evens the loudness, and stops without writing if the recording does not split into exactly 21 lines. A `line_NN` file replaces line NN.
