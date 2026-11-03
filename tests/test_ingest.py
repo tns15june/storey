@@ -74,6 +74,24 @@ def test_large_image_is_rejected_from_its_header(tmp_path, monkeypatch):
         ingest([tmp_path / "big.png"], tmp_path / "out")
 
 
+@pytest.mark.parametrize("upload", ["pdf", "images"])
+def test_output_past_the_disk_limit_is_refused_and_removed(tmp_path, monkeypatch, upload):
+    from storey import ingest as mod
+    if upload == "pdf":
+        paths = [tmp_path / "set.pdf"]
+        _pdf(paths[0])
+    else:
+        paths = [tmp_path / "a.png", tmp_path / "b.png"]
+        for p in paths:
+            cv2.imwrite(str(p), np.zeros((40, 60, 3), np.uint8))
+    first = ingest(paths, tmp_path / "probe")[0]
+    monkeypatch.setattr(mod, "MAX_DISK_BYTES", (tmp_path / "probe" / first.image).stat().st_size)   # room for the first sheet only
+    out = tmp_path / "out"
+    with pytest.raises(ValueError, match="too large"):
+        ingest(paths, out)
+    assert not list(out.glob("sheet_*")) and not (out / "sheets.json").exists()
+
+
 def test_wide_image_is_scaled_to_the_edge_limit(tmp_path, monkeypatch):
     from storey import ingest as mod
     monkeypatch.setattr(mod, "MAX_EDGE", 30)

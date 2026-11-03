@@ -1,6 +1,7 @@
 import base64
 import json
 import shutil
+import subprocess
 
 import cv2
 import numpy as np
@@ -9,7 +10,7 @@ import pytest
 from storey import floors, meta
 from storey.floors import GATE, discharge_floor, floors_stage, ink, register, select_floors, warp_point, write_stack
 from storey.meta import BudgetReached, Meter
-from storey.pipeline import Context, read_json, run, write_json
+from storey.pipeline import Context, write_json
 
 SIZE = (1100, 1500)   # height, width
 BOX = (100, 80, 1400, 1020)
@@ -634,18 +635,26 @@ def test_missing_ffmpeg_fails_plainly(tmp_path, monkeypatch):
         write_stack([np.zeros((100, 100, 3), np.uint8)], tmp_path / "s.mp4")
 
 
-def test_missing_ffmpeg_fails_the_stage_and_the_review_still_finishes(tmp_path, monkeypatch, quick_fit):
-    folder = tmp_path / "reviews" / "r1"
-    folder.mkdir(parents=True)
+def test_missing_ffmpeg_keeps_the_floor_order_and_fits_and_says_the_outlines_are_not_drawn(tmp_path, monkeypatch, quick_fit):
     base = plan(3)
-    ctx = review(folder, [marked(base, 1), marked(base, 2)], ["First floor", "Second floor"])
-    (folder / "sheets.json").write_text(json.dumps(ctx.sheets))
+    ctx = review(tmp_path, [marked(base, 2), marked(base, 1)], ["Second floor", "First floor"])
     model_answers(truly_sorted)
     monkeypatch.setattr(shutil, "which", lambda name: None)
-    run(folder, stages=[("floors", "Line up the floors", floors_stage), ("after", "After", lambda ctx: {"ran": True})])
-    assert read_json(folder / "stage_floors.json") == {"failed": "Line up the floors did not finish."}
-    assert read_json(folder / "stage_after.json") == {"ran": True}
-    assert read_json(folder / "status.json")["state"] == "done"
+    out = floors_stage(ctx)
+    assert out["order"] == [1, 0] and out["order_read"] is True
+    assert set(out["transforms"]) == {0, 1} and out["unaligned"] == []
+    assert out["stack"] is None and not (tmp_path / "stack.mp4").exists()
+    assert "ffmpeg was not found" in out["not_checked"] and "outlines are not drawn" in out["not_checked"]
+
+
+def test_stack_encoder_that_runs_past_its_time_limit_fails_plainly(tmp_path, monkeypatch):
+    monkeypatch.setattr(floors.shutil, "which", lambda name: "/bin/true")
+
+    def slow(*args, **kw):
+        raise subprocess.TimeoutExpired("ffmpeg", kw["timeout"])
+    monkeypatch.setattr(floors.subprocess, "run", slow)
+    with pytest.raises(RuntimeError, match="ffmpeg could not write"):
+        write_stack([np.zeros((100, 100, 3), np.uint8)], tmp_path / "s.mp4")
 
 
 @ffmpeg

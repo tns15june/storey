@@ -1123,3 +1123,17 @@ def test_one_failed_sam_request_keeps_the_other_requests_masks(tmp_path):
     rows = stage(ctx)["verticals"]
     assert cell(rows[16], ctx, 0)["mask"] is not None
     assert cell(rows[0], ctx, 0)["mask"] is None
+
+
+def test_no_stack_costs_no_seed_and_keeps_the_matrix(tmp_path):
+    ctx = review(tmp_path, [stair(), stair(), stair()])
+    floors = json.loads((tmp_path / "stage_floors.json").read_text())
+    (tmp_path / "stage_floors.json").write_text(json.dumps(floors | {"stack": None}))   # what floors_stage returns when ffmpeg is missing or fails
+    (tmp_path / "stack.mp4").unlink()
+    m = model(listing(on([0, 1, 2])), sam="")
+    out = stage(ctx)
+    row = out["verticals"][0]
+    assert states(row, ctx) == ["found", "found", "found"]
+    assert all(c["mask"] is None for c in row["floors"].values())
+    assert not m.of("You are an object grounding expert") and not m.sam_prompts
+    assert "Stairs with no outline drawn: 1. An outline is a picture only, so their cells are unchanged." in out["not_checked"]

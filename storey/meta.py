@@ -4,6 +4,7 @@ SAM is billed per image or frame, so it takes no token cap.
 The key is loaded in this module only, on the first real call, and is never logged.
 """
 import base64
+import contextlib
 import fcntl
 import functools
 import hashlib
@@ -13,6 +14,7 @@ import random
 import threading
 import time
 import uuid
+from collections import defaultdict
 from collections.abc import Sequence
 from pathlib import Path
 
@@ -31,6 +33,10 @@ SAM_IMAGE_USD = 0.0025
 SAM_FRAME_USD = 0.0002
 SAM_MIN_FRAMES = 50
 SAM_BAD_EVENTS = ("response.failed", "response.incomplete", "response.refusal.delta", "response.refusal.done", "error")
+IMAGE_TOKENS = 4000   # input tokens a Spark call holds per image. shortcut: measured, not taken from Meta's docs, at most about 3,500 an image over 2,500 recorded calls, raise it if a ledger row ever shows more
+
+_settled = threading.Condition()   # one for every Meter, because reviews that share a ledger share its daily cap
+_held = defaultdict(list)          # ledger to the USD held by calls in flight in this process
 
 
 class BudgetReached(RuntimeError):
@@ -42,12 +48,14 @@ class _Retryable(RuntimeError):
 
 
 class Meter:
-    """Spend for one review. The ledger is shared by every review, so it also carries the server's daily total."""
+    """Spend for one review. The ledger is shared by every review, so it also carries the server's daily total.
+    A call holds the most it can cost against both caps until it is charged, so calls in flight together pass a cap by one call's hold at most."""
 
     def __init__(self, cap_usd: float = 8.0, daily_cap_usd: float = 25.0, ledger: Path = DATA / "ledger.jsonl"):
         self.cap_usd, self.daily_cap_usd, self.ledger = cap_usd, daily_cap_usd, ledger
         self._spent = 0.0
         self._lock = threading.Lock()
+        self._held = []
 
     def add(self, usd: float, **fields) -> None:
         with self._lock:
@@ -62,12 +70,38 @@ class Meter:
         with self._lock:
             return self._spent
 
+    def _reached(self):
+        """(the message of a cap that spend and holds have reached, whether calls in flight hold part of it), or None. Runs under _settled."""
+        if self.spent + sum(self._held) >= self.cap_usd:
+            return f"This review reached its spend cap of {self.cap_usd:.2f} USD.", bool(self._held)
+        # shortcut: holds are seen within this process only, so another process on the same ledger can pass the daily cap by its own calls in flight, write holds to the ledger if two servers ever share one.
+        if self._spent_today() + sum(_held[self.ledger]) >= self.daily_cap_usd:
+            return f"The server reached its daily spend cap of {self.daily_cap_usd:.2f} USD.", bool(_held[self.ledger])
+        return None
+
     def check(self) -> None:
-        # shortcut: parallel calls can all pass here before any adds so overshoot can reach one call per thread, reserve an estimate here if a cap must hold tighter.
-        if self.spent >= self.cap_usd:
-            raise BudgetReached(f"This review reached its spend cap of {self.cap_usd:.2f} USD.")
-        if self._spent_today() >= self.daily_cap_usd:
-            raise BudgetReached(f"The server reached its daily spend cap of {self.daily_cap_usd:.2f} USD.")
+        with _settled:
+            reached = self._reached()
+        if reached:
+            raise BudgetReached(reached[0])
+
+    @contextlib.contextmanager
+    def hold(self, usd: float):
+        """Holds `usd`, the most one call can cost, against both caps while the call runs. At a cap, a call waits while calls in flight may still settle under it, and raises BudgetReached once none are left."""
+        with _settled:
+            while (reached := self._reached()) and reached[1]:
+                _settled.wait()
+            if reached:
+                raise BudgetReached(reached[0])
+            self._held.append(usd)
+            _held[self.ledger].append(usd)
+        try:
+            yield
+        finally:
+            with _settled:
+                self._held.remove(usd)
+                _held[self.ledger].remove(usd)
+                _settled.notify_all()
 
     def _spent_today(self):
         try:
@@ -228,12 +262,14 @@ def spark(prompt: str, images: Sequence = (), *, meter: Meter, schema: dict | No
     }
     if schema:
         request["response_format"] = {"type": "json_schema", "json_schema": {"name": "out", "schema": schema, "strict": True}}
+    # A token covers at least one byte of text, and JSON escapes each non-ASCII character to six, so its length bounds the text's tokens. The output stops at the token cap.
+    worst = ((len(json.dumps([system, prompt, schema])) + IMAGE_TOKENS * len(encoded)) * input_price + max_tokens * output_price) / 1e6
     for attempt in range(2):
-        meter.check()
-        reply = _retry(lambda: _transport("chat", **request))
-        tokens_in, cached, tokens_out = reply.get("input", 0), reply.get("cached", 0), reply.get("output", 0)
-        usd = ((tokens_in - cached) * input_price + cached * cached_price + tokens_out * output_price) / 1e6
-        meter.add(usd, model=model, input=tokens_in, output=tokens_out, images=len(encoded))
+        with meter.hold(worst):
+            reply = _retry(lambda: _transport("chat", **request))
+            tokens_in, cached, tokens_out = reply.get("input", 0), reply.get("cached", 0), reply.get("output", 0)
+            usd = ((tokens_in - cached) * input_price + cached * cached_price + tokens_out * output_price) / 1e6
+            meter.add(usd, model=model, input=tokens_in, output=tokens_out, images=len(encoded))
         finish = reply.get("finish")
         if finish in ("length", "content_filter"):   # the same request would be cut off again
             raise ValueError(f"The model's reply was cut off ({finish})")
@@ -278,15 +314,15 @@ def _sam(prompt, media, metadata, fmt, key, usd, meter, **fields):
     text = _cached(key)
     if text is not None:
         return _masks(text, fmt)
-    meter.check()
-    content = [{"type": "input_text", "text": prompt}, media()]
-    request = {
-        "model": SAM,
-        "metadata": {"include_confidence": "true", "mask_encoding": "one_bit", **metadata},
-        "input": [{"type": "message", "role": "user", "content": content}],
-    }
-    text = _retry(lambda: _transport("sam", **request))
-    meter.add(usd, model=SAM, **fields)
+    with meter.hold(usd):
+        content = [{"type": "input_text", "text": prompt}, media()]
+        request = {
+            "model": SAM,
+            "metadata": {"include_confidence": "true", "mask_encoding": "one_bit", **metadata},
+            "input": [{"type": "message", "role": "user", "content": content}],
+        }
+        text = _retry(lambda: _transport("sam", **request))
+        meter.add(usd, model=SAM, **fields)
     masks = _masks(text, fmt)
     _store(key, text)
     return masks

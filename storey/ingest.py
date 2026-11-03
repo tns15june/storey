@@ -60,7 +60,7 @@ def _from_pdf(path, out_dir):
 def _from_images(paths, out_dir):
     if len(paths) > MAX_SHEETS:
         raise ValueError(f"This upload has {len(paths)} images, and the limit is {MAX_SHEETS}")
-    sheets = []
+    sheets, written = [], 0
     for i, p in enumerate(sorted(paths)):
         try:
             with Image.open(p) as probe:     # reads the header only
@@ -77,6 +77,9 @@ def _from_images(paths, out_dir):
             im = cv2.resize(im, None, fx=k, fy=k, interpolation=cv2.INTER_AREA)
         name = f"sheet_{i:03d}.png"
         cv2.imwrite(str(out_dir / name), im)
+        written += (out_dir / name).stat().st_size
+        if written > MAX_DISK_BYTES:
+            raise ValueError("These page images are too large to read")
         sheets.append(Sheet(i, name, im.shape[1], im.shape[0], "scan"))
     return sheets
 
@@ -89,7 +92,12 @@ def ingest(paths, out_dir):
     pdfs = [p for p in paths if p.suffix.lower() == ".pdf"]
     if pdfs and len(paths) > 1:
         raise ValueError("Upload one PDF, or a set of page images, not both")
-    sheets = _from_pdf(pdfs[0], out_dir) if pdfs else _from_images(paths, out_dir)
+    try:
+        sheets = _from_pdf(pdfs[0], out_dir) if pdfs else _from_images(paths, out_dir)
+    except BaseException:
+        for sheet in out_dir.glob("sheet_*.png"):   # a refused upload must not keep the disk it filled
+            sheet.unlink()
+        raise
     if not sheets:
         raise ValueError("The upload holds no pages")
     (out_dir / "sheets.json").write_text(json.dumps([asdict(s) for s in sheets]))

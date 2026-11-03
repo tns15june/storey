@@ -194,16 +194,17 @@ def _frame_size(shape):
 
 
 def write_stack(frames: list[np.ndarray], path: Path) -> None:
-    """An H.264 MP4 with one frame per floor, long side 960 px. The first frame sets the size."""
+    """An H.264 MP4 with one frame per floor, long side 960 px. The first frame sets the size. Any failure raises RuntimeError with a plain message."""
     ffmpeg = shutil.which("ffmpeg")
     if ffmpeg is None:
         raise RuntimeError("ffmpeg was not found on PATH, so the floor stack cannot be written.")
     w, h = _frame_size(frames[0].shape)
     raw = b"".join(cv2.resize(f, (w, h), interpolation=cv2.INTER_AREA).tobytes() for f in frames)
-    done = subprocess.run([ffmpeg, "-y", "-v", "error", "-f", "rawvideo", "-pix_fmt", "bgr24", "-s", f"{w}x{h}", "-r", "4", "-i", "-",
-                           "-c:v", "libx264", "-crf", "16", "-pix_fmt", "yuv420p", str(path)], input=raw, capture_output=True, timeout=STACK_SECONDS)
-    if done.returncode:
-        raise RuntimeError("ffmpeg could not write the floor stack.")
+    try:
+        subprocess.run([ffmpeg, "-y", "-v", "error", "-f", "rawvideo", "-pix_fmt", "bgr24", "-s", f"{w}x{h}", "-r", "4", "-i", "-",
+                        "-c:v", "libx264", "-crf", "16", "-pix_fmt", "yuv420p", str(path)], input=raw, capture_output=True, timeout=STACK_SECONDS, check=True)
+    except (OSError, subprocess.SubprocessError):
+        raise RuntimeError("ffmpeg could not write the floor stack.") from None
 
 
 def _plan_sheets(sheets):
@@ -258,7 +259,7 @@ def _joint_order(ctx, ids, sheet):
 def floors_stage(ctx) -> dict:
     """`transforms` map a floor's sheet px to the reference sheet's px, and a floor that failed the gates has none and is a blank frame in the stack.
     `inliers` holds each floor's count against the reference, or the link's count if it chained. The reference's entry is its total to its neighbours, which is what chose it.
-    A stack pixel is a reference sheet pixel scaled by frame_size over that sheet's width and height."""
+    A stack pixel is a reference sheet pixel scaled by frame_size over that sheet's width and height. `stack` is None if the stack could not be written, and a note says why."""
     read = ctx.stage("read")
     rows = read.get("sheets", [])
     floors = select_floors(rows)
@@ -350,6 +351,11 @@ def floors_stage(ctx) -> dict:
             frames.append(cv2.resize(warped, (w, h), interpolation=cv2.INTER_AREA))
         else:
             frames.append(np.full((h, w, 3), 255, np.uint8))   # a blank page drew no mask in the audit's control, and another building's sheet did
-    write_stack(frames, ctx.dir / "stack.mp4")
+    stack = "stack.mp4"
+    try:
+        write_stack(frames, ctx.dir / stack)
+    except RuntimeError as e:   # only the outlines read the stack, so the order and the fits stand without it
+        stack = None
+        notes.append(f"{e} Stair outlines are not drawn, and the stair matrix is not affected.")
     return result | {"order": order, "order_read": order_read, "reference": reference, "transforms": {i: H.tolist() for i, H in transforms.items()}, "inliers": inliers,
-                     "unaligned": [i for i in order if i not in transforms], "stack": "stack.mp4", "frame_size": [w, h], "not_checked": " ".join(notes) or None}
+                     "unaligned": [i for i in order if i not in transforms], "stack": stack, "frame_size": [w, h], "not_checked": " ".join(notes) or None}

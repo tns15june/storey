@@ -1,4 +1,5 @@
 import base64
+import contextlib
 import fcntl
 import json
 import threading
@@ -385,6 +386,36 @@ def test_parallel_calls_lose_no_spend(tmp_path):
     assert m.spent == pytest.approx(400 * REPLY_USD)
     assert sum(r["usd"] for r in rows(m)) == pytest.approx(400 * REPLY_USD, abs=1e-3)
     assert len(rows(m)) == 400
+
+
+@pytest.mark.parametrize("caps, reviews", [({"cap_usd": REPLY_USD}, 1), ({"daily_cap_usd": REPLY_USD}, 2)], ids=["review cap", "daily cap, two reviews"])
+def test_calls_in_flight_together_pass_a_cap_by_one_call_at_most(tmp_path, caps, reviews):
+    gate = threading.Barrier(8, timeout=1)
+
+    def transport(kind, **request):
+        with contextlib.suppress(threading.BrokenBarrierError):
+            gate.wait()   # every call let through is in flight here before any is charged
+        return REPLY
+    meta.set_transport(transport)
+    meters = [Meter(**caps, ledger=tmp_path / "ledger.jsonl") for _ in range(reviews)]
+
+    def call(i):
+        try:
+            return spark(f"q{i}", meter=meters[i % reviews], schema=SCHEMA)
+        except BudgetReached:
+            return None
+    with ThreadPoolExecutor(8) as pool:
+        out = list(pool.map(call, range(8)))
+    assert out.count({"a": 1}) == 1 and out.count(None) == 7
+    assert sum(r["usd"] for r in rows(meters[0])) == pytest.approx(REPLY_USD)
+
+
+def test_a_call_that_raises_holds_nothing_after(tmp_path):
+    fake(api_status(400))
+    m = Meter(cap_usd=REPLY_USD, ledger=tmp_path / "ledger.jsonl")
+    with pytest.raises(openai.APIStatusError):
+        spark("q", meter=m)
+    m.check()
 
 
 @pytest.mark.parametrize("call", [lambda m: m.add(1.0), lambda m: m.check()], ids=["write", "read"])

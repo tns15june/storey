@@ -341,6 +341,8 @@ def _box_dist(p, b):
 def _draw(ctx, rows, order, floors, paths, sizes, scales, H):
     """Outlines Found cells: one SAM object per stair, pinned with one box on every Found floor's frame. Any failure leaves `mask` null, because the matrix is already decided. Returns the stairs left with no outline, and the spend cap's message if the cap stopped the outlines."""
     targets = [r for r in rows if any(c["state"] == "found" for c in r["cells"].values())]
+    if floors.get("stack") is None:
+        return len(targets), None   # the floors stage's note says why there is no stack
     rw, rh = sizes[floors["reference"]]
     fw, fh = floors["frame_size"]
     stop = None

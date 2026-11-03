@@ -212,3 +212,19 @@ def test_reader_noise_on_stdout_is_ignored(client, monkeypatch):
     monkeypatch.setattr(server, "INGEST_COMMAND", [sys.executable, "-c", flood])
     rid = client.post("/api/reviews", files=[("files", ("set.pdf", _pdf_bytes(), "application/pdf"))]).json()["id"]
     assert _wait(client, rid)["sheets"] == 3
+
+
+WROTE = "import sys, pathlib, time; d = pathlib.Path(sys.argv[1]); (d / 'sheet_000.png').write_bytes(b'x' * 1000); (d / 'wrote').touch(); "
+READERS = {"killed at its time limit": WROTE + "time.sleep(30)", "crashed": WROTE + "raise SystemExit(139)", "garbled result": WROTE + "(d / 'ingest_result.json').write_text('[]')"}
+
+
+@pytest.mark.parametrize("reader", READERS.values(), ids=READERS.keys())
+def test_a_reader_that_fails_leaves_no_sheets(client, monkeypatch, tmp_path, reader):
+    import sys
+    from storey import server
+    monkeypatch.setattr(server, "INGEST_COMMAND", [sys.executable, "-c", reader])
+    monkeypatch.setattr(server, "INGEST_SECONDS", 1)
+    rid = client.post("/api/reviews", files=[("files", ("set.pdf", _pdf_bytes(), "application/pdf"))]).json()["id"]
+    assert _wait(client, rid)["state"] == "failed"
+    assert (tmp_path / rid / "wrote").exists()   # the reader did render a sheet before it stopped
+    assert not list((tmp_path / rid).glob("sheet_*.png"))

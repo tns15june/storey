@@ -151,13 +151,18 @@ def close_interrupted():
 
 
 def _ingest(path, uploads):
-    r = subprocess.run([*INGEST_COMMAND, str(path), *map(str, uploads)], cwd=ROOT, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=INGEST_SECONDS)
     try:
-        out = json.loads((path / "ingest_result.json").read_text())
-    except (OSError, ValueError):
-        out = {}
-    if r.returncode or "sheets" not in out:
-        raise ValueError(out.get("error", "Could not read this upload"))
+        r = subprocess.run([*INGEST_COMMAND, str(path), *map(str, uploads)], cwd=ROOT, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=INGEST_SECONDS)
+        try:
+            out = json.loads((path / "ingest_result.json").read_text())
+        except (OSError, ValueError):
+            out = {}
+        if r.returncode or "sheets" not in out:
+            raise ValueError(out.get("error", "Could not read this upload"))
+    except BaseException:
+        for sheet in path.glob("sheet_*.png"):   # a reader killed at its time or CPU limit cannot remove what it rendered
+            sheet.unlink()
+        raise
     return out["sheets"]
 
 
